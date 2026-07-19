@@ -124,6 +124,9 @@
   .hp-row .hp-bar { height: 14px; background: var(--series-1); border-radius: 3px; }
   .hp-row .hp-n { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
   .hp-more { font-size: .76rem; color: var(--text-muted); margin-top: 6px; }
+  .ws-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: .85rem; }
+  .ws-row a { color: inherit; font-weight: 600; }
+  .ws-row span { color: var(--text-secondary); white-space: nowrap; }
   #cloud { line-height: 1.15; text-align: center; padding: 8px 0 4px; }
   #cloud span { display: inline-block; padding: 2px 7px; white-space: nowrap; }
   #cloud .c0 { color: var(--series-1); }
@@ -177,6 +180,10 @@ const CONFIG = {
 
 // Per URL lassen sich eventId/Ziele überschreiben (praktisch zum Ausprobieren,
 // ohne die Datei zu ändern): dashboard.html?event=104&min=70&max=80
+// Workshops/Panels/Vorträge werden gesondert dargestellt (eigene Sektion) und
+// zählen NICHT in Runden-/Platzzahlen – erkannt an Titel oder System:
+const WS_RE = /workshop|panel|vortrag/i;
+
 const params  = new URLSearchParams(location.search);
 const EVENT   = params.get("event") || String(CONFIG.eventId);
 const LO      = parseInt(params.get("min") || CONFIG.zielMin, 10);
@@ -195,7 +202,7 @@ const dayKey = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric",
 const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date(t)), 10);
 
 async function load() {
-  const url = `${SUPABASE}/rest/v1/sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,event_id)`
+  const url = `${SUPABASE}/rest/v1/sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id)`
     + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`;
   const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
   if (!resp.ok) throw new Error("HTTP " + resp.status);
@@ -258,6 +265,7 @@ function groupSlots(sessions) {
     map.get(key).games.push({
       title: s.game_id.title.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || s.game_id.title,
       url: "https://app.playabl.io/games/" + s.game_id.id,
+      ws: WS_RE.test((s.game_id.system || "") + " " + s.game_id.title),
       seats: s.participant_count + 1,  // Spielplätze + 1 anbietende Person (SL/Moderation)
       playerSeats: s.participant_count,
       rsvps: (s.rsvps || []).length,
@@ -271,19 +279,23 @@ function groupSlots(sessions) {
 function render(slots) {
   const app = document.getElementById("app");
   const tooltip = document.getElementById("tooltip");
-  const totalSessions = slots.reduce((a, s) => a + s.games.length, 0);
-  const totalSeats = slots.reduce((a, s) => a + s.games.reduce((x, g) => x + g.seats, 0), 0);
-  const totalRsvps = slots.reduce((a, s) => a + s.games.reduce((x, g) => x + g.rsvps, 0), 0);
-  const avgSeats = totalSeats / totalSessions;
-  const MAX = Math.max(90, HI + 10, ...slots.map(s => s.games.reduce((x, g) => x + g.seats, 0) + 5));
+  const reg = s => s.games.filter(g => !g.ws);   // reguläre Runden
+  const wsOf = s => s.games.filter(g => g.ws);   // Workshops & Specials
+  const workshops = slots.flatMap(s => wsOf(s).map(g => ({ ...g, slot: s })));
+  const totalSessions = slots.reduce((a, s) => a + reg(s).length, 0);
+  const totalSeats = slots.reduce((a, s) => a + reg(s).reduce((x, g) => x + g.seats, 0), 0);
+  const totalRsvps = slots.reduce((a, s) => a + reg(s).reduce((x, g) => x + g.rsvps, 0), 0);
+  const avgSeats = totalSeats / Math.max(1, totalSessions);
+  const seatsOf = s => reg(s).reduce((x, g) => x + g.seats, 0);
+  const MAX = Math.max(90, HI + 10, ...slots.map(s => seatsOf(s) + 5));
   const pct = v => (v / MAX * 100) + "%";
-  const seatsOf = s => s.games.reduce((x, g) => x + g.seats, 0);
   const minSeats = Math.min(...slots.map(seatsOf));
 
   app.innerHTML = `
     <div class="kpis">
       <div class="kpi"><div class="v">${totalSessions}</div><div class="l">Sessions gesamt</div></div>
       <div class="kpi"><div class="v">${totalSeats}</div><div class="l">Spielplätze gesamt</div></div>
+      ${workshops.length ? `<div class="kpi"><div class="v">${workshops.length}</div><div class="l">Workshops &amp; Specials (separat gezählt)</div></div>` : ""}
       ${totalRsvps ? `<div class="kpi"><div class="v">${totalRsvps + totalSessions}</div><div class="l">Plätze bereits belegt (inkl. Anbietende)</div></div>` : ""}
       <div class="kpi"><div class="v">${LO}–${HI}</div><div class="l">Ziel-Plätze je Slot</div></div>
       ${CONFIG.erwartete ? `<div class="kpi"><div class="v">${CONFIG.erwartete}</div><div class="l">erwartete Teilnehmende je Tag</div></div>` : ""}
@@ -303,6 +315,9 @@ function render(slots) {
       </table>
     </div>
     <div class="card"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
+    ${workshops.length ? `<div class="card"><h2>Workshops &amp; Specials</h2>
+      <p class="hint">Erkannt an „Workshop/Panel/Vortrag" in Titel oder System. Sie zählen oben nicht in Runden und Plätze, damit sie die Übersicht nicht verzerren.</p>
+      <div id="wsList"></div></div>` : ""}
     <div class="card" id="funCard" hidden>
       <h2>Insights</h2>
       <p class="hint">Auswertungen über alle angebotenen Runden – wird bei jedem Öffnen live neu berechnet.</p>
@@ -323,10 +338,11 @@ function render(slots) {
   const chart = document.getElementById("chart");
   for (const slot of slots) {
     const seats = seatsOf(slot);
-    const rsvps = slot.games.reduce((x, g) => x + g.rsvps, 0);
+    const rsvps = reg(slot).reduce((x, g) => x + g.rsvps, 0);
+    const nWs = wsOf(slot).length;
     const row = document.createElement("div");
     row.className = "row";
-    row.innerHTML = `<div class="lbl"><b>${slot.day.split(",")[0]} ${slot.part}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${slot.games.length} Runden${rsvps ? ` · ${rsvps + slot.games.length} belegt` : ""}</span></div>`;
+    row.innerHTML = `<div class="lbl"><b>${slot.day.split(",")[0]} ${slot.part}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${rsvps ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span></div>`;
     const track = document.createElement("div");
     track.className = "track";
     const band = document.createElement("div");
@@ -337,7 +353,7 @@ function render(slots) {
     const bar = document.createElement("div");
     bar.className = "bar";
     bar.style.width = pct(seats);
-    for (const g of slot.games) {
+    for (const g of reg(slot)) {
       const seg = document.createElement("a");
       seg.className = "seg";
       seg.href = g.url;
@@ -388,12 +404,12 @@ function render(slots) {
   const needsBody = document.getElementById("needsBody");
   for (const slot of slots) {
     const seats = seatsOf(slot);
-    const rsvps = slot.games.reduce((x, g) => x + g.rsvps, 0);
+    const rsvps = reg(slot).reduce((x, g) => x + g.rsvps, 0);
     const n70 = Math.max(0, LO - seats), n80 = Math.max(0, HI - seats);
     const tr = document.createElement("tr");
     if (seats === minSeats) tr.className = "worst";
-    tr.innerHTML = `<td>${slot.day.split(",")[0]} ${slot.part}</td><td>${slot.games.length}</td><td>${seats}</td>`
-      + (totalRsvps ? `<td>${rsvps + slot.games.length}</td>` : "")
+    tr.innerHTML = `<td>${slot.day.split(",")[0]} ${slot.part}</td><td>${reg(slot).length}</td><td>${seats}</td>`
+      + (totalRsvps ? `<td>${rsvps + reg(slot).length}</td>` : "")
       + `<td class="need">${n70}</td><td>${n80}</td><td class="need">${Math.ceil(n70 / avgSeats)}–${Math.ceil(n80 / avgSeats)}</td>`;
     needsBody.appendChild(tr);
   }
@@ -402,13 +418,20 @@ function render(slots) {
   for (const slot of slots) {
     const seats = seatsOf(slot);
     const d = document.createElement("details");
-    const rows = slot.games.map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${totalRsvps ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
-    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${slot.games.length} Runden, ${seats} Plätze</summary><table class="games">${rows}</table>`;
+    const rows = reg(slot).map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${totalRsvps ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
+    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seats} Plätze</summary><table class="games">${rows}</table>`;
     detail.appendChild(d);
+  }
+
+  if (workshops.length) {
+    document.getElementById("wsList").innerHTML = workshops.map(w =>
+      `<div class="ws-row"><a href="${w.url}" target="_blank" rel="noopener">${w.title}</a>
+       <span>${w.slot.day.split(",")[0]} ${w.slot.part} · ${w.start}–${w.end} · ${w.playerSeats} Plätze</span></div>`).join("");
   }
 }
 
 function renderFun(games) {
+  games = games.filter(g => !WS_RE.test((g.system || "") + " " + g.title));  // Workshops nicht in die Insights
   if (!games.length) return;
   document.getElementById("funCard").hidden = false;
   const plain = g => (g.description || "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
