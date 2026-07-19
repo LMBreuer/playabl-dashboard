@@ -446,8 +446,12 @@ function render(slots, rsvpsOpen) {
       <p class="hint">Auswertungen über alle angebotenen Runden – wird bei jedem Öffnen live neu berechnet.</p>
       <div class="facts" id="facts"></div>
       <h3>System-Hitparade</h3>
+      <p class="hint">Zählt schlicht das System-Feld der Runden (gleiche Schreibweisen zusammengefasst).</p>
       <div id="hitparade"></div>
       <p class="hp-more" id="hpMore"></p>
+      <h3 id="famHeading" hidden>Systemfamilien</h3>
+      <p class="hint" id="famHint" hidden>Extra-Zählung: In wie vielen Runden wird eine Spielfamilie überhaupt erwähnt (im System-Feld, Titel oder in der Beschreibung)? Eine Runde kann zu mehreren Familien passen.</p>
+      <div id="famList"></div>
       <h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3>
       <div id="cloud" aria-hidden="true"></div>
       <p class="sr-only" id="cloudAlt"></p>
@@ -723,18 +727,28 @@ function renderFun(games) {
   document.getElementById("facts").innerHTML =
     facts.map(f => `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
 
-  // Reguläre Zeilen: Systeme, die nicht schon als Familie gezählt werden
-  const ranked = [...systems.values()].filter(s => !famLower.includes(s.name.toLowerCase())).sort((a, b) => b.n - a.n);
-  const multi = [...families, ...ranked.filter(s => s.n >= 2)].sort((a, b) => b.n - a.n);
+  // Hitparade: eine einzige, einfache Regel – es zählt nur das System-Feld
+  const ranked = [...systems.values()].sort((a, b) => b.n - a.n);
+  const multi = ranked.filter(s => s.n >= 2);
   const maxN = multi.length ? multi[0].n : 1;
   document.getElementById("hitparade").innerHTML = multi.map(s =>
-    `<div class="hp-row"><div class="hp-name" title="${s.name}${s.fam ? " (Systemfamilie)" : ""}">${s.name}${s.fam ? ' <span class="badge">Familie</span>' : ""}</div>
+    `<div class="hp-row"><div class="hp-name" title="${s.name}">${s.name}</div>
      <div><div class="hp-bar" style="width:${s.n / maxN * 100}%"></div></div>
      <div class="hp-n">${s.n}×</div></div>`).join("");
-  const singles = ranked.filter(s => s.n === 1).length;
+  const singles = ranked.length - multi.length;
   document.getElementById("hpMore").textContent =
-    (singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden. ` : "") +
-    (families.length ? `Familien werden über System, Titel und Beschreibung gezählt – einzelne Vertreter (z.B. „Brindlewood Bay") können zusätzlich eigene Zeilen haben.` : "");
+    singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
+
+  // Systemfamilien: eigener Block mit eigener, klar erklärter Zählung
+  if (families.length) {
+    document.getElementById("famHeading").hidden = false;
+    document.getElementById("famHint").hidden = false;
+    const famMax = Math.max(...families.map(f => f.n));
+    document.getElementById("famList").innerHTML = families.sort((a, b) => b.n - a.n).map(f =>
+      `<div class="hp-row"><div class="hp-name" title="${f.name}">${f.name}</div>
+       <div><div class="hp-bar" style="width:${f.n / famMax * 100}%"></div></div>
+       <div class="hp-n">${f.n}×</div></div>`).join("");
+  }
 
   const stop = new Set(("und oder aber auch noch dann wird werden wurde kann können könnt muss müssen darf dürfen soll sollen " +
     "der die das den dem des ein eine einen einem einer eines ist sind war waren sein seine seinem seiner ihr ihre ihrem ihren " +
