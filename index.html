@@ -178,6 +178,10 @@
   .hp-row .hp-bar { height: 14px; background: var(--series-1); border-radius: 3px; }
   .hp-row .hp-n { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
   .hp-more { font-size: .76rem; color: var(--text-muted); margin-top: 6px; }
+  .inline-select {
+    font: inherit; font-size: .8rem; color: var(--text-primary);
+    background: var(--page); border: 1px solid var(--baseline); border-radius: 7px; padding: 3px 8px;
+  }
   #cloud { line-height: 1.15; text-align: center; padding: 8px 0 4px; }
   #cloud span { display: inline-block; padding: 2px 7px; white-space: nowrap; }
   #cloud .c0 { color: var(--series-1); }
@@ -445,13 +449,16 @@ function render(slots, rsvpsOpen) {
       <h2>Insights</h2>
       <p class="hint">Auswertungen über alle angebotenen Runden – wird bei jedem Öffnen live neu berechnet.</p>
       <div class="facts" id="facts"></div>
-      <h3>System-Hitparade</h3>
-      <p class="hint">Zählt schlicht das System-Feld der Runden (gleiche Schreibweisen zusammengefasst).</p>
-      <div id="hitparade"></div>
-      <p class="hp-more" id="hpMore"></p>
-      <h3 id="famHeading" hidden>Systemfamilien</h3>
-      <p class="hint" id="famHint" hidden>Extra-Zählung: In wie vielen Runden wird eine Spielfamilie überhaupt erwähnt (im System-Feld, Titel oder in der Beschreibung)? Eine Runde kann zu mehreren Familien passen.</p>
-      <div id="famList"></div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 8px">
+        <h3 style="margin:0">Systeme</h3>
+        <select id="sysMode" class="inline-select" aria-label="Zählweise der Systeme" hidden>
+          <option value="field">nur System-Feld</option>
+          <option value="mentions">Systemfamilien (Erwähnungen)</option>
+        </select>
+      </div>
+      <p class="hint" id="sysHint"></p>
+      <div id="sysList"></div>
+      <p class="hp-more" id="sysMore"></p>
       <h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3>
       <div id="cloud" aria-hidden="true"></div>
       <p class="sr-only" id="cloudAlt"></p>
@@ -727,28 +734,30 @@ function renderFun(games) {
   document.getElementById("facts").innerHTML =
     facts.map(f => `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
 
-  // Hitparade: eine einzige, einfache Regel – es zählt nur das System-Feld
+  // Systeme-Liste mit umschaltbarer Zählweise:
+  //   "field"    = zählt nur das System-Feld der Runden
+  //   "mentions" = zählt Erwähnungen der konfigurierten Systemfamilien
   const ranked = [...systems.values()].sort((a, b) => b.n - a.n);
-  const multi = ranked.filter(s => s.n >= 2);
-  const maxN = multi.length ? multi[0].n : 1;
-  document.getElementById("hitparade").innerHTML = multi.map(s =>
-    `<div class="hp-row"><div class="hp-name" title="${s.name}">${s.name}</div>
-     <div><div class="hp-bar" style="width:${s.n / maxN * 100}%"></div></div>
-     <div class="hp-n">${s.n}×</div></div>`).join("");
-  const singles = ranked.length - multi.length;
-  document.getElementById("hpMore").textContent =
-    singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
-
-  // Systemfamilien: eigener Block mit eigener, klar erklärter Zählung
+  const singles = ranked.filter(s => s.n === 1).length;
+  const renderSysList = mode => {
+    const rows = mode === "mentions" ? [...families].sort((a, b) => b.n - a.n) : ranked.filter(s => s.n >= 2);
+    const maxN = rows.length ? rows[0].n : 1;
+    document.getElementById("sysHint").textContent = mode === "mentions"
+      ? "Zählt, in wie vielen Runden die Spielfamilie erwähnt wird – im System-Feld, Titel oder in der Beschreibung. Eine Runde kann zu mehreren Familien passen."
+      : "Zählt schlicht, was im System-Feld der Runden steht (gleiche Schreibweisen zusammengefasst).";
+    document.getElementById("sysList").innerHTML = rows.map(s =>
+      `<div class="hp-row"><div class="hp-name" title="${s.name}">${s.name}</div>
+       <div><div class="hp-bar" style="width:${s.n / maxN * 100}%"></div></div>
+       <div class="hp-n">${s.n}×</div></div>`).join("") || '<p class="hint">Keine Einträge.</p>';
+    document.getElementById("sysMore").textContent =
+      mode === "field" && singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
+  };
+  const modeSel = document.getElementById("sysMode");
   if (families.length) {
-    document.getElementById("famHeading").hidden = false;
-    document.getElementById("famHint").hidden = false;
-    const famMax = Math.max(...families.map(f => f.n));
-    document.getElementById("famList").innerHTML = families.sort((a, b) => b.n - a.n).map(f =>
-      `<div class="hp-row"><div class="hp-name" title="${f.name}">${f.name}</div>
-       <div><div class="hp-bar" style="width:${f.n / famMax * 100}%"></div></div>
-       <div class="hp-n">${f.n}×</div></div>`).join("");
+    modeSel.hidden = false;
+    modeSel.onchange = () => renderSysList(modeSel.value);
   }
+  renderSysList("field");
 
   const stop = new Set(("und oder aber auch noch dann wird werden wurde kann können könnt muss müssen darf dürfen soll sollen " +
     "der die das den dem des ein eine einen einem einer eines ist sind war waren sein seine seinem seiner ihr ihre ihrem ihren " +
