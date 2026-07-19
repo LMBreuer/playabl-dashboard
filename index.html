@@ -198,7 +198,11 @@
     <h1 id="pageTitle">Spielangebot pro Slot</h1>
     <p class="sub" id="pageSub">Daten werden live von Playabl geladen …</p>
     <p id="rsvpBanner" class="banner" role="status" hidden></p>
-    <nav class="controls" aria-label="Ansicht und Event wählen">
+    <nav class="controls" aria-label="Ansicht, Event und Ziel wählen">
+      <div class="field">
+        <label for="communitySelect">Community</label>
+        <select id="communitySelect"><option value="">– lädt –</option></select>
+      </div>
       <div class="field">
         <label for="eventSelect">Event wechseln</label>
         <select id="eventSelect"><option value="">– lädt –</option></select>
@@ -206,8 +210,17 @@
       <div class="field">
         <label for="eventInput">… oder Playabl-URL / Event-ID</label>
         <div style="display:flex;gap:6px">
-          <input id="eventInput" type="text" inputmode="numeric" placeholder="z.B. 104" size="12">
+          <input id="eventInput" type="text" inputmode="numeric" placeholder="z.B. 104" size="10">
           <button id="eventGo" type="button">Anzeigen</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="zielMin">Ziel-Plätze pro Slot (von–bis)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="zielMin" type="number" min="1" max="999" style="width:70px" aria-label="Ziel von">
+          <span aria-hidden="true">–</span>
+          <input id="zielMax" type="number" min="1" max="999" style="width:70px" aria-label="Ziel bis">
+          <button id="zielGo" type="button">Anwenden</button>
         </div>
       </div>
       <div class="tabs" role="group" aria-label="Ansicht">
@@ -277,7 +290,7 @@ const load = () => api(`sessions?select=id,start_time,end_time,participant_count
   + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`);
 const loadGames = () => api(`games?select=id,title,system,description,participant_count&event_id=eq.${EVENT}&deleted_at=is.null`).catch(() => []);
 const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);
-const loadEventsList = () => api(`community_events?select=id,title,start_time&draft_state=eq.PUBLISHED&deleted_at=is.null&order=start_time.desc&limit=40`).catch(() => []);
+const loadEventsList = () => api(`community_events?select=id,title,start_time,community_id(id,name)&draft_state=eq.PUBLISHED&deleted_at=is.null&order=start_time.desc&limit=100`).catch(() => []);
 
 const fmt = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" });
 const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
@@ -371,7 +384,7 @@ function render(slots, rsvpsOpen) {
     </div>
     <div class="card">
       <h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2>
-      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz ? ` (${CONFIG.zielNotiz})` : ""}.${workshops.length ? " Gestrichelt umrandet: zusätzliche Plätze durch Workshops/Specials – sie zählen nicht in die Runden-Zahlen, bringen aber Teilnehmende unter." : ""} Dieselben Zahlen stehen in der Tabelle darunter.</p>
+      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz && LO === CONFIG.zielMin && HI === CONFIG.zielMax ? ` (${CONFIG.zielNotiz})` : ""}.${workshops.length ? " Gestrichelt umrandet: zusätzliche Plätze durch Workshops/Specials – sie zählen nicht in die Runden-Zahlen, bringen aber Teilnehmende unter." : ""} Dieselben Zahlen stehen in der Tabelle darunter.</p>
       <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
       <div class="baseline-x" aria-hidden="true"><div></div><div class="xticks" id="xticks"></div></div>
     </div>
@@ -584,18 +597,55 @@ document.getElementById("eventGo").addEventListener("click", () => {
 document.getElementById("eventInput").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("eventGo").click(); });
 document.getElementById("eventSelect").addEventListener("change", e => gotoEvent(e.target.value));
 
+let allEvents = [];
 function fillEventsList(events) {
+  allEvents = events;
+  const csel = document.getElementById("communitySelect");
+  const communities = new Map();
+  for (const e of events) { const c = e.community_id; if (c?.id) communities.set(c.id, c.name || "?"); }
+  csel.innerHTML = "";
+  csel.appendChild(new Option("Alle Communities", ""));
+  [...communities.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, name]) => csel.appendChild(new Option(name, id)));
+  // Vorauswahl: die Community des aktuell angezeigten Events
+  const current = events.find(e => String(e.id) === EVENT);
+  csel.value = current?.community_id?.id || "";
+  fillEventOptions();
+}
+
+function fillEventOptions() {
+  const cid = document.getElementById("communitySelect").value;
   const sel = document.getElementById("eventSelect");
   const dFmt = new Intl.DateTimeFormat("de-AT", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  const list = cid ? allEvents.filter(e => String(e.community_id?.id) === cid) : allEvents;
   sel.innerHTML = "";
-  if (!events.some(e => String(e.id) === EVENT)) events.unshift({ id: EVENT, title: `Event ${EVENT}` });
-  for (const e of events) {
-    const o = document.createElement("option");
-    o.value = e.id;
-    o.textContent = `${e.title}${e.start_time ? " (" + dFmt.format(new Date(e.start_time)) + ")" : ""}`;
+  if (!list.some(e => String(e.id) === EVENT)) {
+    const ph = new Option("– Event wählen –", "");
+    ph.disabled = true;
+    ph.selected = true;
+    sel.appendChild(ph);
+  }
+  for (const e of list) {
+    const o = new Option(`${e.title}${e.start_time ? " (" + dFmt.format(new Date(e.start_time)) + ")" : ""}`, e.id);
     if (String(e.id) === EVENT) o.selected = true;
     sel.appendChild(o);
   }
+}
+document.getElementById("communitySelect").addEventListener("change", fillEventOptions);
+
+// ---------- Ziel-Plätze anpassen ----------
+function applyZiel() {
+  const lo = parseInt(document.getElementById("zielMin").value, 10);
+  const hi = parseInt(document.getElementById("zielMax").value, 10);
+  if (!lo || !hi || lo < 1 || hi < lo) { alert("Bitte gültige Ziel-Werte angeben (von ≤ bis)."); return; }
+  const p = new URLSearchParams(location.search);
+  p.set("event", EVENT);
+  p.set("min", lo);
+  p.set("max", hi);
+  location.href = location.pathname + "?" + p.toString() + location.hash;
+}
+document.getElementById("zielGo").addEventListener("click", applyZiel);
+for (const id of ["zielMin", "zielMax"]) {
+  document.getElementById(id).addEventListener("keydown", e => { if (e.key === "Enter") applyZiel(); });
 }
 
 // ---------- Insights ----------
@@ -688,6 +738,8 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList()]).then(([session
   renderCalendar(slots, rsvpsOpen);
   renderFun(games);
   fillEventsList(eventsList);
+  document.getElementById("zielMin").value = LO;
+  document.getElementById("zielMax").value = HI;
   setView(location.hash === "#kalender" ? "kalender" : "uebersicht");
 }).catch(err => {
   document.getElementById("status").innerHTML =
