@@ -189,6 +189,28 @@
   .foot li { margin-bottom: 4px; margin-left: 18px; }
   .err { color: #d03b3b; font-weight: 600; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* Breite Inhalte scrollen im eigenen Container statt die Seite zu sprengen */
+  .tscroll { overflow-x: auto; }
+  .tscroll table { min-width: 480px; }
+  .lbl .mstats { display: none; }
+
+  /* Mobile: Slot-Beschriftung über den Balken, Zahlen in der Textzeile statt
+     absolut positioniert (verhindert Überlappungen) */
+  @media (max-width: 620px) {
+    body { padding: 20px 10px 48px; }
+    .card { padding: 14px 12px; }
+    .row { grid-template-columns: 1fr; gap: 3px; margin: 18px 0; }
+    .row .lbl { text-align: left; }
+    .row .lbl b, .row .lbl span { white-space: normal; }
+    .val, .gap-note { display: none; }
+    .lbl .mstats { display: block; color: var(--text-secondary); font-size: .75rem; }
+    .baseline-x { grid-template-columns: 1fr; }
+    .baseline-x > div:first-child { display: none; }
+    .controls { padding: 10px; gap: 10px; }
+    .tabs { margin-left: 0; }
+    .hp-row { grid-template-columns: minmax(90px, 130px) 1fr 30px; }
+  }
 </style>
 </head>
 <body>
@@ -262,6 +284,17 @@ const CONFIG = {
   erwartete: "~90",
   cutoffStunde: 14,
   zeitzone: "Europe/Vienna",
+  // Systemfamilien für die Hitparade: gezählt wird jedes Spiel, das den
+  // Begriff in System, Titel ODER Beschreibung nennt (fängt Hacks und
+  // Vertreter wie "Brindlewood Bay" mit ein). Einträge frei erweiterbar.
+  systemFamilien: [
+    "Carved from Brindlewood",
+    "Powered by the Apocalypse",
+    "Belonging Outside Belonging",
+    "Forged in the Dark",
+    "Descended from the Queen",
+    "No Dice No Masters",
+  ],
 };
 
 // Workshops/Panels/Vorträge werden gesondert dargestellt (eigene Sektion) und
@@ -397,11 +430,11 @@ function render(slots, rsvpsOpen) {
     <div class="card">
       <h2>Wo werden noch Runden gebraucht?</h2>
       <p class="hint">Fehlende Plätze bis zum unteren (${LO}) bzw. oberen Zielwert (${HI}); umgerechnet in Runden bei ø ${avgSeats.toFixed(1).replace(".", ",")} Plätzen pro Runde.</p>
-      <table>
+      <div class="tscroll"><table>
         <caption class="sr-only">Runden, Plätze und fehlende Plätze je Slot</caption>
         <thead><tr><th scope="col">Slot</th><th scope="col">Runden</th><th scope="col">Plätze</th>${showBusy ? '<th scope="col">belegt</th>' : ""}<th scope="col">fehlt bis ${LO}</th><th scope="col">fehlt bis ${HI}</th><th scope="col">≈ Runden zusätzlich</th></tr></thead>
         <tbody id="needsBody"></tbody>
-      </table>
+      </table></div>
       ${workshops.length ? `<p class="hint" style="margin-top:10px">* In diesem Slot gibt es zusätzlich Workshops/Specials (eigene Sektion unten) – sie bringen Teilnehmende unter, tendenziell werden dort also weniger zusätzliche Runden gebraucht.</p>` : ""}
     </div>
     <div class="card"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
@@ -433,7 +466,7 @@ function render(slots, rsvpsOpen) {
     const nWs = wsOf(slot).length;
     const row = document.createElement("div");
     row.className = "row";
-    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${showBusy ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span></div>`;
+    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${showBusy ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span><span class="mstats">${seats} Plätze${LO - seats > 0 ? ` · noch +${LO - seats} bis Ziel` : " · Ziel erreicht"}</span></div>`;
     const track = document.createElement("div");
     track.className = "track";
     const band = document.createElement("div");
@@ -521,7 +554,7 @@ function render(slots, rsvpsOpen) {
   for (const slot of slots) {
     const d = document.createElement("details");
     const rows = reg(slot).map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
-    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seatsOf(slot)} Plätze</summary><table class="games"><caption class="sr-only">Runden am ${slot.day} ${slot.part}</caption>${rows}</table>`;
+    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seatsOf(slot)} Plätze</summary><div class="tscroll"><table class="games"><caption class="sr-only">Runden am ${slot.day} ${slot.part}</caption>${rows}</table></div>`;
     detail.appendChild(d);
   }
 
@@ -662,12 +695,23 @@ function renderFun(games) {
   const glRe = /gm-?less|sl-?los|spielleit(er|ungs)los|ohne\s+spielleitung|moderation:/i;
   const gmless = games.filter(g => glRe.test(g.system + " " + plain(g))).length;
   const xcard = games.filter(g => /x-?ka?rte|x-?card/i.test(plain(g))).length;
+  // System-Freitext bereinigen: Klammer-Zusätze wie "[GM less]" entfernen
+  const cleanSys = s => (s || "?").replace(/\s*[\[(][^\])]*[\])]\s*/g, " ").replace(/\s+/g, " ").trim() || "?";
+  const famNames = (CONFIG.systemFamilien || []).map(f => f.trim()).filter(Boolean);
+  const famLower = famNames.map(f => f.toLowerCase());
   const systems = new Map();
   for (const g of games) {
-    const s = (g.system || "?").trim().replace(/\s+/g, " ");
+    const s = cleanSys(g.system);
     const k = s.toLowerCase();
     systems.set(k, { name: systems.get(k)?.name || s, n: (systems.get(k)?.n || 0) + 1 });
   }
+  // Familien: Volltext-Zählung über System + Titel + Beschreibung
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const families = famNames.map(name => ({
+    name,
+    fam: true,
+    n: games.filter(g => new RegExp(esc(name), "i").test((g.system || "") + " " + g.title + " " + plain(g))).length
+  })).filter(f => f.n >= 2);
   const facts = [
     { v: (seats.reduce((a, b) => a + b, 0) / seats.length).toFixed(1).replace(".", ","), l: "Personen pro Runde (ø, inkl. SL)" },
     { v: systems.size, l: "verschiedene Systeme – Vielfalt!" },
@@ -679,16 +723,18 @@ function renderFun(games) {
   document.getElementById("facts").innerHTML =
     facts.map(f => `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
 
-  const ranked = [...systems.values()].sort((a, b) => b.n - a.n);
-  const multi = ranked.filter(s => s.n >= 2);
+  // Reguläre Zeilen: Systeme, die nicht schon als Familie gezählt werden
+  const ranked = [...systems.values()].filter(s => !famLower.includes(s.name.toLowerCase())).sort((a, b) => b.n - a.n);
+  const multi = [...families, ...ranked.filter(s => s.n >= 2)].sort((a, b) => b.n - a.n);
   const maxN = multi.length ? multi[0].n : 1;
   document.getElementById("hitparade").innerHTML = multi.map(s =>
-    `<div class="hp-row"><div class="hp-name" title="${s.name}">${s.name}</div>
+    `<div class="hp-row"><div class="hp-name" title="${s.name}${s.fam ? " (Systemfamilie)" : ""}">${s.name}${s.fam ? ' <span class="badge">Familie</span>' : ""}</div>
      <div><div class="hp-bar" style="width:${s.n / maxN * 100}%"></div></div>
      <div class="hp-n">${s.n}×</div></div>`).join("");
-  const singles = ranked.length - multi.length;
+  const singles = ranked.filter(s => s.n === 1).length;
   document.getElementById("hpMore").textContent =
-    singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
+    (singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden. ` : "") +
+    (families.length ? `Familien werden über System, Titel und Beschreibung gezählt – einzelne Vertreter (z.B. „Brindlewood Bay") können zusätzlich eigene Zeilen haben.` : "");
 
   const stop = new Set(("und oder aber auch noch dann wird werden wurde kann können könnt muss müssen darf dürfen soll sollen " +
     "der die das den dem des ein eine einen einem einer eines ist sind war waren sein seine seinem seiner ihr ihre ihrem ihren " +
