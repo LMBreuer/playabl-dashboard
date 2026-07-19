@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playabl-Event – Spielangebot pro Slot</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --page:           #f9f9f7;
+    --surface-1:      #fcfcfb;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --series-1-soft:  #9ec5f4;
+    --band:           #f0efec;
+    --band-edge:      #c3c2b7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page:           #0d0d0d;
+      --surface-1:      #1a1a19;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-1-soft:  #1c5cab;
+      --band:           #262624;
+      --band-edge:      #52514e;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; font-weight: 700; }
+  .sub { color: var(--text-secondary); font-size: .9rem; margin-top: 4px; }
+  #status { font-size: .85rem; color: var(--text-muted); margin: 16px 0; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+  .kpi {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 18px; flex: 1 1 150px; min-width: 150px;
+  }
+  .kpi .v { font-size: 1.6rem; font-weight: 700; }
+  .kpi .l { font-size: .8rem; color: var(--text-secondary); }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 22px; margin-bottom: 20px;
+  }
+  .card h2 { font-size: 1.05rem; margin-bottom: 4px; }
+  .card .hint { font-size: .82rem; color: var(--text-secondary); margin-bottom: 16px; }
+
+  .chart { position: relative; }
+  .row { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: center; margin: 14px 0; }
+  .row .lbl { font-size: .85rem; text-align: right; }
+  .row .lbl b { display: block; white-space: nowrap; }
+  .row .lbl span { color: var(--text-muted); font-size: .75rem; white-space: nowrap; display: block; }
+  .track { position: relative; height: 34px; }
+  .band {
+    position: absolute; top: -4px; bottom: -4px;
+    background: var(--band);
+    border-left: 1px dashed var(--band-edge);
+    border-right: 1px dashed var(--band-edge);
+  }
+  .bar { position: absolute; top: 4px; bottom: 4px; left: 0; display: flex; gap: 2px; }
+  .seg { background: var(--series-1); position: relative; cursor: pointer; overflow: hidden; display: block; }
+  .seg:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+  .seg .fill { position: absolute; inset: 0; background: var(--series-1-soft); transform-origin: left; }
+  .seg:first-child { border-radius: 4px 0 0 4px; }
+  .seg:last-child { border-radius: 0 4px 4px 0; }
+  .seg:only-child { border-radius: 4px; }
+  .seg:hover { filter: brightness(1.15); }
+  .val { position: absolute; top: 50%; transform: translateY(-50%); font-size: .82rem; font-weight: 600; white-space: nowrap; }
+  .gap-note { position: absolute; top: 50%; transform: translateY(-50%); font-size: .74rem; color: var(--text-muted); white-space: nowrap; }
+  .baseline-x { display: grid; grid-template-columns: 160px 1fr; gap: 10px; margin-top: 4px; }
+  .xticks { position: relative; height: 18px; border-top: 1px solid var(--baseline); }
+  .xticks span { position: absolute; top: 2px; transform: translateX(-50%); font-size: .7rem; color: var(--text-muted); }
+
+  #tooltip {
+    position: fixed; z-index: 10; pointer-events: none; display: none;
+    background: var(--surface-1); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    padding: 8px 10px; font-size: .78rem; max-width: 280px;
+  }
+  #tooltip .t { font-weight: 600; }
+  #tooltip .s { color: var(--text-secondary); }
+
+  .needs { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .needs th, .needs td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--grid); }
+  .needs th:first-child, .needs td:first-child { text-align: left; }
+  .needs th { color: var(--text-secondary); font-weight: 600; font-size: .76rem; }
+  .needs td.need { font-weight: 700; }
+  .needs tr.worst td { background: color-mix(in srgb, var(--band) 60%, transparent); }
+
+  details { margin-top: 8px; }
+  summary { cursor: pointer; font-size: .88rem; font-weight: 600; padding: 6px 0; }
+  .games { width: 100%; border-collapse: collapse; font-size: .82rem; margin: 6px 0 14px; }
+  .games td { padding: 4px 10px; border-bottom: 1px solid var(--grid); }
+  .games td:last-child { text-align: right; color: var(--text-secondary); white-space: nowrap; }
+  .foot { font-size: .76rem; color: var(--text-muted); margin-top: 24px; }
+  .foot li { margin-bottom: 4px; margin-left: 18px; }
+  .err { color: #d03b3b; font-weight: 600; }
+
+  .card h3 { font-size: .92rem; margin: 20px 0 8px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 10px; }
+  .fact { background: var(--band); border-radius: 8px; padding: 10px 14px; flex: 1 1 160px; min-width: 160px; }
+  .fact .v { font-size: 1.15rem; font-weight: 700; }
+  .fact .l { font-size: .74rem; color: var(--text-secondary); }
+  .hp-row { display: grid; grid-template-columns: minmax(120px, 240px) 1fr 34px; gap: 10px; align-items: center; margin: 5px 0; font-size: .82rem; }
+  .hp-row .hp-name { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hp-row .hp-bar { height: 14px; background: var(--series-1); border-radius: 3px; }
+  .hp-row .hp-n { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .hp-more { font-size: .76rem; color: var(--text-muted); margin-top: 6px; }
+  #cloud { line-height: 1.15; text-align: center; padding: 8px 0 4px; }
+  #cloud span { display: inline-block; padding: 2px 7px; white-space: nowrap; }
+  #cloud .c0 { color: var(--series-1); }
+  #cloud .c1 { color: var(--text-primary); }
+  #cloud .c2 { color: var(--text-secondary); }
+  #cloud .c3 { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="pageTitle">Spielangebot pro Slot</h1>
+  <p class="sub" id="pageSub">Daten werden live von Playabl geladen …</p>
+  <p id="status">Lade Daten von Playabl …</p>
+  <div id="app"></div>
+</div>
+<div id="tooltip"></div>
+
+<script>
+/* ============================================================================
+   KONFIGURATION – für ein anderes Event NUR diesen Block anpassen!
+
+   eventId:   Die Playabl-Event-ID. Sie steht in der Event-URL:
+              https://app.playabl.io/events/104/overview  →  104
+              Titel, Datum, RSVP-Termin und alle Auswertungen holt sich die
+              Seite dann automatisch live aus der Playabl-API.
+
+   zielMin /  Zielkorridor: wie viele Personen (Spielplätze + anbietende
+   zielMax:   Person) pro Slot untergebracht werden sollen. Wird als graues
+              Band im Diagramm und in der Bedarfstabelle verwendet.
+
+   zielNotiz: Freitext, der die Herkunft des Ziels erklärt (erscheint im
+              Hinweistext unter dem Diagramm). Leer lassen ("") zum Ausblenden.
+
+   erwartete: Anzeige-Text der Kachel „erwartete Teilnehmende je Tag".
+              Leer lassen ("") blendet die Kachel aus.
+
+   cutoffStunde: Sessions, die VOR dieser Uhrzeit starten, zählen als
+              „Vormittag", alle anderen als „Nachmittag".
+
+   zeitzone:  Zeitzone des Events (IANA-Name).
+   ============================================================================ */
+const CONFIG = {
+  eventId: 104,
+  zielMin: 70,
+  zielMax: 80,
+  zielNotiz: "Erfahrungswert aus dem Vorjahr: 13–16 Sessions für 70–80 Personen je Slot",
+  erwartete: "~90",
+  cutoffStunde: 14,
+  zeitzone: "Europe/Vienna",
+};
+
+// Per URL lassen sich eventId/Ziele überschreiben (praktisch zum Ausprobieren,
+// ohne die Datei zu ändern): dashboard.html?event=104&min=70&max=80
+const params  = new URLSearchParams(location.search);
+const EVENT   = params.get("event") || String(CONFIG.eventId);
+const LO      = parseInt(params.get("min") || CONFIG.zielMin, 10);
+const HI      = parseInt(params.get("max") || CONFIG.zielMax, 10);
+const CUTOFF  = CONFIG.cutoffStunde;
+const TZ      = CONFIG.zeitzone;
+const EVENT_URL = `https://app.playabl.io/events/${EVENT}/overview`;
+
+const SUPABASE = "https://oapuqtuewlvswrdezthc.supabase.co";
+// Öffentlicher anon-Key von Playabl (steckt in deren Web-App, wird an jeden Besucher ausgeliefert):
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hcHVxdHVld2x2c3dyZGV6dGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDQ3OTExODMsImV4cCI6MTk2MDM2NzE4M30.uSjfOkoD7KXv4ztVSFhzIS9LuIsgKg42NaZotZAcqko";
+
+const fmt = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" });
+const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+const dayKey = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date(t)), 10);
+
+async function load() {
+  const url = `${SUPABASE}/rest/v1/sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,event_id)`
+    + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`;
+  const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  return resp.json();
+}
+
+async function loadGames() {
+  const url = `${SUPABASE}/rest/v1/games?select=id,title,system,description,participant_count`
+    + `&event_id=eq.${EVENT}&deleted_at=is.null`;
+  const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
+  if (!resp.ok) return [];  // Insights sind optional – Dashboard funktioniert auch ohne
+  return resp.json();
+}
+
+async function loadEvent() {
+  const url = `${SUPABASE}/rest/v1/community_events?select=title,start_time,end_time,fixed_access_time&id=eq.${EVENT}`;
+  const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
+  if (!resp.ok) return null;  // optional – Kopfzeile fällt dann generisch aus
+  return (await resp.json())[0] || null;
+}
+
+function eventRangeText(a, b) {
+  const full = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric", month: "long", year: "numeric" });
+  const dayOnly = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric" });
+  const monthYear = d => new Intl.DateTimeFormat("de-AT", { timeZone: TZ, month: "numeric", year: "numeric" }).format(d);
+  const dA = new Date(a), dB = new Date(b);
+  if (dayOnly.format(dA) === dayOnly.format(dB) && monthYear(dA) === monthYear(dB)) return full.format(dA);
+  return monthYear(dA) === monthYear(dB)
+    ? `${dayOnly.format(dA)}.–${full.format(dB)}`
+    : `${full.format(dA)} – ${full.format(dB)}`;
+}
+
+// Kopfzeile (Titel, Datum, Quelle) aus den Event-Daten befüllen
+function applyEvent(ev) {
+  const name = ev?.title || `Playabl-Event ${EVENT}`;
+  document.title = `${name} – Spielangebot pro Slot`;
+  document.getElementById("pageTitle").textContent = `${name} – Spielangebot pro Slot`;
+  const range = ev?.start_time && ev?.end_time ? eventRangeText(ev.start_time, ev.end_time) + " · " : "";
+  document.getElementById("pageSub").innerHTML =
+    `${range}Datenquelle: <a href="${EVENT_URL}" style="color:inherit">${name} auf Playabl</a> · lädt bei jedem Öffnen live`;
+}
+
+// Hinweis auf den RSVP-Start ans Ende der Fußnoten hängen (falls noch in der Zukunft)
+function applyRsvpNote(ev) {
+  if (!ev?.fixed_access_time || ev.fixed_access_time <= Date.now()) return;
+  const when = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(ev.fixed_access_time));
+  const li = document.createElement("li");
+  li.textContent = `Anmeldungen (RSVPs) öffnen am ${when} Uhr – bis dahin zeigt die Seite nur das Angebot, danach automatisch auch die Belegung.`;
+  const foot = document.querySelector(".foot");
+  if (foot) foot.prepend(li);
+}
+
+function groupSlots(sessions) {
+  const map = new Map();
+  for (const s of sessions) {
+    const d = dayKey.format(new Date(s.start_time));
+    const part = hourOf(s.start_time) < CUTOFF ? "Vormittag" : "Nachmittag";
+    const key = d + "|" + part;
+    if (!map.has(key)) map.set(key, { date: d, part, day: fmt.format(new Date(s.start_time)), games: [] });
+    map.get(key).games.push({
+      title: s.game_id.title.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || s.game_id.title,
+      url: "https://app.playabl.io/games/" + s.game_id.id,
+      seats: s.participant_count + 1,  // Spielplätze + 1 anbietende Person (SL/Moderation)
+      playerSeats: s.participant_count,
+      rsvps: (s.rsvps || []).length,
+      start: fmtTime.format(new Date(s.start_time)),
+      end: fmtTime.format(new Date(s.end_time))
+    });
+  }
+  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (a.part === "Vormittag" ? -1 : 1));
+}
+
+function render(slots) {
+  const app = document.getElementById("app");
+  const tooltip = document.getElementById("tooltip");
+  const totalSessions = slots.reduce((a, s) => a + s.games.length, 0);
+  const totalSeats = slots.reduce((a, s) => a + s.games.reduce((x, g) => x + g.seats, 0), 0);
+  const totalRsvps = slots.reduce((a, s) => a + s.games.reduce((x, g) => x + g.rsvps, 0), 0);
+  const avgSeats = totalSeats / totalSessions;
+  const MAX = Math.max(90, HI + 10, ...slots.map(s => s.games.reduce((x, g) => x + g.seats, 0) + 5));
+  const pct = v => (v / MAX * 100) + "%";
+  const seatsOf = s => s.games.reduce((x, g) => x + g.seats, 0);
+  const minSeats = Math.min(...slots.map(seatsOf));
+
+  app.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="v">${totalSessions}</div><div class="l">Sessions gesamt</div></div>
+      <div class="kpi"><div class="v">${totalSeats}</div><div class="l">Spielplätze gesamt</div></div>
+      ${totalRsvps ? `<div class="kpi"><div class="v">${totalRsvps + totalSessions}</div><div class="l">Plätze bereits belegt (inkl. Anbietende)</div></div>` : ""}
+      <div class="kpi"><div class="v">${LO}–${HI}</div><div class="l">Ziel-Plätze je Slot</div></div>
+      ${CONFIG.erwartete ? `<div class="kpi"><div class="v">${CONFIG.erwartete}</div><div class="l">erwartete Teilnehmende je Tag</div></div>` : ""}
+    </div>
+    <div class="card">
+      <h2>Angebotene Spielplätze pro Slot</h2>
+      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${totalRsvps ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz ? ` (${CONFIG.zielNotiz})` : ""}.</p>
+      <div class="chart" id="chart"></div>
+      <div class="baseline-x"><div></div><div class="xticks" id="xticks"></div></div>
+    </div>
+    <div class="card">
+      <h2>Wo werden noch Runden gebraucht?</h2>
+      <p class="hint">Fehlende Plätze bis zum unteren (${LO}) bzw. oberen Zielwert (${HI}); umgerechnet in Runden bei ø ${avgSeats.toFixed(1).replace(".", ",")} Plätzen pro Runde.</p>
+      <table class="needs">
+        <thead><tr><th>Slot</th><th>Runden</th><th>Plätze</th>${totalRsvps ? "<th>belegt</th>" : ""}<th>fehlt bis ${LO}</th><th>fehlt bis ${HI}</th><th>≈ Runden zusätzlich</th></tr></thead>
+        <tbody id="needsBody"></tbody>
+      </table>
+    </div>
+    <div class="card"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
+    <div class="card" id="funCard" hidden>
+      <h2>Insights</h2>
+      <p class="hint">Auswertungen über alle angebotenen Runden – wird bei jedem Öffnen live neu berechnet.</p>
+      <div class="facts" id="facts"></div>
+      <h3>System-Hitparade</h3>
+      <div id="hitparade"></div>
+      <p class="hp-more" id="hpMore"></p>
+      <h3>Wortwolke aus den Rundenbeschreibungen</h3>
+      <div id="cloud"></div>
+    </div>
+    <ul class="foot">
+      <li>Diese Seite lädt die Daten bei jedem Öffnen direkt von der Playabl-API – einfach neu laden für den aktuellen Stand.</li>
+      <li>Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone Wien).</li>
+      <li>Plätze = Spielplätze laut Playabl <strong>plus 1 anbietende Person</strong> (SL/Moderation) je Session – auch GMs sind ja untergebracht. Two-Shots zählen in jedem ihrer Slots.</li>
+      <li>Mini-LARPs/Workshops und Programm außerhalb von Playabl sind nicht enthalten.</li>
+    </ul>`;
+
+  const chart = document.getElementById("chart");
+  for (const slot of slots) {
+    const seats = seatsOf(slot);
+    const rsvps = slot.games.reduce((x, g) => x + g.rsvps, 0);
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `<div class="lbl"><b>${slot.day.split(",")[0]} ${slot.part}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${slot.games.length} Runden${rsvps ? ` · ${rsvps + slot.games.length} belegt` : ""}</span></div>`;
+    const track = document.createElement("div");
+    track.className = "track";
+    const band = document.createElement("div");
+    band.className = "band";
+    band.style.left = pct(LO);
+    band.style.width = ((HI - LO) / MAX * 100) + "%";
+    track.appendChild(band);
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.width = pct(seats);
+    for (const g of slot.games) {
+      const seg = document.createElement("a");
+      seg.className = "seg";
+      seg.href = g.url;
+      seg.target = "_blank";
+      seg.rel = "noopener";
+      seg.setAttribute("aria-label", g.title);
+      seg.style.flex = g.seats + " 0 0";
+      if (totalRsvps > 0) {
+        const fill = document.createElement("div");
+        fill.className = "fill";
+        fill.style.transform = `scaleX(${Math.min(1, (g.rsvps + 1) / g.seats)})`;
+        seg.appendChild(fill);
+      }
+      seg.addEventListener("mousemove", e => {
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `<div class="t">${g.title}</div><div class="s">${g.start}–${g.end} · ${g.playerSeats} Spielplätze + SL/Mod${totalRsvps ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""} · Klick öffnet die Runde</div>`;
+        tooltip.style.left = Math.min(e.clientX + 14, innerWidth - tooltip.offsetWidth - 8) + "px";
+        tooltip.style.top = (e.clientY + 14) + "px";
+      });
+      seg.addEventListener("mouseleave", () => tooltip.style.display = "none");
+      bar.appendChild(seg);
+    }
+    track.appendChild(bar);
+    const val = document.createElement("div");
+    val.className = "val";
+    val.style.left = `calc(${pct(seats)} + 8px)`;
+    val.textContent = seats;
+    track.appendChild(val);
+    if (LO - seats > 0) {
+      const gap = document.createElement("div");
+      gap.className = "gap-note";
+      gap.style.left = `calc(${pct(seats)} + 30px)`;
+      gap.textContent = `+${LO - seats} bis Ziel`;
+      track.appendChild(gap);
+    }
+    row.appendChild(track);
+    chart.appendChild(row);
+  }
+
+  const xt = document.getElementById("xticks");
+  for (const v of [0, 20, 40, 60, LO, HI]) {
+    const s = document.createElement("span");
+    s.style.left = pct(v);
+    s.textContent = v;
+    xt.appendChild(s);
+  }
+
+  const needsBody = document.getElementById("needsBody");
+  for (const slot of slots) {
+    const seats = seatsOf(slot);
+    const rsvps = slot.games.reduce((x, g) => x + g.rsvps, 0);
+    const n70 = Math.max(0, LO - seats), n80 = Math.max(0, HI - seats);
+    const tr = document.createElement("tr");
+    if (seats === minSeats) tr.className = "worst";
+    tr.innerHTML = `<td>${slot.day.split(",")[0]} ${slot.part}</td><td>${slot.games.length}</td><td>${seats}</td>`
+      + (totalRsvps ? `<td>${rsvps + slot.games.length}</td>` : "")
+      + `<td class="need">${n70}</td><td>${n80}</td><td class="need">${Math.ceil(n70 / avgSeats)}–${Math.ceil(n80 / avgSeats)}</td>`;
+    needsBody.appendChild(tr);
+  }
+
+  const detail = document.getElementById("detail");
+  for (const slot of slots) {
+    const seats = seatsOf(slot);
+    const d = document.createElement("details");
+    const rows = slot.games.map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${totalRsvps ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
+    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${slot.games.length} Runden, ${seats} Plätze</summary><table class="games">${rows}</table>`;
+    detail.appendChild(d);
+  }
+}
+
+function renderFun(games) {
+  if (!games.length) return;
+  document.getElementById("funCard").hidden = false;
+  const plain = g => (g.description || "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const cleanTitle = t => (t.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || t).slice(0, 44);
+
+  // --- Fun-Fact-Kacheln ---
+  const seats = games.map(g => g.participant_count + 1);
+  const biggest = games.reduce((a, b) => b.participant_count > a.participant_count ? b : a);
+  const smallest = games.reduce((a, b) => b.participant_count < a.participant_count ? b : a);
+  const glRe = /gm-?less|sl-?los|spielleit(er|ungs)los|ohne\s+spielleitung|moderation:/i;
+  const gmless = games.filter(g => glRe.test(g.system + " " + plain(g))).length;
+  const xcard = games.filter(g => /x-?ka?rte|x-?card/i.test(plain(g))).length;
+  const systems = new Map();
+  for (const g of games) {
+    const s = (g.system || "?").trim().replace(/\s+/g, " ");
+    const k = s.toLowerCase();
+    systems.set(k, { name: systems.get(k)?.name || s, n: (systems.get(k)?.n || 0) + 1 });
+  }
+  const facts = [
+    { v: (seats.reduce((a, b) => a + b, 0) / seats.length).toFixed(1).replace(".", ","), l: "Personen pro Runde (ø, inkl. SL)" },
+    { v: systems.size, l: "verschiedene Systeme – Vielfalt!" },
+    { v: `${Math.round(gmless / games.length * 100)} %`, l: "der Runden kommen ohne SL aus" },
+    { v: `${Math.round(xcard / games.length * 100)} %`, l: "erwähnen die X-Karte" },
+    { v: biggest.participant_count + "+SL", l: `größte Runde: ${cleanTitle(biggest.title)}` },
+    { v: smallest.participant_count + "+SL", l: `intimste Runde: ${cleanTitle(smallest.title)}` },
+  ];
+  document.getElementById("facts").innerHTML =
+    facts.map(f => `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
+
+  // --- System-Hitparade ---
+  const ranked = [...systems.values()].sort((a, b) => b.n - a.n);
+  const multi = ranked.filter(s => s.n >= 2);
+  const maxN = multi.length ? multi[0].n : 1;
+  document.getElementById("hitparade").innerHTML = multi.map(s =>
+    `<div class="hp-row"><div class="hp-name" title="${s.name}">${s.name}</div>
+     <div><div class="hp-bar" style="width:${s.n / maxN * 100}%"></div></div>
+     <div class="hp-n">${s.n}×</div></div>`).join("");
+  const singles = ranked.length - multi.length;
+  document.getElementById("hpMore").textContent =
+    singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
+
+  // --- Wortwolke ---
+  const stop = new Set(("und oder aber auch noch dann wird werden wurde kann können könnt muss müssen darf dürfen soll sollen " +
+    "der die das den dem des ein eine einen einem einer eines ist sind war waren sein seine seinem seiner ihr ihre ihrem ihren " +
+    "wir ihr sie es ich du man uns euch mich dich sich nicht kein keine nur mehr sehr auf aus bei mit von zu zum zur nach vor über " +
+    "unter durch für gegen ohne um an am im in dass wie als wenn weil ob was wer wo alle allen alles jede jeder jedes dieser diese " +
+    "dieses etwas eher habe hat haben hatte gibt geht dabei dazu damit dafür darauf dort hier schon noch mal so ganz gut the and " +
+    "for with you your are was were will this that not but can have has from they them our its all one two new more most other " +
+    "some their there where which while who whom about into over such play game games player players playing " +
+    "spiel spiele spielen spielt gespielt runde runden charaktere charakter figuren regeln system beschreibung link publisher " +
+    "safety tools tool lines veils veil karte card open door policy ort offline con wien spielleitung moderation setting genre " +
+    "stichwörter sprache deutsch englisch english hinweise warnungen voraussetzungen erfahrung equipment technik keine discord " +
+    "https http www com net org itch drivethrurpg gerne zwei drei vier fünf pro per etc " +
+    "offline-runde innen unser unsere unserer unserem unseren eure euer immer viel viele vielen selbst wäre würde werdet " +
+    "dieser diesem diesen jeweils sowie bzw ggf inkl nötig notwendig hilfreich benötigt wird " +
+    "verwendete verwendet kommen wollen sondern zwischen spiels spieler spielerinnen beginn teil willkommen " +
+    "spielmaterial characters x-karte x-card mitbringen bringe stelle gestellt").split(/\s+/));
+  const counts = new Map();
+  for (const g of games) {
+    for (const w of plain(g).toLowerCase().match(/[a-zäöüßæéè][a-zäöüßæéè'-]{3,}/g) || []) {
+      if (!stop.has(w)) counts.set(w, (counts.get(w) || 0) + 1);
+    }
+  }
+  const words = [...counts.entries()].filter(w => w[1] >= 3).sort((a, b) => b[1] - a[1]).slice(0, 45);
+  if (words.length) {
+    const wMax = words[0][1], wMin = words[words.length - 1][1];
+    const shuffled = words.map(([w, n], i) => ({ w, n, key: (i * 2654435761 >>> 8) % 1000 })).sort((a, b) => a.key - b.key);
+    document.getElementById("cloud").innerHTML = shuffled.map(({ w, n }) => {
+      const t = wMax === wMin ? 0.5 : (Math.sqrt(n) - Math.sqrt(wMin)) / (Math.sqrt(wMax) - Math.sqrt(wMin));
+      const size = (0.72 + t * 1.5).toFixed(2);
+      const cls = "c" + (w.length + n) % 4;
+      const weight = t > 0.55 ? 700 : 400;
+      return `<span class="${cls}" style="font-size:${size}rem;font-weight:${weight}" title="${n}×">${w}</span>`;
+    }).join(" ");
+  }
+}
+
+Promise.all([load(), loadGames(), loadEvent()]).then(([sessions, games, ev]) => {
+  document.getElementById("status").textContent =
+    "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
+  applyEvent(ev);
+  render(groupSlots(sessions));
+  renderFun(games);
+  applyRsvpNote(ev);
+}).catch(err => {
+  document.getElementById("status").innerHTML =
+    `<span class="err">Daten konnten nicht geladen werden (${err.message}).</span> Bitte Seite neu laden oder direkt auf <a href="${EVENT_URL}">Playabl</a> schauen.`;
+});
+</script>
+</body>
+</html>
