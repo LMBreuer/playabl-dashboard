@@ -19,6 +19,7 @@
     --series-1-soft:  #9ec5f4;
     --band:           #f0efec;
     --band-edge:      #c3c2b7;
+    --good:           #006300;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -34,6 +35,7 @@
       --series-1-soft:  #1c5cab;
       --band:           #262624;
       --band-edge:      #52514e;
+      --good:           #0ca30c;
     }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,10 +47,40 @@
     padding: 32px 16px 64px;
   }
   .wrap { max-width: 880px; margin: 0 auto; }
-  h1 { font-size: 1.5rem; font-weight: 700; }
+  h1 { font-size: 1.5rem; font-weight: 700; text-wrap: balance; }
   .sub { color: var(--text-secondary); font-size: .9rem; margin-top: 4px; }
-  #status { font-size: .85rem; color: var(--text-muted); margin: 16px 0; }
-  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+  #status { font-size: .85rem; color: var(--text-muted); margin: 12px 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--surface-1); padding: 8px 14px; border-radius: 6px; z-index: 20; }
+  .skip-link:focus { left: 8px; top: 8px; }
+  a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--series-1); outline-offset: 2px; border-radius: 3px;
+  }
+
+  .banner {
+    margin: 14px 0; padding: 10px 14px; border-radius: 10px;
+    background: var(--band); border: 1px solid var(--border); font-size: .9rem;
+  }
+  .banner.open { border-color: var(--good); }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end;
+    margin: 18px 0 6px; padding: 12px 14px;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .controls .field { display: flex; flex-direction: column; gap: 3px; }
+  .controls label { font-size: .74rem; color: var(--text-secondary); }
+  .controls select, .controls input, .controls button {
+    font: inherit; font-size: .88rem; color: var(--text-primary);
+    background: var(--page); border: 1px solid var(--baseline); border-radius: 7px;
+    padding: 6px 10px; max-width: 300px;
+  }
+  .controls button { cursor: pointer; }
+  .tabs { display: flex; gap: 6px; margin-left: auto; }
+  .tabs button { background: var(--page); }
+  .tabs button[aria-pressed="true"] { background: var(--series-1); color: #fff; border-color: var(--series-1); }
+
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
   .kpi {
     background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px 18px; flex: 1 1 150px; min-width: 150px;
@@ -60,13 +92,14 @@
     padding: 20px 22px; margin-bottom: 20px;
   }
   .card h2 { font-size: 1.05rem; margin-bottom: 4px; }
+  .card h3 { font-size: .92rem; margin: 20px 0 8px; }
   .card .hint { font-size: .82rem; color: var(--text-secondary); margin-bottom: 16px; }
 
   .chart { position: relative; }
   .row { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: center; margin: 14px 0; }
   .row .lbl { font-size: .85rem; text-align: right; }
   .row .lbl b { display: block; white-space: nowrap; }
-  .row .lbl span { color: var(--text-muted); font-size: .75rem; white-space: nowrap; display: block; }
+  .row .lbl span { color: var(--text-muted); font-size: .75rem; display: block; }
   .track { position: relative; height: 34px; }
   .band {
     position: absolute; top: -4px; bottom: -4px;
@@ -76,7 +109,6 @@
   }
   .bar { position: absolute; top: 4px; bottom: 4px; left: 0; display: flex; gap: 2px; }
   .seg { background: var(--series-1); position: relative; cursor: pointer; overflow: hidden; display: block; }
-  .seg:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
   .seg .fill { position: absolute; inset: 0; background: var(--series-1-soft); transform-origin: left; }
   .seg:first-child { border-radius: 4px 0 0 4px; }
   .seg:last-child { border-radius: 0 4px 4px 0; }
@@ -98,23 +130,44 @@
   #tooltip .t { font-weight: 600; }
   #tooltip .s { color: var(--text-secondary); }
 
-  .needs { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
-  .needs th, .needs td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--grid); }
-  .needs th:first-child, .needs td:first-child { text-align: left; }
-  .needs th { color: var(--text-secondary); font-weight: 600; font-size: .76rem; }
-  .needs td.need { font-weight: 700; }
-  .needs tr.worst td { background: color-mix(in srgb, var(--band) 60%, transparent); }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 600; font-size: .76rem; }
+  td.need { font-weight: 700; }
+  tr.worst td { background: color-mix(in srgb, var(--band) 60%, transparent); }
 
   details { margin-top: 8px; }
   summary { cursor: pointer; font-size: .88rem; font-weight: 600; padding: 6px 0; }
-  .games { width: 100%; border-collapse: collapse; font-size: .82rem; margin: 6px 0 14px; }
-  .games td { padding: 4px 10px; border-bottom: 1px solid var(--grid); }
+  .games td { padding: 4px 10px; }
   .games td:last-child { text-align: right; color: var(--text-secondary); white-space: nowrap; }
-  .foot { font-size: .76rem; color: var(--text-muted); margin-top: 24px; }
-  .foot li { margin-bottom: 4px; margin-left: 18px; }
-  .err { color: #d03b3b; font-weight: 600; }
 
-  .card h3 { font-size: .92rem; margin: 20px 0 8px; }
+  .free-row, .ws-row {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: .85rem;
+  }
+  .free-row a, .ws-row a { color: inherit; font-weight: 600; }
+  .free-row span, .ws-row span { color: var(--text-secondary); }
+  .badge {
+    display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .74rem; font-weight: 600;
+    background: var(--band); color: var(--text-secondary); border: 1px solid var(--border); white-space: nowrap;
+  }
+  .badge.frei { color: var(--good); border-color: var(--good); background: transparent; }
+  .badge.voll { opacity: .8; }
+
+  .cal-day { margin-bottom: 20px; }
+  .cal-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .cal-cols { grid-template-columns: 1fr; } }
+  .cal-col h3 { margin: 8px 0; }
+  .cal-card {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; margin-bottom: 8px;
+    background: var(--page);
+  }
+  .cal-card:hover { border-color: var(--series-1); }
+  .cal-card .t { font-weight: 600; font-size: .88rem; }
+  .cal-card .m { font-size: .76rem; color: var(--text-secondary); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+
   .facts { display: flex; flex-wrap: wrap; gap: 10px; }
   .fact { background: var(--band); border-radius: 8px; padding: 10px 14px; flex: 1 1 160px; min-width: 160px; }
   .fact .v { font-size: 1.15rem; font-weight: 700; }
@@ -124,48 +177,67 @@
   .hp-row .hp-bar { height: 14px; background: var(--series-1); border-radius: 3px; }
   .hp-row .hp-n { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
   .hp-more { font-size: .76rem; color: var(--text-muted); margin-top: 6px; }
-  .ws-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: .85rem; }
-  .ws-row a { color: inherit; font-weight: 600; }
-  .ws-row span { color: var(--text-secondary); white-space: nowrap; }
   #cloud { line-height: 1.15; text-align: center; padding: 8px 0 4px; }
   #cloud span { display: inline-block; padding: 2px 7px; white-space: nowrap; }
   #cloud .c0 { color: var(--series-1); }
   #cloud .c1 { color: var(--text-primary); }
   #cloud .c2 { color: var(--text-secondary); }
   #cloud .c3 { color: var(--text-muted); }
+
+  .foot { font-size: .76rem; color: var(--text-muted); margin-top: 24px; }
+  .foot li { margin-bottom: 4px; margin-left: 18px; }
+  .err { color: #d03b3b; font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="wrap">
-  <h1 id="pageTitle">Spielangebot pro Slot</h1>
-  <p class="sub" id="pageSub">Daten werden live von Playabl geladen …</p>
-  <p id="status">Lade Daten von Playabl …</p>
-  <div id="app"></div>
+  <header>
+    <h1 id="pageTitle">Spielangebot pro Slot</h1>
+    <p class="sub" id="pageSub">Daten werden live von Playabl geladen …</p>
+    <p id="rsvpBanner" class="banner" role="status" hidden></p>
+    <nav class="controls" aria-label="Ansicht und Event wählen">
+      <div class="field">
+        <label for="eventSelect">Event wechseln</label>
+        <select id="eventSelect"><option value="">– lädt –</option></select>
+      </div>
+      <div class="field">
+        <label for="eventInput">… oder Playabl-URL / Event-ID</label>
+        <div style="display:flex;gap:6px">
+          <input id="eventInput" type="text" inputmode="numeric" placeholder="z.B. 104" size="12">
+          <button id="eventGo" type="button">Anzeigen</button>
+        </div>
+      </div>
+      <div class="tabs" role="group" aria-label="Ansicht">
+        <button id="tabOverview" type="button" aria-pressed="true">Übersicht</button>
+        <button id="tabCalendar" type="button" aria-pressed="false">Kalender</button>
+      </div>
+    </nav>
+    <p id="status">Lade Daten von Playabl …</p>
+  </header>
+  <main id="main">
+    <div id="app"></div>
+    <section id="calView" hidden aria-label="Kalender-Ansicht"></section>
+  </main>
 </div>
-<div id="tooltip"></div>
+<div id="tooltip" aria-hidden="true"></div>
 
 <script>
 /* ============================================================================
-   KONFIGURATION – für ein anderes Event NUR diesen Block anpassen!
+   KONFIGURATION – für ein anderes Standard-Event NUR diesen Block anpassen!
+   (Besucher können das Event zusätzlich jederzeit über das Dropdown oder
+   die URL wechseln: index.html?event=104)
 
-   eventId:   Die Playabl-Event-ID. Sie steht in der Event-URL:
+   eventId:   Playabl-Event-ID, steht in der Event-URL:
               https://app.playabl.io/events/104/overview  →  104
               Titel, Datum, RSVP-Termin und alle Auswertungen holt sich die
-              Seite dann automatisch live aus der Playabl-API.
-
+              Seite automatisch live aus der Playabl-API.
    zielMin /  Zielkorridor: wie viele Personen (Spielplätze + anbietende
-   zielMax:   Person) pro Slot untergebracht werden sollen. Wird als graues
-              Band im Diagramm und in der Bedarfstabelle verwendet.
-
-   zielNotiz: Freitext, der die Herkunft des Ziels erklärt (erscheint im
-              Hinweistext unter dem Diagramm). Leer lassen ("") zum Ausblenden.
-
-   erwartete: Anzeige-Text der Kachel „erwartete Teilnehmende je Tag".
-              Leer lassen ("") blendet die Kachel aus.
-
-   cutoffStunde: Sessions, die VOR dieser Uhrzeit starten, zählen als
-              „Vormittag", alle anderen als „Nachmittag".
-
+   zielMax:   Person) pro Slot untergebracht werden sollen.
+   zielNotiz: Freitext zur Herkunft des Ziels ("" = ausblenden).
+   erwartete: Text der Kachel „erwartete Teilnehmende je Tag" ("" = ausblenden).
+   cutoffStunde: Session-Start VOR dieser Uhrzeit = Vormittag.
    zeitzone:  Zeitzone des Events (IANA-Name).
    ============================================================================ */
 const CONFIG = {
@@ -178,8 +250,6 @@ const CONFIG = {
   zeitzone: "Europe/Vienna",
 };
 
-// Per URL lassen sich eventId/Ziele überschreiben (praktisch zum Ausprobieren,
-// ohne die Datei zu ändern): dashboard.html?event=104&min=70&max=80
 // Workshops/Panels/Vorträge werden gesondert dargestellt (eigene Sektion) und
 // zählen NICHT in Runden-/Platzzahlen – erkannt an Titel oder System:
 const WS_RE = /workshop|panel|vortrag/i;
@@ -196,64 +266,22 @@ const SUPABASE = "https://oapuqtuewlvswrdezthc.supabase.co";
 // Öffentlicher anon-Key von Playabl (steckt in deren Web-App, wird an jeden Besucher ausgeliefert):
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hcHVxdHVld2x2c3dyZGV6dGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDQ3OTExODMsImV4cCI6MTk2MDM2NzE4M30.uSjfOkoD7KXv4ztVSFhzIS9LuIsgKg42NaZotZAcqko";
 
-const fmt = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" });
-const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
-const dayKey = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
-const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date(t)), 10);
-
-async function load() {
-  const url = `${SUPABASE}/rest/v1/sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id)`
-    + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`;
-  const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
+async function api(path) {
+  const resp = await fetch(`${SUPABASE}/rest/v1/${path}`, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
   if (!resp.ok) throw new Error("HTTP " + resp.status);
   return resp.json();
 }
 
-async function loadGames() {
-  const url = `${SUPABASE}/rest/v1/games?select=id,title,system,description,participant_count`
-    + `&event_id=eq.${EVENT}&deleted_at=is.null`;
-  const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
-  if (!resp.ok) return [];  // Insights sind optional – Dashboard funktioniert auch ohne
-  return resp.json();
-}
+const load = () => api(`sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id)`
+  + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`);
+const loadGames = () => api(`games?select=id,title,system,description,participant_count&event_id=eq.${EVENT}&deleted_at=is.null`).catch(() => []);
+const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);
+const loadEventsList = () => api(`community_events?select=id,title,start_time&draft_state=eq.PUBLISHED&deleted_at=is.null&order=start_time.desc&limit=40`).catch(() => []);
 
-async function loadEvent() {
-  const url = `${SUPABASE}/rest/v1/community_events?select=title,start_time,end_time,fixed_access_time&id=eq.${EVENT}`;
-  const resp = await fetch(url, { headers: { apikey: ANON, Authorization: "Bearer " + ANON } });
-  if (!resp.ok) return null;  // optional – Kopfzeile fällt dann generisch aus
-  return (await resp.json())[0] || null;
-}
-
-function eventRangeText(a, b) {
-  const full = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric", month: "long", year: "numeric" });
-  const dayOnly = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric" });
-  const monthYear = d => new Intl.DateTimeFormat("de-AT", { timeZone: TZ, month: "numeric", year: "numeric" }).format(d);
-  const dA = new Date(a), dB = new Date(b);
-  if (dayOnly.format(dA) === dayOnly.format(dB) && monthYear(dA) === monthYear(dB)) return full.format(dA);
-  return monthYear(dA) === monthYear(dB)
-    ? `${dayOnly.format(dA)}.–${full.format(dB)}`
-    : `${full.format(dA)} – ${full.format(dB)}`;
-}
-
-// Kopfzeile (Titel, Datum, Quelle) aus den Event-Daten befüllen
-function applyEvent(ev) {
-  const name = ev?.title || `Playabl-Event ${EVENT}`;
-  document.title = `${name} – Spielangebot pro Slot`;
-  document.getElementById("pageTitle").textContent = `${name} – Spielangebot pro Slot`;
-  const range = ev?.start_time && ev?.end_time ? eventRangeText(ev.start_time, ev.end_time) + " · " : "";
-  document.getElementById("pageSub").innerHTML =
-    `${range}Datenquelle: <a href="${EVENT_URL}" style="color:inherit">${name} auf Playabl</a> · lädt bei jedem Öffnen live`;
-}
-
-// Hinweis auf den RSVP-Start ans Ende der Fußnoten hängen (falls noch in der Zukunft)
-function applyRsvpNote(ev) {
-  if (!ev?.fixed_access_time || ev.fixed_access_time <= Date.now()) return;
-  const when = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(ev.fixed_access_time));
-  const li = document.createElement("li");
-  li.textContent = `Anmeldungen (RSVPs) öffnen am ${when} Uhr – bis dahin zeigt die Seite nur das Angebot, danach automatisch auch die Belegung.`;
-  const foot = document.querySelector(".foot");
-  if (foot) foot.prepend(li);
-}
+const fmt = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" });
+const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+const dayKey = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date(t)), 10);
 
 function groupSlots(sessions) {
   const map = new Map();
@@ -276,41 +304,88 @@ function groupSlots(sessions) {
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (a.part === "Vormittag" ? -1 : 1));
 }
 
-function render(slots) {
+const reg = s => s.games.filter(g => !g.ws);   // reguläre Runden eines Slots
+const wsOf = s => s.games.filter(g => g.ws);   // Workshops & Specials eines Slots
+const seatsOf = s => reg(s).reduce((x, g) => x + g.seats, 0);
+const slotName = s => `${s.day.split(",")[0]} ${s.part}`;
+const frei = g => Math.max(0, g.playerSeats - g.rsvps);
+
+function eventRangeText(a, b) {
+  const full = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric", month: "long", year: "numeric" });
+  const dayOnly = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric" });
+  const monthYear = d => new Intl.DateTimeFormat("de-AT", { timeZone: TZ, month: "numeric", year: "numeric" }).format(d);
+  const dA = new Date(a), dB = new Date(b);
+  if (dayOnly.format(dA) === dayOnly.format(dB) && monthYear(dA) === monthYear(dB)) return full.format(dA);
+  return monthYear(dA) === monthYear(dB)
+    ? `${dayOnly.format(dA)}.–${full.format(dB)}`
+    : `${full.format(dA)} – ${full.format(dB)}`;
+}
+
+// Kopfzeile (Titel, Datum, Quelle) + Anmelde-Banner aus den Event-Daten
+function applyEvent(ev, rsvpsOpen) {
+  const name = ev?.title || `Playabl-Event ${EVENT}`;
+  document.title = `${name} – Spielangebot pro Slot`;
+  document.getElementById("pageTitle").textContent = `${name} – Spielangebot pro Slot`;
+  const range = ev?.start_time && ev?.end_time ? eventRangeText(ev.start_time, ev.end_time) + " · " : "";
+  document.getElementById("pageSub").innerHTML =
+    `${range}Datenquelle: <a href="${EVENT_URL}" style="color:inherit">${name} auf Playabl</a> · lädt bei jedem Öffnen live`;
+
+  const banner = document.getElementById("rsvpBanner");
+  if (ev?.fixed_access_time) {
+    const when = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(ev.fixed_access_time));
+    banner.hidden = false;
+    if (rsvpsOpen) {
+      banner.classList.add("open");
+      banner.innerHTML = `✅ <strong>Anmeldung ist offen</strong> (seit ${when} Uhr) – freie Plätze siehe „Wo ist noch Platz?" und Kalender.`;
+    } else {
+      banner.innerHTML = `🔒 <strong>Anmeldung noch gesperrt</strong> – RSVPs öffnen am ${when} Uhr. Bis dahin zeigt die Seite das Angebot.`;
+    }
+  }
+}
+
+// ---------- Übersichts-Ansicht ----------
+function render(slots, rsvpsOpen) {
   const app = document.getElementById("app");
   const tooltip = document.getElementById("tooltip");
-  const reg = s => s.games.filter(g => !g.ws);   // reguläre Runden
-  const wsOf = s => s.games.filter(g => g.ws);   // Workshops & Specials
   const workshops = slots.flatMap(s => wsOf(s).map(g => ({ ...g, slot: s })));
   const totalSessions = slots.reduce((a, s) => a + reg(s).length, 0);
-  const totalSeats = slots.reduce((a, s) => a + reg(s).reduce((x, g) => x + g.seats, 0), 0);
+  const totalSeats = slots.reduce((a, s) => a + seatsOf(s), 0);
   const totalRsvps = slots.reduce((a, s) => a + reg(s).reduce((x, g) => x + g.rsvps, 0), 0);
+  const showBusy = rsvpsOpen || totalRsvps > 0;
   const avgSeats = totalSeats / Math.max(1, totalSessions);
-  const seatsOf = s => reg(s).reduce((x, g) => x + g.seats, 0);
   const MAX = Math.max(90, HI + 10, ...slots.map(s => seatsOf(s) + 5));
   const pct = v => (v / MAX * 100) + "%";
   const minSeats = Math.min(...slots.map(seatsOf));
+  const allReg = slots.flatMap(s => reg(s).map(g => ({ ...g, slot: s })));
+  const freeTotal = allReg.reduce((a, g) => a + frei(g), 0);
 
   app.innerHTML = `
     <div class="kpis">
       <div class="kpi"><div class="v">${totalSessions}</div><div class="l">Sessions gesamt</div></div>
       <div class="kpi"><div class="v">${totalSeats}</div><div class="l">Spielplätze gesamt</div></div>
       ${workshops.length ? `<div class="kpi"><div class="v">${workshops.length}</div><div class="l">Workshops &amp; Specials (separat gezählt)</div></div>` : ""}
-      ${totalRsvps ? `<div class="kpi"><div class="v">${totalRsvps + totalSessions}</div><div class="l">Plätze bereits belegt (inkl. Anbietende)</div></div>` : ""}
+      ${showBusy ? `<div class="kpi"><div class="v">${freeTotal}</div><div class="l">Spielplätze noch frei</div></div>` : ""}
       <div class="kpi"><div class="v">${LO}–${HI}</div><div class="l">Ziel-Plätze je Slot</div></div>
       ${CONFIG.erwartete ? `<div class="kpi"><div class="v">${CONFIG.erwartete}</div><div class="l">erwartete Teilnehmende je Tag</div></div>` : ""}
     </div>
     <div class="card">
-      <h2>Angebotene Spielplätze pro Slot</h2>
-      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${totalRsvps ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz ? ` (${CONFIG.zielNotiz})` : ""}.</p>
-      <div class="chart" id="chart"></div>
-      <div class="baseline-x"><div></div><div class="xticks" id="xticks"></div></div>
+      <h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2>
+      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz ? ` (${CONFIG.zielNotiz})` : ""}. Dieselben Zahlen stehen in der Tabelle darunter.</p>
+      <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
+      <div class="baseline-x" aria-hidden="true"><div></div><div class="xticks" id="xticks"></div></div>
     </div>
+    ${showBusy ? `<div class="card">
+      <h2>Wo ist noch Platz?</h2>
+      <p class="hint">Reguläre Runden mit freien Spielplätzen, sortiert nach den meisten freien Plätzen.</p>
+      <div id="freeList"></div>
+      <p class="hp-more" id="freeMore"></p>
+    </div>` : ""}
     <div class="card">
       <h2>Wo werden noch Runden gebraucht?</h2>
       <p class="hint">Fehlende Plätze bis zum unteren (${LO}) bzw. oberen Zielwert (${HI}); umgerechnet in Runden bei ø ${avgSeats.toFixed(1).replace(".", ",")} Plätzen pro Runde.</p>
-      <table class="needs">
-        <thead><tr><th>Slot</th><th>Runden</th><th>Plätze</th>${totalRsvps ? "<th>belegt</th>" : ""}<th>fehlt bis ${LO}</th><th>fehlt bis ${HI}</th><th>≈ Runden zusätzlich</th></tr></thead>
+      <table>
+        <caption class="sr-only">Runden, Plätze und fehlende Plätze je Slot</caption>
+        <thead><tr><th scope="col">Slot</th><th scope="col">Runden</th><th scope="col">Plätze</th>${showBusy ? '<th scope="col">belegt</th>' : ""}<th scope="col">fehlt bis ${LO}</th><th scope="col">fehlt bis ${HI}</th><th scope="col">≈ Runden zusätzlich</th></tr></thead>
         <tbody id="needsBody"></tbody>
       </table>
     </div>
@@ -325,14 +400,15 @@ function render(slots) {
       <h3>System-Hitparade</h3>
       <div id="hitparade"></div>
       <p class="hp-more" id="hpMore"></p>
-      <h3>Wortwolke aus den Rundenbeschreibungen</h3>
-      <div id="cloud"></div>
+      <h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3>
+      <div id="cloud" aria-hidden="true"></div>
+      <p class="sr-only" id="cloudAlt"></p>
     </div>
     <ul class="foot">
       <li>Diese Seite lädt die Daten bei jedem Öffnen direkt von der Playabl-API – einfach neu laden für den aktuellen Stand.</li>
-      <li>Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone Wien).</li>
+      <li>Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone ${TZ}).</li>
       <li>Plätze = Spielplätze laut Playabl <strong>plus 1 anbietende Person</strong> (SL/Moderation) je Session – auch GMs sind ja untergebracht. Two-Shots zählen in jedem ihrer Slots.</li>
-      <li>Mini-LARPs/Workshops und Programm außerhalb von Playabl sind nicht enthalten.</li>
+      <li>Programm außerhalb von Playabl ist nicht enthalten.</li>
     </ul>`;
 
   const chart = document.getElementById("chart");
@@ -342,11 +418,12 @@ function render(slots) {
     const nWs = wsOf(slot).length;
     const row = document.createElement("div");
     row.className = "row";
-    row.innerHTML = `<div class="lbl"><b>${slot.day.split(",")[0]} ${slot.part}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${rsvps ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span></div>`;
+    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${showBusy ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span></div>`;
     const track = document.createElement("div");
     track.className = "track";
     const band = document.createElement("div");
     band.className = "band";
+    band.setAttribute("aria-hidden", "true");
     band.style.left = pct(LO);
     band.style.width = ((HI - LO) / MAX * 100) + "%";
     track.appendChild(band);
@@ -359,9 +436,11 @@ function render(slots) {
       seg.href = g.url;
       seg.target = "_blank";
       seg.rel = "noopener";
-      seg.setAttribute("aria-label", g.title);
+      seg.setAttribute("aria-label",
+        `${g.title}, ${slotName(slot)} ${g.start} bis ${g.end}, ${g.playerSeats} Spielplätze plus Spielleitung` +
+        (showBusy ? `, ${g.rsvps} belegt, ${frei(g)} frei` : "") + ". Öffnet die Runde auf Playabl.");
       seg.style.flex = g.seats + " 0 0";
-      if (totalRsvps > 0) {
+      if (showBusy) {
         const fill = document.createElement("div");
         fill.className = "fill";
         fill.style.transform = `scaleX(${Math.min(1, (g.rsvps + 1) / g.seats)})`;
@@ -369,7 +448,7 @@ function render(slots) {
       }
       seg.addEventListener("mousemove", e => {
         tooltip.style.display = "block";
-        tooltip.innerHTML = `<div class="t">${g.title}</div><div class="s">${g.start}–${g.end} · ${g.playerSeats} Spielplätze + SL/Mod${totalRsvps ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""} · Klick öffnet die Runde</div>`;
+        tooltip.innerHTML = `<div class="t">${g.title}</div><div class="s">${g.start}–${g.end} · ${g.playerSeats} Spielplätze + SL/Mod${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt · ${frei(g)} frei` : ""} · Klick öffnet die Runde</div>`;
         tooltip.style.left = Math.min(e.clientX + 14, innerWidth - tooltip.offsetWidth - 8) + "px";
         tooltip.style.top = (e.clientY + 14) + "px";
       });
@@ -408,28 +487,107 @@ function render(slots) {
     const n70 = Math.max(0, LO - seats), n80 = Math.max(0, HI - seats);
     const tr = document.createElement("tr");
     if (seats === minSeats) tr.className = "worst";
-    tr.innerHTML = `<td>${slot.day.split(",")[0]} ${slot.part}</td><td>${reg(slot).length}</td><td>${seats}</td>`
-      + (totalRsvps ? `<td>${rsvps + reg(slot).length}</td>` : "")
+    tr.innerHTML = `<td>${slotName(slot)}</td><td>${reg(slot).length}</td><td>${seats}</td>`
+      + (showBusy ? `<td>${rsvps + reg(slot).length}</td>` : "")
       + `<td class="need">${n70}</td><td>${n80}</td><td class="need">${Math.ceil(n70 / avgSeats)}–${Math.ceil(n80 / avgSeats)}</td>`;
     needsBody.appendChild(tr);
   }
 
   const detail = document.getElementById("detail");
   for (const slot of slots) {
-    const seats = seatsOf(slot);
     const d = document.createElement("details");
-    const rows = reg(slot).map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${totalRsvps ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
-    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seats} Plätze</summary><table class="games">${rows}</table>`;
+    const rows = reg(slot).map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
+    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seatsOf(slot)} Plätze</summary><table class="games"><caption class="sr-only">Runden am ${slot.day} ${slot.part}</caption>${rows}</table>`;
     detail.appendChild(d);
   }
 
   if (workshops.length) {
     document.getElementById("wsList").innerHTML = workshops.map(w =>
       `<div class="ws-row"><a href="${w.url}" target="_blank" rel="noopener">${w.title}</a>
-       <span>${w.slot.day.split(",")[0]} ${w.slot.part} · ${w.start}–${w.end} · ${w.playerSeats} Plätze</span></div>`).join("");
+       <span>${slotName(w.slot)} · ${w.start}–${w.end} · ${w.playerSeats} Plätze</span></div>`).join("");
+  }
+
+  if (showBusy) {
+    const open = allReg.filter(g => frei(g) > 0).sort((a, b) => frei(b) - frei(a));
+    const full = allReg.length - open.length;
+    document.getElementById("freeList").innerHTML = open.map(g =>
+      `<div class="free-row"><a href="${g.url}" target="_blank" rel="noopener">${g.title}</a>
+       <span>${slotName(g.slot)} · ${g.start}–${g.end} <span class="badge frei">${frei(g)} von ${g.playerSeats} frei</span></span></div>`).join("")
+      || '<p class="hint">Aktuell sind alle Runden voll.</p>';
+    document.getElementById("freeMore").textContent = full > 0 ? `${full} weitere Runden sind bereits voll.` : "";
   }
 }
 
+// ---------- Kalender-Ansicht ----------
+function renderCalendar(slots, rsvpsOpen) {
+  const cal = document.getElementById("calView");
+  const showBusy = rsvpsOpen || slots.some(s => s.games.some(g => g.rsvps > 0));
+  const days = new Map();
+  for (const s of slots) {
+    if (!days.has(s.date)) days.set(s.date, { day: s.day, parts: {} });
+    days.get(s.date).parts[s.part] = s;
+  }
+  const card = g => `
+    <a class="cal-card" href="${g.url}" target="_blank" rel="noopener" aria-label="${g.title}, ${g.start} bis ${g.end}${g.ws ? ", Workshop" : `, ${g.playerSeats} Spielplätze plus Spielleitung${showBusy ? `, ${frei(g)} frei` : ""}`}">
+      <span class="t">${g.title}</span>
+      <span class="m">${g.start}–${g.end}${g.ws ? ' <span class="badge">Workshop</span>' : ` · ${g.playerSeats}+SL${showBusy ? (frei(g) > 0 ? ` <span class="badge frei">${frei(g)} frei</span>` : ' <span class="badge voll">voll</span>') : ""}`}</span>
+    </a>`;
+  cal.innerHTML = [...days.values()].map(d => `
+    <div class="card cal-day">
+      <h2>${d.day}</h2>
+      <div class="cal-cols">
+        ${["Vormittag", "Nachmittag"].map(p => `
+          <div class="cal-col">
+            <h3>${p}</h3>
+            ${d.parts[p] ? d.parts[p].games.map(card).join("") : '<p class="hint">– keine Runden –</p>'}
+          </div>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+// ---------- Ansicht umschalten (Übersicht/Kalender) ----------
+function setView(v) {
+  const cal = v === "kalender";
+  document.getElementById("app").hidden = cal;
+  document.getElementById("calView").hidden = !cal;
+  document.getElementById("tabOverview").setAttribute("aria-pressed", String(!cal));
+  document.getElementById("tabCalendar").setAttribute("aria-pressed", String(cal));
+  if (location.hash !== (cal ? "#kalender" : "") ) history.replaceState(null, "", location.pathname + location.search + (cal ? "#kalender" : ""));
+}
+document.getElementById("tabOverview").addEventListener("click", () => setView("uebersicht"));
+document.getElementById("tabCalendar").addEventListener("click", () => setView("kalender"));
+
+// ---------- Event-Auswahl ----------
+function gotoEvent(id) {
+  if (!id) return;
+  const p = new URLSearchParams(location.search);
+  p.set("event", id);
+  location.href = location.pathname + "?" + p.toString() + location.hash;
+}
+document.getElementById("eventGo").addEventListener("click", () => {
+  const raw = document.getElementById("eventInput").value.trim();
+  const m = raw.match(/events\/(\d+)/) || raw.match(/^(\d+)$/);
+  if (m) gotoEvent(m[1]);
+  else alert("Bitte eine Event-ID (z.B. 104) oder eine Playabl-Event-URL eingeben.");
+});
+document.getElementById("eventInput").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("eventGo").click(); });
+document.getElementById("eventSelect").addEventListener("change", e => gotoEvent(e.target.value));
+
+function fillEventsList(events) {
+  const sel = document.getElementById("eventSelect");
+  const dFmt = new Intl.DateTimeFormat("de-AT", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  sel.innerHTML = "";
+  if (!events.some(e => String(e.id) === EVENT)) events.unshift({ id: EVENT, title: `Event ${EVENT}` });
+  for (const e of events) {
+    const o = document.createElement("option");
+    o.value = e.id;
+    o.textContent = `${e.title}${e.start_time ? " (" + dFmt.format(new Date(e.start_time)) + ")" : ""}`;
+    if (String(e.id) === EVENT) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+// ---------- Insights ----------
 function renderFun(games) {
   games = games.filter(g => !WS_RE.test((g.system || "") + " " + g.title));  // Workshops nicht in die Insights
   if (!games.length) return;
@@ -437,7 +595,6 @@ function renderFun(games) {
   const plain = g => (g.description || "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
   const cleanTitle = t => (t.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || t).slice(0, 44);
 
-  // --- Fun-Fact-Kacheln ---
   const seats = games.map(g => g.participant_count + 1);
   const biggest = games.reduce((a, b) => b.participant_count > a.participant_count ? b : a);
   const smallest = games.reduce((a, b) => b.participant_count < a.participant_count ? b : a);
@@ -461,7 +618,6 @@ function renderFun(games) {
   document.getElementById("facts").innerHTML =
     facts.map(f => `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
 
-  // --- System-Hitparade ---
   const ranked = [...systems.values()].sort((a, b) => b.n - a.n);
   const multi = ranked.filter(s => s.n >= 2);
   const maxN = multi.length ? multi[0].n : 1;
@@ -473,7 +629,6 @@ function renderFun(games) {
   document.getElementById("hpMore").textContent =
     singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
 
-  // --- Wortwolke ---
   const stop = new Set(("und oder aber auch noch dann wird werden wurde kann können könnt muss müssen darf dürfen soll sollen " +
     "der die das den dem des ein eine einen einem einer eines ist sind war waren sein seine seinem seiner ihr ihre ihrem ihren " +
     "wir ihr sie es ich du man uns euch mich dich sich nicht kein keine nur mehr sehr auf aus bei mit von zu zum zur nach vor über " +
@@ -506,16 +661,23 @@ function renderFun(games) {
       const weight = t > 0.55 ? 700 : 400;
       return `<span class="${cls}" style="font-size:${size}rem;font-weight:${weight}" title="${n}×">${w}</span>`;
     }).join(" ");
+    document.getElementById("cloudAlt").textContent =
+      "Häufigste Wörter in den Beschreibungen: " + words.slice(0, 12).map(([w, n]) => `${w} (${n}×)`).join(", ") + ".";
   }
 }
 
-Promise.all([load(), loadGames(), loadEvent()]).then(([sessions, games, ev]) => {
+// ---------- Start ----------
+Promise.all([load(), loadGames(), loadEvent(), loadEventsList()]).then(([sessions, games, ev, eventsList]) => {
   document.getElementById("status").textContent =
     "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
-  applyEvent(ev);
-  render(groupSlots(sessions));
+  const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
+  applyEvent(ev, rsvpsOpen);
+  const slots = groupSlots(sessions);
+  render(slots, rsvpsOpen);
+  renderCalendar(slots, rsvpsOpen);
   renderFun(games);
-  applyRsvpNote(ev);
+  fillEventsList(eventsList);
+  setView(location.hash === "#kalender" ? "kalender" : "uebersicht");
 }).catch(err => {
   document.getElementById("status").innerHTML =
     `<span class="err">Daten konnten nicht geladen werden (${err.message}).</span> Bitte Seite neu laden oder direkt auf <a href="${EVENT_URL}">Playabl</a> schauen.`;
