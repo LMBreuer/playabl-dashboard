@@ -116,6 +116,7 @@
   .seg:hover { filter: brightness(1.15); }
   .val { position: absolute; top: 50%; transform: translateY(-50%); font-size: .82rem; font-weight: 600; white-space: nowrap; }
   .gap-note { position: absolute; top: 50%; transform: translateY(-50%); font-size: .74rem; color: var(--text-muted); white-space: nowrap; }
+  .ghost { position: absolute; top: 4px; bottom: 4px; border: 1.5px dashed var(--band-edge); border-radius: 4px; pointer-events: none; }
   .baseline-x { display: grid; grid-template-columns: 160px 1fr; gap: 10px; margin-top: 4px; }
   .xticks { position: relative; height: 18px; border-top: 1px solid var(--baseline); }
   .xticks span { position: absolute; top: 2px; transform: translateX(-50%); font-size: .7rem; color: var(--text-muted); }
@@ -370,7 +371,7 @@ function render(slots, rsvpsOpen) {
     </div>
     <div class="card">
       <h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2>
-      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz ? ` (${CONFIG.zielNotiz})` : ""}. Dieselben Zahlen stehen in der Tabelle darunter.</p>
+      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz ? ` (${CONFIG.zielNotiz})` : ""}.${workshops.length ? " Gestrichelt umrandet: zusätzliche Plätze durch Workshops/Specials – sie zählen nicht in die Runden-Zahlen, bringen aber Teilnehmende unter." : ""} Dieselben Zahlen stehen in der Tabelle darunter.</p>
       <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
       <div class="baseline-x" aria-hidden="true"><div></div><div class="xticks" id="xticks"></div></div>
     </div>
@@ -388,6 +389,7 @@ function render(slots, rsvpsOpen) {
         <thead><tr><th scope="col">Slot</th><th scope="col">Runden</th><th scope="col">Plätze</th>${showBusy ? '<th scope="col">belegt</th>' : ""}<th scope="col">fehlt bis ${LO}</th><th scope="col">fehlt bis ${HI}</th><th scope="col">≈ Runden zusätzlich</th></tr></thead>
         <tbody id="needsBody"></tbody>
       </table>
+      ${workshops.length ? `<p class="hint" style="margin-top:10px">* In diesem Slot gibt es zusätzlich Workshops/Specials (eigene Sektion unten) – sie bringen Teilnehmende unter, tendenziell werden dort also weniger zusätzliche Runden gebraucht.</p>` : ""}
     </div>
     <div class="card"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
     ${workshops.length ? `<div class="card"><h2>Workshops &amp; Specials</h2>
@@ -456,6 +458,15 @@ function render(slots, rsvpsOpen) {
       bar.appendChild(seg);
     }
     track.appendChild(bar);
+    const wsSeatsTotal = wsOf(slot).reduce((x, g) => x + g.seats, 0);
+    if (wsSeatsTotal > 0) {
+      const ghost = document.createElement("div");
+      ghost.className = "ghost";
+      ghost.setAttribute("aria-hidden", "true");
+      ghost.style.left = pct(seats);
+      ghost.style.width = pct(Math.max(0, Math.min(wsSeatsTotal, MAX - seats)));
+      track.appendChild(ghost);
+    }
     const val = document.createElement("div");
     val.className = "val";
     val.style.left = `calc(${pct(seats)} + 8px)`;
@@ -465,7 +476,7 @@ function render(slots, rsvpsOpen) {
       const gap = document.createElement("div");
       gap.className = "gap-note";
       gap.style.left = `calc(${pct(seats)} + 30px)`;
-      gap.textContent = `+${LO - seats} bis Ziel`;
+      gap.textContent = `+${LO - seats} bis Ziel` + (nWs ? ` · Workshop${nWs > 1 ? "s" : ""} (+${wsSeatsTotal} Pl.) hilft` : "");
       track.appendChild(gap);
     }
     row.appendChild(track);
@@ -489,7 +500,7 @@ function render(slots, rsvpsOpen) {
     if (seats === minSeats) tr.className = "worst";
     tr.innerHTML = `<td>${slotName(slot)}</td><td>${reg(slot).length}</td><td>${seats}</td>`
       + (showBusy ? `<td>${rsvps + reg(slot).length}</td>` : "")
-      + `<td class="need">${n70}</td><td>${n80}</td><td class="need">${Math.ceil(n70 / avgSeats)}–${Math.ceil(n80 / avgSeats)}</td>`;
+      + `<td class="need">${n70}</td><td>${n80}</td><td class="need">${Math.ceil(n70 / avgSeats)}–${Math.ceil(n80 / avgSeats)}${wsOf(slot).length ? " *" : ""}</td>`;
     needsBody.appendChild(tr);
   }
 
