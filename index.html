@@ -260,6 +260,7 @@
     <div id="app"></div>
     <section id="calView" hidden aria-label="Kalender-Ansicht"></section>
   </main>
+  <div class="foot" id="credits" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:32px;padding-top:12px;border-top:1px solid var(--grid)"></div>
 </div>
 <div id="tooltip" aria-hidden="true"></div>
 
@@ -796,8 +797,33 @@ function renderFun(games) {
   }
 }
 
+// ---------- Credits & Cross-Link zum Raumplan ----------
+const RAUMPLAN_URL = "https://lmbreuer.github.io/con-raumplan/";
+const RAUMPLAN_SUPABASE = "https://wgnbcebakabkzjonslfi.supabase.co";
+const RAUMPLAN_ANON = "sb_publishable_H87YdUgB35PR37LL-efOkA_ShJxVIaq";
+async function findRaumplanCon(eventId) {
+  try {
+    const r = await fetch(`${RAUMPLAN_SUPABASE}/rest/v1/cons?select=slug&playabl_event_id=eq.${eventId}&limit=1`,
+      { headers: { apikey: RAUMPLAN_ANON, Authorization: "Bearer " + RAUMPLAN_ANON } });
+    if (!r.ok) return null;
+    const rows = await r.json();
+    return rows[0]?.slug || null;
+  } catch { return null; }
+}
+async function renderCredits() {
+  const slug = await findRaumplanCon(EVENT);
+  const raumplanLink = slug ? `${RAUMPLAN_URL}plan.html?con=${encodeURIComponent(slug)}` : RAUMPLAN_URL;
+  document.getElementById("credits").innerHTML = `
+    <span>Playabl Slot-Dashboard</span> ·
+    <a href="https://playabl.io" target="_blank" rel="noopener" style="color:inherit">Playabl</a> ·
+    <a href="https://www.3w6-podcast.com/" target="_blank" rel="noopener" style="color:inherit">3W6-Community</a> ·
+    <a href="${raumplanLink}" style="color:inherit">Raumverteilung${slug ? " für dieses Event" : ""}</a> ·
+    <a href="impressum.html" style="color:inherit">Impressum</a>`;
+}
+
 // ---------- Start ----------
 Promise.all([load(), loadGames(), loadEvent(), loadEventsList()]).then(([sessions, games, ev, eventsList]) => {
+  renderCredits();
   document.getElementById("status").textContent =
     "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
   const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
