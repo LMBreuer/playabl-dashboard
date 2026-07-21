@@ -5,20 +5,101 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Impressum – Playabl Slot-Dashboard</title>
+<script>
+  try {
+    const saved = localStorage.getItem("raumplan-theme");
+    const initial = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", initial);
+  } catch {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Paytone+One&family=Open+Sans:wght@400;600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
 <style>
+  /* Theme-Variablenblock 1:1 aus index.html (siehe dort für Kommentare) —
+     kein Switcher hier, die Seite erbt nur die aktuell gespeicherte Wahl. */
   :root {
-    color-scheme: light dark;
-    --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e;
-    --text-muted: #898781; --border: rgba(11,11,11,0.10);
+    --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+    --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+    --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
+    --fs-xs: .76rem; --fs-sm: .86rem; --fs-base: 1rem; --fs-md: 1.05rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.6rem; --fs-2xl: 1.7rem;
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: var(--font-body);
+    --shadow-card: none;
+    --border-w: 1px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #fff; --text-secondary: #c3c2b7; --border: rgba(255,255,255,0.10); }
+  :root, :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0b0d10; --surface-1: #15181d; --text-primary: #f3f4f2; --text-secondary: #a9b0bb;
+    --text-muted: #6b7280; --border: rgba(255,255,255,0.09); --accent: #5b8def;
+    --shadow-card: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.55);
   }
-  body { background: var(--page); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5; padding: 32px 16px; }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --page: #f6f5f2; --surface-1: #ffffff; --text-primary: #1c1d1f; --text-secondary: #55575c;
+    --text-muted: #8a8d93; --border: rgba(20,20,20,0.10); --accent: #2a5fd6;
+    --shadow-card: 0 1px 2px rgba(30,20,0,.05), 0 6px 16px -10px rgba(30,20,0,.16);
+  }
+  :root[data-theme="contrast"] {
+    color-scheme: light;
+    --page: #ffffff; --surface-1: #ffffff; --text-primary: #000000; --text-secondary: #000000;
+    --text-muted: #262626; --border: #000000; --accent: #0000cc; --shadow-card: none; --border-w: 2px;
+  }
+  :root[data-theme="colorful"] {
+    color-scheme: light;
+    --page: #f4f2fb; --surface-1: #ffffff; --text-primary: #211a3d; --text-secondary: #4f4870;
+    --text-muted: #8b84a8; --border: rgba(70,34,184,0.14); --accent: #4622b8;
+    --shadow-card: 0 2px 4px rgba(70,34,184,.06), 0 10px 24px -14px rgba(70,34,184,.28);
+    --font-display: "Paytone One", var(--font-body); --font-body: "Open Sans", system-ui, -apple-system, sans-serif;
+  }
+  :root[data-theme="terminal"] {
+    color-scheme: dark;
+    --page: #050a05; --surface-1: #0a140a; --text-primary: #6dffa0; --text-secondary: #3fcf74;
+    --text-muted: #2a8a4e; --border: rgba(80,255,140,0.28); --accent: #3dff85;
+    --shadow-card: 0 0 0 1px rgba(80,255,140,.12), 0 0 18px -6px rgba(70,255,140,.35);
+    --font-body: "Share Tech Mono", "Courier New", monospace; --font-display: "Share Tech Mono", "Courier New", monospace;
+  }
+  :root[data-theme="terminal"] body {
+    background-image: repeating-linear-gradient(180deg,
+      rgba(80,255,140,0.035) 0px, rgba(80,255,140,0.035) 1px, transparent 1px, transparent 3px);
+  }
+  :root[data-theme="cyberpunk"] {
+    color-scheme: dark;
+    --page: #0a0612; --surface-1: #140a24; --text-primary: #f2e9ff; --text-secondary: #c9a8ff;
+    --text-muted: #7a5ca3; --border: rgba(255,60,220,0.35); --accent: #00f0ff;
+    --shadow-card: 0 0 0 1px rgba(0,240,255,.25), 0 0 24px -4px rgba(255,47,208,.5), 0 0 44px -14px rgba(0,240,255,.4);
+    --font-display: "Orbitron", var(--font-body);
+  }
+  :root[data-theme="cyberpunk"] h1 { text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent); }
+  :root[data-theme="ukiyo"] {
+    color-scheme: light;
+    --page: #f7f1e6; --surface-1: #fbf7ee; --text-primary: #2b2620; --text-secondary: #5a5044;
+    --text-muted: #948a78; --border: rgba(43,38,32,0.14); --accent: #8b2f3b;
+    --shadow-card: none; --font-display: "Shippori Mincho", var(--font-body);
+  }
+  :root[data-theme="ukiyo"] body {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--page) 95%, transparent), color-mix(in srgb, var(--page) 95%, transparent)),
+      var(--ukiyo-bg, none);
+    background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page); color: var(--text-primary); font-family: var(--font-body); line-height: 1.5; padding: var(--sp-6) var(--sp-4); }
   .wrap { max-width: 640px; margin: 0 auto; }
-  a { color: inherit; }
-  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-top: 20px; }
-  .hint { font-size: .82rem; color: var(--text-muted); margin-top: 20px; }
+  h1 { font-family: var(--font-display); }
+  a { color: var(--accent); }
+  .card {
+    background: var(--surface-1); border: var(--border-w) solid var(--border); border-radius: var(--r-lg);
+    padding: var(--sp-5) var(--sp-6); margin-top: var(--sp-5); box-shadow: var(--shadow-card);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: transform .16s ease, box-shadow .16s ease; animation: rp-fadein .28s ease-out both; }
+    .card:hover { transform: translateY(-2px); }
+  }
+  @keyframes rp-fadein { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-5); }
 </style>
 </head>
 <body>
