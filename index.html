@@ -335,11 +335,29 @@ const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit"
 const dayKey = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date(t)), 10);
 
-function groupSlots(sessions) {
+// Standard-Hinweistext für den Fall ohne verknüpfte Con-Raumplan-Con (reiner
+// CUTOFF-Fallback); wird nach dem Laden ggf. durch die echten Zeitabschnitte
+// der verknüpften Con ersetzt (siehe findSlotBuckets/Start unten).
+let slotRuleHint = `Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone ${TZ}).`;
+
+// buckets: aktive Zeitabschnitte der verknüpften con-raumplan-Con (falls
+// vorhanden) — ersetzen den hart codierten CUTOFF-Vergleich. Ohne
+// Verknüpfung (buckets leer) bleibt das bisherige Vormittag/Nachmittag-
+// Verhalten unverändert erhalten.
+function groupSlots(sessions, buckets) {
+  const useBuckets = buckets && buckets.length;
+  const rank = new Map(useBuckets ? buckets.map((b, i) => [b.label, i]) : [["Vormittag", 0], ["Nachmittag", 1]]);
   const map = new Map();
   for (const s of sessions) {
     const d = dayKey.format(new Date(s.start_time));
-    const part = hourOf(s.start_time) < CUTOFF ? "Vormittag" : "Nachmittag";
+    let part;
+    if (useBuckets) {
+      const h = hourOf(s.start_time);
+      const b = buckets.find(b => h >= b.start_hour && h < b.end_hour);
+      part = b ? b.label : "Unsortiert";
+    } else {
+      part = hourOf(s.start_time) < CUTOFF ? "Vormittag" : "Nachmittag";
+    }
     const key = d + "|" + part;
     if (!map.has(key)) map.set(key, { date: d, part, day: fmt.format(new Date(s.start_time)), games: [] });
     map.get(key).games.push({
@@ -353,7 +371,7 @@ function groupSlots(sessions) {
       end: fmtTime.format(new Date(s.end_time))
     });
   }
-  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (a.part === "Vormittag" ? -1 : 1));
+  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (rank.get(a.part) ?? 99) - (rank.get(b.part) ?? 99));
 }
 
 const reg = s => s.games.filter(g => !g.ws);   // reguläre Runden eines Slots
@@ -466,7 +484,7 @@ function render(slots, rsvpsOpen) {
     </div>
     <ul class="foot">
       <li>Diese Seite lädt die Daten bei jedem Öffnen direkt von der Playabl-API – einfach neu laden für den aktuellen Stand.</li>
-      <li>Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone ${TZ}).</li>
+      <li>${slotRuleHint}</li>
       <li>Plätze = Spielplätze laut Playabl <strong>plus 1 anbietende Person</strong> (SL/Moderation) je Session – auch GMs sind ja untergebracht. Two-Shots zählen in jedem ihrer Slots.</li>
       <li>Programm außerhalb von Playabl ist nicht enthalten.</li>
     </ul>`;
@@ -803,15 +821,25 @@ const RAUMPLAN_SUPABASE = "https://wgnbcebakabkzjonslfi.supabase.co";
 const RAUMPLAN_ANON = "sb_publishable_H87YdUgB35PR37LL-efOkA_ShJxVIaq";
 async function findRaumplanCon(eventId) {
   try {
-    const r = await fetch(`${RAUMPLAN_SUPABASE}/rest/v1/cons?select=slug&playabl_event_id=eq.${eventId}&limit=1`,
+    const r = await fetch(`${RAUMPLAN_SUPABASE}/rest/v1/cons?select=id,slug&playabl_event_id=eq.${eventId}&limit=1`,
       { headers: { apikey: RAUMPLAN_ANON, Authorization: "Bearer " + RAUMPLAN_ANON } });
     if (!r.ok) return null;
     const rows = await r.json();
-    return rows[0]?.slug || null;
+    return rows[0] || null;
   } catch { return null; }
 }
-async function renderCredits() {
-  const slug = await findRaumplanCon(EVENT);
+// Aktive Zeitabschnitte der verknüpften Con lesen (öffentlich, gleicher
+// anon-Key wie oben) — Basis für groupSlots(), ersetzt den CUTOFF-Fallback.
+async function findSlotBuckets(conId) {
+  try {
+    const r = await fetch(`${RAUMPLAN_SUPABASE}/rest/v1/slot_buckets?select=label,start_hour,end_hour&con_id=eq.${conId}&active=eq.true&order=sort`,
+      { headers: { apikey: RAUMPLAN_ANON, Authorization: "Bearer " + RAUMPLAN_ANON } });
+    if (!r.ok) return [];
+    return await r.json();
+  } catch { return []; }
+}
+function renderCredits(con) {
+  const slug = con?.slug || null;
   const raumplanLink = slug ? `${RAUMPLAN_URL}plan.html?con=${encodeURIComponent(slug)}` : RAUMPLAN_URL;
   document.getElementById("credits").innerHTML = `
     <span>Playabl Slot-Dashboard</span> ·
@@ -822,13 +850,17 @@ async function renderCredits() {
 }
 
 // ---------- Start ----------
-Promise.all([load(), loadGames(), loadEvent(), loadEventsList()]).then(([sessions, games, ev, eventsList]) => {
-  renderCredits();
+Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon(EVENT)]).then(async ([sessions, games, ev, eventsList, con]) => {
+  renderCredits(con);
   document.getElementById("status").textContent =
     "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
   const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
   applyEvent(ev, rsvpsOpen);
-  const slots = groupSlots(sessions);
+  const buckets = con ? await findSlotBuckets(con.id) : [];
+  if (buckets.length) {
+    slotRuleHint = `Zuordnung folgt den Zeitabschnitten der verknüpften Con-Raumplan-Con: ${buckets.map(b => `${b.label} (${b.start_hour}–${b.end_hour} Uhr)`).join(", ")} (Zeitzone ${TZ}).`;
+  }
+  const slots = groupSlots(sessions, buckets);
   render(slots, rsvpsOpen);
   renderCalendar(slots, rsvpsOpen);
   renderFun(games);
