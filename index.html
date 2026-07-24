@@ -581,8 +581,15 @@
   .calendar-bento .cal-day { margin:0; padding:26px; }
   .calendar-bento .cal-day > h2 { margin-bottom:18px; }
   .calendar-bento .cal-cols { grid-template-columns:repeat(var(--calendar-columns,2),minmax(0,1fr)); gap:14px; }
-  .calendar-bento .cal-col { min-width:0; }
-  .calendar-bento .cal-col h3 { padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .calendar-bento .cal-col { min-width:0; padding:16px; background:var(--band); border-radius:var(--r-lg); }
+  .calendar-bento .cal-col-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding-bottom:10px; }
+  .calendar-bento .cal-col h3 { margin:0; }
+  .calendar-bento .cal-card { display:block; margin:0 0 10px; padding:12px 14px; background:var(--surface-2); border:0; border-radius:var(--r-md); color:var(--text-primary); text-decoration:none; transition:transform .2s ease; }
+  .calendar-bento .cal-card:last-child { margin-bottom:0; }
+  .calendar-bento .cal-card:hover { transform:translateX(4px); border-color:transparent; }
+  .cal-slot-badge { font-size:.7rem; font-weight:700; white-space:nowrap; }
+  .cal-slot-badge.is-good { color:var(--good); }
+  .cal-slot-badge.is-warn { color:var(--warn); }
   .bento-kpis { grid-column:3 / 5; grid-row:1 / 3; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   .bento-kpis .kpi { min-height:132px; padding:22px; }
   .bento-grid > .card { grid-column:1 / -1; margin:0; }
@@ -1290,11 +1297,18 @@ function renderCalendar(slots, rsvpsOpen) {
     <div class="card cal-day">
       <h2>${d.day}</h2>
       <div class="cal-cols" style="--calendar-columns:${Math.min(3, Math.max(1, parts.length))}">
-        ${parts.map(slot => `
+        ${parts.map(slot => {
+          const seats = seatsOf(slot);
+          const free = reg(slot).reduce((sum, game) => sum + frei(game), 0);
+          const missing = Math.max(0, LO - seats);
+          const badge = showBusy ? `${free} frei` : (missing ? `noch +${missing} bis Ziel` : "Ziel erreicht");
+          const badgeClass = showBusy || !missing ? "is-good" : "is-warn";
+          return `
           <div class="cal-col">
-            <h3>${slot.part}</h3>
+            <div class="cal-col-head"><h3>${slot.part}</h3><span class="cal-slot-badge ${badgeClass}">${badge}</span></div>
             ${slot.games.map(card).join("") || '<p class="hint">– keine Runden –</p>'}
-          </div>`).join("")}
+          </div>`;
+        }).join("")}
       </div>
     </div>`;
   }).join("")}</div>`;
