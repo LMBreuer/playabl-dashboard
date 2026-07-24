@@ -500,6 +500,8 @@
   :root[data-theme="solarpunk"] body::after {
     content:""; position:fixed; z-index:0; left:-42vw; width:clamp(420px,42vw,720px); height:clamp(120px,15vw,220px); pointer-events:none;
     opacity:.61; filter:blur(9px);
+    -webkit-mask-image:radial-gradient(ellipse at center, #000 0 43%, rgba(0,0,0,.84) 58%, transparent 88%);
+    mask-image:radial-gradient(ellipse at center, #000 0 43%, rgba(0,0,0,.84) 58%, transparent 88%);
     background:radial-gradient(ellipse at 17% 67%,rgba(255,255,255,.92) 0 24%,rgba(195,226,228,.44) 43%,transparent 67%),radial-gradient(ellipse at 34% 48%,rgba(255,255,255,.95) 0 31%,rgba(195,226,228,.46) 52%,transparent 75%),radial-gradient(ellipse at 54% 58%,rgba(255,255,255,.95) 0 35%,rgba(195,226,228,.44) 56%,transparent 78%),radial-gradient(ellipse at 73% 70%,rgba(255,255,255,.91) 0 27%,rgba(195,226,228,.40) 47%,transparent 70%);
   }
   :root[data-theme="solarpunk"] body::before { top:var(--solar-cloud-y-1,18vh); animation:pd-solar-cloud-1 var(--solar-cloud-duration-1,230s) linear var(--solar-cloud-delay-1,-80s) infinite; }
@@ -507,13 +509,13 @@
   @keyframes pd-solar-cloud-1 { from { transform:translate3d(0,0,0) scale(var(--solar-cloud-scale-1,.9)); } to { transform:translate3d(170vw,0,0) scale(var(--solar-cloud-scale-1,.9)); } }
   @keyframes pd-solar-cloud-2 { from { transform:translate3d(0,0,0) scale(var(--solar-cloud-scale-2,.72)); } to { transform:translate3d(176vw,0,0) scale(var(--solar-cloud-scale-2,.72)); } }
   .solarpunk-airship { display:none; }
-  :root[data-theme="solarpunk"] .solarpunk-airship { display:block; position:fixed; z-index:0; top:var(--airship-y,31vh); left:-22rem; width:clamp(150px,17vw,300px); height:auto; pointer-events:none; opacity:0; filter:sepia(.75) saturate(1.45) hue-rotate(54deg) drop-shadow(0 8px 10px rgba(39,77,43,.18)); animation:pd-airship-pass var(--airship-duration,220s) linear var(--airship-delay,-58s) infinite; }
-  @keyframes pd-airship-pass { 0%,8% { transform:translate3d(0,0,0) rotate(-2deg); opacity:0; } 12%,47% { opacity:.38; } 52%,100% { transform:translate3d(calc(100vw + 28rem),-8vh,0) rotate(1deg); opacity:0; } }
+  :root[data-theme="solarpunk"] .solarpunk-airship { display:block; position:fixed; z-index:0; top:var(--airship-y,31vh); left:-18rem; width:clamp(96px,11vw,176px); height:auto; pointer-events:none; opacity:0; filter:sepia(.64) saturate(1.25) hue-rotate(54deg) drop-shadow(0 6px 8px rgba(39,77,43,.13)); animation:pd-airship-pass var(--airship-duration,320s) linear var(--airship-delay,-58s) infinite; }
+  @keyframes pd-airship-pass { 0%,12% { transform:translate3d(0,0,0) scaleX(-1) rotate(-2deg); opacity:0; } 16%,40% { opacity:.16; } 46%,100% { transform:translate3d(calc(100vw + 23rem),-6vh,0) scaleX(-1) rotate(1deg); opacity:0; } }
   :root[data-theme="glass"] body { background-color:var(--page); background-image:radial-gradient(circle at 12% 8%,rgba(64,174,255,.42),transparent 31%),radial-gradient(circle at 88% 12%,rgba(173,105,255,.35),transparent 32%),radial-gradient(circle at 72% 88%,rgba(31,216,177,.23),transparent 38%),linear-gradient(145deg,#091120 0%,#10162b 48%,#09101d 100%); background-attachment:fixed; }
   :root[data-theme="comic"] body { background-image:radial-gradient(circle,rgba(24,20,24,.14) 1.7px,transparent 1.7px); background-size:16px 16px; }
   :root[data-theme="punk"] body { position:relative; isolation:isolate; overflow-x:hidden; background-image:linear-gradient(104deg,transparent 0 61%,rgba(0,87,255,.22) 61% 79%,transparent 79%),linear-gradient(-7deg,transparent 0 72%,rgba(255,61,0,.18) 72% 88%,transparent 88%),repeating-linear-gradient(90deg,rgba(11,11,11,.12) 0 1px,transparent 1px 48px),repeating-linear-gradient(0deg,rgba(11,11,11,.12) 0 1px,transparent 1px 48px); background-attachment:fixed; }
   :root[data-theme="punk"] body::before { content:"PLAYABL // DASHBOARD"; position:fixed; z-index:0; top:22vh; left:-6vw; width:118vw; pointer-events:none; color:rgba(0,87,255,.17); font-family:"Arial Black",Arial,sans-serif; font-size:clamp(5rem,15vw,17rem); font-weight:1000; line-height:.7; letter-spacing:-.1em; text-align:center; text-transform:uppercase; transform:rotate(-8deg); white-space:nowrap; }
-  :root[data-theme="punk"] body::after { content:"THEME: PUNK ZINE"; position:fixed; z-index:3; right:-12vw; bottom:1.2rem; width:124vw; padding:7px 0 6px; pointer-events:none; border-block:3px solid #0b0b0b; background:var(--accent-soft); color:#0b0b0b; font:1000 clamp(.66rem,1.05vw,.98rem)/1 "Arial Black",Arial,sans-serif; letter-spacing:.07em; text-align:center; text-transform:uppercase; transform:rotate(1.4deg); white-space:nowrap; }
+  :root[data-theme="punk"] body::after { content:none; }
 
   body { padding:40px 32px 64px; min-height:100vh; }
   .dashboard-page .wrap { max-width:none; margin:0; position:relative; z-index:1; }
@@ -550,6 +552,31 @@
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
   .kpi { min-width:0; border-radius:var(--r-lg); }
   .card { padding:24px 28px; }
+  /* Bento-Struktur der Designvorlage: großes Angebot-Panel, Kennzahlen
+     rechts, danach die breite Slot-Visualisierung und die Detailkarten. */
+  #app { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; align-items:stretch; }
+  #app .kpis { display:contents; }
+  #app .kpi { min-height:132px; padding:22px; }
+  #app .kpi:first-child { grid-column:1 / 3; grid-row:1 / 3; min-height:288px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(145deg,var(--surface-1),var(--surface-2)); }
+  #app .kpi:first-child .v { font-size:clamp(3rem,7vw,5.8rem); line-height:.9; }
+  #app .kpi:nth-child(2) { grid-column:3; grid-row:1; }
+  #app .kpi:nth-child(3) { grid-column:4; grid-row:1; }
+  #app .kpi:nth-child(4) { grid-column:3; grid-row:2; }
+  #app .kpi:nth-child(5) { grid-column:4; grid-row:2; }
+  #app > .card { grid-column:1 / -1; margin:0; }
+  #app > .card:not(:first-of-type) { grid-column:span 2; }
+  #app > .card:last-of-type { grid-column:1 / -1; }
+  .punk-zine-banner { position:fixed; z-index:3; right:-12vw; bottom:1.2rem; width:124vw; padding:7px 0 6px; border-block:3px solid #0b0b0b; background:var(--accent-soft); color:#0b0b0b; font:1000 clamp(.66rem,1.05vw,.98rem)/1 "Arial Black",Arial,sans-serif; letter-spacing:.03em; text-align:center; text-transform:uppercase; transform:rotate(1.4deg); white-space:nowrap; overflow:hidden; }
+  .punk-zine-banner a { color:inherit; text-decoration:none; }
+  #slotConfigDlg { max-width:min(610px,calc(100vw - 28px)); padding:0; color:var(--text-primary); background:var(--surface-1); border:var(--border-w) solid var(--border); border-radius:var(--r-lg); box-shadow:var(--shadow-card); }
+  #slotConfigDlg::backdrop { background:rgba(0,0,0,.56); backdrop-filter:blur(3px); }
+  .slot-config-form { padding:24px; }
+  .slot-config-form h2 { margin:0 0 8px; }
+  .slot-config-row { display:grid; grid-template-columns:minmax(0,1fr) 86px 86px auto; gap:8px; align-items:end; margin-top:12px; }
+  .slot-config-row label { display:flex; flex-direction:column; gap:4px; font-size:var(--fs-xs); color:var(--text-secondary); }
+  .slot-config-row input { width:100%; padding:8px; color:var(--text-primary); background:var(--page); border:var(--border-w) solid var(--border); border-radius:var(--r-sm); font:inherit; }
+  .slot-config-row button { padding:8px 10px; }
+  .slot-config-actions { display:grid; grid-template-columns:auto 1fr auto auto auto; gap:8px; margin-top:18px; }
   :root[data-theme="glass"] .card, :root[data-theme="glass"] .kpi, :root[data-theme="glass"] .cal-card, :root[data-theme="glass"] .controls { background-color:var(--surface-1); background-image:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025) 48%,rgba(255,255,255,.06)); border-color:rgba(255,255,255,.20); backdrop-filter:blur(22px) saturate(145%); }
   :root[data-theme="solarpunk"] .card, :root[data-theme="solarpunk"] .kpi, :root[data-theme="solarpunk"] .cal-card, :root[data-theme="solarpunk"] .controls { border-color:rgba(37,83,43,.22); background-image:linear-gradient(145deg,rgba(255,255,255,.38),transparent 42%); }
   :root[data-theme="solarpunk"] .slot-tabs { border-radius:24px 10px 24px 10px; }
@@ -578,6 +605,13 @@
     .dashboard-theme { justify-self:start; }
     .dashboard-hero { text-align:left; }
     .dashboard-hero .sub { margin-left:0; }
+    #app { grid-template-columns:1fr; gap:16px; }
+    #app .kpi, #app .kpi:first-child, #app .kpi:nth-child(n) { grid-column:1; grid-row:auto; min-height:0; }
+    #app > .card, #app > .card:not(:first-of-type), #app > .card:last-of-type { grid-column:1; }
+    .slot-config-row { grid-template-columns:1fr 1fr auto; }
+    .slot-config-row label:first-child { grid-column:1 / -1; }
+    .slot-config-actions { grid-template-columns:auto 1fr auto; }
+    .slot-config-actions button:last-child { grid-column:3; }
     .card { padding:18px; }
   }
 </style>
@@ -637,6 +671,10 @@
           <button id="zielGo" type="button">Anwenden</button>
         </div>
       </div>
+      <div class="field">
+        <label>Slot-Zeiten</label>
+        <button id="slotConfigOpen" type="button">Slots definieren</button>
+      </div>
     </nav>
     <p id="status">Lade Daten von Playabl …</p>
     <div id="app"></div>
@@ -646,6 +684,15 @@
 </div>
 <div id="tooltip" aria-hidden="true"></div>
 <img class="solarpunk-airship" src="https://commons.wikimedia.org/wiki/Special:FilePath/Airship-Zeppelin-LZ-127.svg" alt="" aria-hidden="true">
+<dialog id="slotConfigDlg" aria-labelledby="slotConfigTitle">
+  <form method="dialog" class="slot-config-form">
+    <h2 id="slotConfigTitle">Slots für dieses Event</h2>
+    <p class="hint">Nur lokal in diesem Browser gespeichert. Die Zeiten überschreiben im Dashboard die automatisch gelesenen Slot-Zeiten.</p>
+    <div id="slotConfigRows"></div>
+    <div class="slot-config-actions"><button type="button" id="slotConfigAdd">+ Slot</button><span></span><button type="button" id="slotConfigReset">Zurücksetzen</button><button value="cancel">Abbrechen</button><button type="button" id="slotConfigSave">Speichern</button></div>
+  </form>
+</dialog>
+<script src="https://lmbreuer.github.io/con-raumplan/punk-zine-quotes.js"></script>
 
 <script>
 /* ============================================================================
@@ -686,7 +733,7 @@ function randomizeSolarClouds(force = false) {
   root.style.setProperty("--solar-cloud-duration-2", `${duration2}s`);
   root.style.setProperty("--solar-cloud-delay-1", `${-Math.floor(duration1 * (0.24 + Math.random() * 0.26))}s`);
   root.style.setProperty("--solar-cloud-delay-2", `${-Math.floor(duration2 * (0.50 + Math.random() * 0.24))}s`);
-  const airshipDuration = 190 + Math.floor(Math.random() * 90);
+  const airshipDuration = 300 + Math.floor(Math.random() * 120);
   root.style.setProperty("--airship-y", `${12 + Math.floor(Math.random() * 34)}vh`);
   root.style.setProperty("--airship-duration", `${airshipDuration}s`);
   root.style.setProperty("--airship-delay", `${-Math.floor(airshipDuration * (0.10 + Math.random() * 0.52))}s`);
@@ -719,11 +766,26 @@ function updateCatEasterEgg() {
     if (!oldCat) eyebrow.insertAdjacentHTML("beforeend", PIXEL_CAT_SVG);
   } else oldCat?.remove();
 }
+function renderPunkZineBanner() {
+  let el = document.getElementById("punkZineBanner");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "punkZineBanner";
+    el.className = "punk-zine-banner";
+    document.body.appendChild(el);
+  }
+  const quotes = window.PUNK_ZINE_QUOTES || [];
+  if (document.documentElement.getAttribute("data-theme") !== "punk" || !quotes.length) { el.hidden = true; return; }
+  const pick = quotes[Math.floor(Math.random() * quotes.length)];
+  el.hidden = false;
+  el.innerHTML = `<a href="${pick.url}" target="_blank" rel="noopener" title="${pick.source}" aria-label="${pick.quote} — ${pick.source}">${pick.quote}</a>`;
+}
 function applyTheme(key) {
   document.documentElement.setAttribute("data-theme", key);
   try { localStorage.setItem("raumplan-theme", key); } catch {}
   if (key === "terminal") terminalEasterEgg();
   updateCatEasterEgg();
+  renderPunkZineBanner();
   if (key === "ukiyo") pickUkiyoBackground();
   if (key === "solarpunk") randomizeSolarClouds(true);
 }
@@ -754,6 +816,7 @@ function renderThemeSwitch(container) {
   if (current === "ukiyo") pickUkiyoBackground();
   if (current === "solarpunk") randomizeSolarClouds();
   updateCatEasterEgg();
+  renderPunkZineBanner();
   const core = THEMES.filter(theme => CORE_THEME_KEYS.includes(theme.key));
   const specials = THEMES.filter(theme => !CORE_THEME_KEYS.includes(theme.key));
   const activeSpecial = specials.find(theme => theme.key === current);
@@ -896,6 +959,22 @@ const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, ho
 // CUTOFF-Fallback); wird nach dem Laden ggf. durch die echten Zeitabschnitte
 // der verknüpften Con ersetzt (siehe findSlotBuckets/Start unten).
 let slotRuleHint = `Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone ${TZ}).`;
+const localSlotKey = `playabl-dashboard-slot-buckets:${EVENT}`;
+function loadLocalSlotBuckets() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(localSlotKey) || "[]");
+    return Array.isArray(rows) ? rows.filter(b => b && b.label && Number.isFinite(+b.start_hour) && Number.isFinite(+b.end_hour) && +b.start_hour < +b.end_hour)
+      .map(b => ({ label:String(b.label), start_hour:+b.start_hour, end_hour:+b.end_hour })) : [];
+  } catch { return []; }
+}
+function slotConfigRow(bucket = { label:"", start_hour:9, end_hour:13 }) {
+  return `<div class="slot-config-row"><label>Name<input data-slot-label value="${bucket.label.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" required></label><label>Von<input data-slot-start type="number" min="0" max="23" value="${bucket.start_hour}" required></label><label>Bis<input data-slot-end type="number" min="1" max="24" value="${bucket.end_hour}" required></label><button type="button" data-slot-remove aria-label="Slot entfernen">×</button></div>`;
+}
+function openSlotConfig() {
+  const current = loadLocalSlotBuckets();
+  document.getElementById("slotConfigRows").innerHTML = (current.length ? current : [{ label:"Vormittag", start_hour:0, end_hour:14 }, { label:"Nachmittag", start_hour:14, end_hour:24 }]).map(slotConfigRow).join("");
+  document.getElementById("slotConfigDlg").showModal();
+}
 
 // buckets: aktive Zeitabschnitte der verknüpften con-raumplan-Con (falls
 // vorhanden) — ersetzen den hart codierten CUTOFF-Vergleich. Ohne
@@ -1252,6 +1331,19 @@ function fillEventOptions() {
 }
 document.getElementById("communitySelect").addEventListener("change", fillEventOptions);
 
+document.getElementById("slotConfigOpen").addEventListener("click", openSlotConfig);
+document.getElementById("slotConfigAdd").addEventListener("click", () => document.getElementById("slotConfigRows").insertAdjacentHTML("beforeend", slotConfigRow()));
+document.getElementById("slotConfigRows").addEventListener("click", event => event.target.closest("[data-slot-remove]")?.closest(".slot-config-row")?.remove());
+document.getElementById("slotConfigReset").addEventListener("click", () => { localStorage.removeItem(localSlotKey); location.reload(); });
+document.getElementById("slotConfigSave").addEventListener("click", () => {
+  const buckets = [...document.querySelectorAll(".slot-config-row")].map(row => ({
+    label:row.querySelector("[data-slot-label]").value.trim(), start_hour:+row.querySelector("[data-slot-start]").value, end_hour:+row.querySelector("[data-slot-end]").value
+  })).filter(b => b.label && b.start_hour >= 0 && b.end_hour <= 24 && b.start_hour < b.end_hour);
+  if (!buckets.length) return alert("Bitte mindestens einen gültigen Slot angeben.");
+  localStorage.setItem(localSlotKey, JSON.stringify(buckets));
+  location.reload();
+});
+
 // ---------- Ziel-Plätze anpassen ----------
 function applyZiel() {
   const lo = parseInt(document.getElementById("zielMin").value, 10);
@@ -1414,9 +1506,12 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon
     "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
   const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
   applyEvent(ev, rsvpsOpen);
-  const buckets = con ? await findSlotBuckets(con.id) : [];
+  const remoteBuckets = con ? await findSlotBuckets(con.id) : [];
+  const localBuckets = loadLocalSlotBuckets();
+  const buckets = localBuckets.length ? localBuckets : remoteBuckets;
   if (buckets.length) {
-    slotRuleHint = `Zuordnung folgt den Zeitabschnitten der verknüpften Con-Raumplan-Con: ${buckets.map(b => `${b.label} (${b.start_hour}–${b.end_hour} Uhr)`).join(", ")} (Zeitzone ${TZ}).`;
+    const origin = localBuckets.length ? "Lokal definierte Slot-Zeiten" : "Zuordnung folgt den Zeitabschnitten der verknüpften Con-Raumplan-Con";
+    slotRuleHint = `${origin}: ${buckets.map(b => `${b.label} (${b.start_hour}–${b.end_hour} Uhr)`).join(", ")} (Zeitzone ${TZ}).`;
   }
   const slots = groupSlots(sessions, buckets);
   render(slots, rsvpsOpen);
