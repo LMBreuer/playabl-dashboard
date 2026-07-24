@@ -499,13 +499,16 @@
   :root[data-theme="solarpunk"] body::before,
   :root[data-theme="solarpunk"] body::after {
     content:""; position:fixed; z-index:0; left:-42vw; width:clamp(420px,42vw,720px); height:clamp(120px,15vw,220px); pointer-events:none;
-    opacity:.44; filter:blur(11px);
+    opacity:.61; filter:blur(9px);
     background:radial-gradient(ellipse at 17% 67%,rgba(255,255,255,.92) 0 24%,rgba(195,226,228,.44) 43%,transparent 67%),radial-gradient(ellipse at 34% 48%,rgba(255,255,255,.95) 0 31%,rgba(195,226,228,.46) 52%,transparent 75%),radial-gradient(ellipse at 54% 58%,rgba(255,255,255,.95) 0 35%,rgba(195,226,228,.44) 56%,transparent 78%),radial-gradient(ellipse at 73% 70%,rgba(255,255,255,.91) 0 27%,rgba(195,226,228,.40) 47%,transparent 70%);
   }
   :root[data-theme="solarpunk"] body::before { top:var(--solar-cloud-y-1,18vh); animation:pd-solar-cloud-1 var(--solar-cloud-duration-1,230s) linear var(--solar-cloud-delay-1,-80s) infinite; }
-  :root[data-theme="solarpunk"] body::after { top:var(--solar-cloud-y-2,54vh); opacity:.27; filter:blur(15px); animation:pd-solar-cloud-2 var(--solar-cloud-duration-2,300s) linear var(--solar-cloud-delay-2,-150s) infinite; }
+  :root[data-theme="solarpunk"] body::after { top:var(--solar-cloud-y-2,54vh); opacity:.39; filter:blur(13px); animation:pd-solar-cloud-2 var(--solar-cloud-duration-2,300s) linear var(--solar-cloud-delay-2,-150s) infinite; }
   @keyframes pd-solar-cloud-1 { from { transform:translate3d(0,0,0) scale(var(--solar-cloud-scale-1,.9)); } to { transform:translate3d(170vw,0,0) scale(var(--solar-cloud-scale-1,.9)); } }
   @keyframes pd-solar-cloud-2 { from { transform:translate3d(0,0,0) scale(var(--solar-cloud-scale-2,.72)); } to { transform:translate3d(176vw,0,0) scale(var(--solar-cloud-scale-2,.72)); } }
+  .solarpunk-airship { display:none; }
+  :root[data-theme="solarpunk"] .solarpunk-airship { display:block; position:fixed; z-index:0; top:var(--airship-y,31vh); left:-22rem; width:clamp(150px,17vw,300px); height:auto; pointer-events:none; opacity:0; filter:sepia(.75) saturate(1.45) hue-rotate(54deg) drop-shadow(0 8px 10px rgba(39,77,43,.18)); animation:pd-airship-pass var(--airship-duration,220s) linear var(--airship-delay,-58s) infinite; }
+  @keyframes pd-airship-pass { 0%,8% { transform:translate3d(0,0,0) rotate(-2deg); opacity:0; } 12%,47% { opacity:.38; } 52%,100% { transform:translate3d(calc(100vw + 28rem),-8vh,0) rotate(1deg); opacity:0; } }
   :root[data-theme="glass"] body { background-color:var(--page); background-image:radial-gradient(circle at 12% 8%,rgba(64,174,255,.42),transparent 31%),radial-gradient(circle at 88% 12%,rgba(173,105,255,.35),transparent 32%),radial-gradient(circle at 72% 88%,rgba(31,216,177,.23),transparent 38%),linear-gradient(145deg,#091120 0%,#10162b 48%,#09101d 100%); background-attachment:fixed; }
   :root[data-theme="comic"] body { background-image:radial-gradient(circle,rgba(24,20,24,.14) 1.7px,transparent 1.7px); background-size:16px 16px; }
   :root[data-theme="punk"] body { position:relative; isolation:isolate; overflow-x:hidden; background-image:linear-gradient(104deg,transparent 0 61%,rgba(0,87,255,.22) 61% 79%,transparent 79%),linear-gradient(-7deg,transparent 0 72%,rgba(255,61,0,.18) 72% 88%,transparent 88%),repeating-linear-gradient(90deg,rgba(11,11,11,.12) 0 1px,transparent 1px 48px),repeating-linear-gradient(0deg,rgba(11,11,11,.12) 0 1px,transparent 1px 48px); background-attachment:fixed; }
@@ -515,6 +518,12 @@
   body { padding:40px 32px 64px; min-height:100vh; }
   .dashboard-page .wrap { max-width:none; margin:0; position:relative; z-index:1; }
   .dashboard-page main, .dashboard-page .foot { max-width:1400px; margin-left:auto; margin-right:auto; }
+  .dashboard-topbar { max-width:1400px; margin:0 auto 30px; padding:0 0 14px; display:flex; align-items:center; justify-content:space-between; gap:18px; border-bottom:var(--border-w) solid var(--border); position:relative; z-index:3; }
+  .dashboard-brand { color:var(--text-primary); font-family:var(--font-display); font-size:1.08rem; font-weight:800; letter-spacing:.01em; text-decoration:none; }
+  .dashboard-actions { display:flex; align-items:center; gap:12px; }
+  .language-switch { display:flex; align-items:center; gap:2px; padding:4px; border:var(--border-w) solid var(--border); border-radius:var(--r-pill); background:var(--surface-1); box-shadow:var(--shadow-card); }
+  .language-switch button { min-width:38px; padding:6px 9px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font:700 .82rem/1 var(--font-display); cursor:pointer; }
+  .language-switch button[aria-pressed="true"] { background:var(--accent-soft); color:var(--accent); }
   .dashboard-head { max-width:1400px; margin:0 auto 28px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:24px; position:relative; z-index:2; }
   .dashboard-hero { max-width:none; margin:0; padding:8px 0 4px; text-align:left; }
   .dashboard-eyebrow { margin-bottom:6px; color:var(--accent); font-size:.8rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
@@ -549,6 +558,8 @@
   :root[data-theme="terminal"] .brand-cursor { color:var(--accent); margin-left:2px; }
   :root[data-theme="punk"] .dashboard-page .wrap { position:relative; z-index:1; }
   :root[data-theme="punk"] .slot-tabs, :root[data-theme="punk"] .slot-tabs a, :root[data-theme="punk"] .controls-group, :root[data-theme="punk"] .theme-switch button, :root[data-theme="punk"] .theme-more-trigger, :root[data-theme="punk"] .theme-more-row { border-radius:0; }
+  :root[data-theme="punk"] .language-switch, :root[data-theme="punk"] .language-switch button { border-radius:0; }
+  :root[data-theme="punk"] .dashboard-topbar { border-bottom:7px solid #0b0b0b; transform:rotate(-.25deg); }
   :root[data-theme="punk"] .slot-tabs { background:var(--accent-soft); }
   :root[data-theme="punk"] .slot-tabs a[aria-pressed="true"] { background:#111; color:var(--accent-soft); }
   :root[data-theme="punk"] .dashboard-hero h1 { display:inline-block; max-width:min(100%,18ch); padding:7px 16px 9px; background:#0b0b0b; color:#fff; box-shadow:18px 0 0 var(--accent),-9px 9px 0 #0057ff; font-size:clamp(2.3rem,7vw,6.8rem); line-height:.82; transform:rotate(-1.5deg) skewX(-4deg); }
@@ -558,9 +569,11 @@
   :root[data-theme="punk"] .card h2 { display:inline; padding:1px 5px; background:var(--accent-soft); color:#0b0b0b; font-weight:1000; text-transform:uppercase; }
   :root[data-theme="punk"] .kpi:nth-child(odd) { transform:rotate(-.35deg); }
   :root[data-theme="punk"] .kpi:nth-child(even) { transform:rotate(.35deg); }
-  @media (prefers-reduced-motion: reduce) { :root[data-theme="solarpunk"] body::before, :root[data-theme="solarpunk"] body::after { display:none; } }
+  @media (prefers-reduced-motion: reduce) { :root[data-theme="solarpunk"] body::before, :root[data-theme="solarpunk"] body::after, :root[data-theme="solarpunk"] .solarpunk-airship { display:none; } }
   @media (max-width:720px) {
     body { padding:24px 16px 48px; }
+    .dashboard-topbar { margin-bottom:22px; }
+    .dashboard-actions { gap:8px; }
     .dashboard-head { grid-template-columns:1fr; gap:14px; margin-bottom:22px; }
     .dashboard-theme { justify-self:start; }
     .dashboard-hero { text-align:left; }
@@ -572,6 +585,19 @@
 <body class="dashboard-page">
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="wrap">
+  <div class="dashboard-topbar" aria-label="Seitenkopf">
+    <a class="dashboard-brand" href="index.html" aria-label="Playabl Dashboard">Playabl Dashboard</a>
+    <div class="dashboard-actions">
+      <div class="language-switch" role="group" aria-label="Sprache wählen">
+        <button type="button" data-language="de" aria-pressed="true" aria-label="Deutsch">DE</button>
+        <button type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button>
+      </div>
+      <div class="controls-group">
+        <span class="sr-only">Farbschema wählen</span>
+        <div id="themeSwitch"></div>
+      </div>
+    </div>
+  </div>
   <header class="dashboard-head" aria-label="Dashboard-Kopfzeile">
     <section class="dashboard-hero" aria-labelledby="pageTitle">
       <div class="dashboard-eyebrow">Playabl · Spielangebot pro Slot<span class="brand-cursor" aria-hidden="true">_</span></div>
@@ -579,12 +605,6 @@
       <p class="sub" id="pageSub">Daten werden live von Playabl geladen …</p>
       <p id="rsvpBanner" class="banner" role="status" hidden></p>
     </section>
-    <div class="dashboard-theme">
-      <div class="controls-group">
-        <span class="sr-only">Farbschema wählen</span>
-        <div id="themeSwitch"></div>
-      </div>
-    </div>
   </header>
 
   <main id="main">
@@ -625,6 +645,7 @@
   <div class="foot" id="credits" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:32px;padding-top:12px;border-top:1px solid var(--grid)"></div>
 </div>
 <div id="tooltip" aria-hidden="true"></div>
+<img class="solarpunk-airship" src="https://commons.wikimedia.org/wiki/Special:FilePath/Airship-Zeppelin-LZ-127.svg" alt="" aria-hidden="true">
 
 <script>
 /* ============================================================================
@@ -665,6 +686,10 @@ function randomizeSolarClouds(force = false) {
   root.style.setProperty("--solar-cloud-duration-2", `${duration2}s`);
   root.style.setProperty("--solar-cloud-delay-1", `${-Math.floor(duration1 * (0.24 + Math.random() * 0.26))}s`);
   root.style.setProperty("--solar-cloud-delay-2", `${-Math.floor(duration2 * (0.50 + Math.random() * 0.24))}s`);
+  const airshipDuration = 190 + Math.floor(Math.random() * 90);
+  root.style.setProperty("--airship-y", `${12 + Math.floor(Math.random() * 34)}vh`);
+  root.style.setProperty("--airship-duration", `${airshipDuration}s`);
+  root.style.setProperty("--airship-delay", `${-Math.floor(airshipDuration * (0.10 + Math.random() * 0.52))}s`);
   root.dataset.solarClouds = "ready";
 }
 const PIXEL_CAT_SVG = `<svg class="pixel-cat" viewBox="0 0 16 16" role="img" aria-label="Eine kleine Pixel-Katze hat sich hier versteckt" xmlns="http://www.w3.org/2000/svg">
@@ -757,6 +782,45 @@ document.addEventListener("click", event => {
   if (event.target.closest(".theme-more-wrap") || event.target.closest("#themeMorePopover")) return;
   closeThemeMorePopover();
 });
+
+// Kleine, persistente Sprachumschaltung in der Kopfzeile. Die Eventdaten
+// bleiben unverändert; die Bedienoberfläche wechselt sofort mit.
+const UI_LANGUAGE_KEY = "playabl-dashboard-language";
+const UI_COPY = {
+  de: {
+    skip: "Zum Inhalt springen", nav: "Ansicht, Event und Ziel wählen", overview: "Übersicht", calendar: "Kalender",
+    community: "Community", event: "Event wechseln", url: "… oder Playabl-URL / Event-ID", show: "Anzeigen",
+    target: "Ziel-Plätze pro Slot (von–bis)", apply: "Anwenden", language: "Sprache wählen"
+  },
+  en: {
+    skip: "Skip to content", nav: "Choose view, event and target", overview: "Overview", calendar: "Calendar",
+    community: "Community", event: "Change event", url: "… or Playabl URL / event ID", show: "Show",
+    target: "Target seats per slot (from–to)", apply: "Apply", language: "Choose language"
+  }
+};
+function applyLanguage(language) {
+  const key = UI_COPY[language] ? language : "de";
+  const copy = UI_COPY[key];
+  document.documentElement.lang = key;
+  try { localStorage.setItem(UI_LANGUAGE_KEY, key); } catch {}
+  document.querySelectorAll("[data-language]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.language === key)));
+  document.querySelector(".skip-link").textContent = copy.skip;
+  document.querySelector(".language-switch").setAttribute("aria-label", copy.language);
+  document.querySelector(".controls").setAttribute("aria-label", copy.nav);
+  document.getElementById("tabOverview").textContent = copy.overview;
+  document.getElementById("tabCalendar").textContent = copy.calendar;
+  document.querySelector("label[for='communitySelect']").textContent = copy.community;
+  document.querySelector("label[for='eventSelect']").textContent = copy.event;
+  document.querySelector("label[for='eventInput']").textContent = copy.url;
+  document.getElementById("eventGo").textContent = copy.show;
+  document.querySelector("label[for='zielMin']").textContent = copy.target;
+  document.getElementById("zielGo").textContent = copy.apply;
+}
+document.querySelector(".language-switch").addEventListener("click", event => {
+  const button = event.target.closest("button[data-language]");
+  if (button) applyLanguage(button.dataset.language);
+});
+try { applyLanguage(localStorage.getItem(UI_LANGUAGE_KEY) || "de"); } catch { applyLanguage("de"); }
 
 /* ============================================================================
    KONFIGURATION – für ein anderes Standard-Event NUR diesen Block anpassen!
@@ -1339,6 +1403,7 @@ function renderCredits(con) {
     <a href="https://playabl.io" target="_blank" rel="noopener" style="color:inherit">Playabl</a> ·
     <a href="https://www.3w6-podcast.com/" target="_blank" rel="noopener" style="color:inherit">3W6-Community</a> ·
     <a href="${raumplanLink}" style="color:inherit">Raumverteilung${slug ? " für dieses Event" : ""}</a> ·
+    <a href="https://commons.wikimedia.org/wiki/File:Airship-Zeppelin-LZ-127.svg" target="_blank" rel="noopener" style="color:inherit">Solarpunk-Zeppelin: Public Domain (Myriam Thyes)</a> ·
     <a href="impressum.html" style="color:inherit">Impressum</a>`;
 }
 
