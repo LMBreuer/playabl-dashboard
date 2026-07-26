@@ -2207,8 +2207,6 @@ function renderCalendar(slots, rsvpsOpen) {
   const cal = document.getElementById("calView");
   const showBusy = rsvpsOpen || slots.some(s => s.games.some(g => g.rsvps > 0));
   const days = new Map();
-  const slotKey = slot => `${slot.date}|${slot.part}`;
-  const slotLabel = slot => `${slot.date.slice(8)}.${slot.date.slice(5, 7)}. ${slot.part}`;
   for (const s of slots) {
     if (!days.has(s.date)) days.set(s.date, { day: s.day, parts: {} });
     days.get(s.date).parts[s.part] = s;
@@ -2216,8 +2214,8 @@ function renderCalendar(slots, rsvpsOpen) {
   const systems = [...new Map(slots.flatMap(slot => slot.games).map(game => [game.system.toLocaleLowerCase("de"), game.system])).values()]
     .sort((a, b) => a.localeCompare(b, "de", { sensitivity:"base", numeric:true }));
   const totalGames = slots.reduce((sum, slot) => sum + slot.games.length, 0);
-  const card = (g, key) => `
-    <a class="cal-card" data-calendar-game data-slot="${escapeHtml(key)}" data-system="${escapeHtml(g.system.toLocaleLowerCase("de"))}" data-search="${escapeHtml(`${g.title} ${g.system} ${g.facilitator}`.toLocaleLowerCase("de"))}" data-free="${String(!g.ws && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${g.system}, Spielleitung ${g.facilitator}, ${g.start} bis ${g.end}${g.ws ? ", Workshop" : `, ${g.playerSeats} Spielplätze plus Spielleitung${showBusy ? `, ${frei(g)} frei` : ""}`}`)}">
+  const card = (g, day) => `
+    <a class="cal-card" data-calendar-game data-day="${escapeHtml(day)}" data-system="${escapeHtml(g.system.toLocaleLowerCase("de"))}" data-search="${escapeHtml(`${g.title} ${g.system} ${g.facilitator}`.toLocaleLowerCase("de"))}" data-free="${String(!g.ws && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${g.system}, Spielleitung ${g.facilitator}, ${g.start} bis ${g.end}${g.ws ? ", Workshop" : `, ${g.playerSeats} Spielplätze plus Spielleitung${showBusy ? `, ${frei(g)} frei` : ""}`}`)}">
       <span class="t">${escapeHtml(g.title)}</span>
       <span class="m">${g.start}–${g.end}${g.ws ? ' <span class="badge">Workshop</span>' : ` · ${g.playerSeats}+SL${showBusy ? (frei(g) > 0 ? ` <span class="badge frei">${frei(g)} frei</span>` : ' <span class="badge voll">voll</span>') : ""}`}</span>
       <span class="m"><span>${escapeHtml(g.system)}</span><span aria-hidden="true">·</span><span>SL: ${escapeHtml(g.facilitator)}</span></span>
@@ -2234,10 +2232,10 @@ function renderCalendar(slots, rsvpsOpen) {
         <datalist id="calendarSystemSuggestions">${systems.map(system => `<option value="${escapeHtml(system)}"></option>`).join("")}</datalist>
       </label>
       <div class="calendar-filter-field calendar-slot-filter">
-        <span class="calendar-filter-label" id="calendarSlotFilterLabel">Slot</span>
-        <div class="calendar-slot-chips" role="group" aria-labelledby="calendarSlotFilterLabel">
-          <button type="button" class="calendar-slot-chip" data-slot-filter="" aria-pressed="true">Alle Slots</button>
-          ${slots.map(slot => `<button type="button" class="calendar-slot-chip" data-slot-filter="${escapeHtml(slotKey(slot))}" aria-pressed="false">${escapeHtml(slotLabel(slot))}</button>`).join("")}
+        <span class="calendar-filter-label" id="calendarDayFilterLabel">Tag</span>
+        <div class="calendar-slot-chips" role="group" aria-labelledby="calendarDayFilterLabel">
+          <button type="button" class="calendar-slot-chip" data-day-filter="" aria-pressed="true">Alle Tage</button>
+          ${[...days.entries()].map(([date, day]) => `<button type="button" class="calendar-slot-chip" data-day-filter="${escapeHtml(date)}" aria-pressed="false">${escapeHtml(day.day)}</button>`).join("")}
         </div>
       </div>
       <div class="calendar-filter-footer">
@@ -2247,10 +2245,10 @@ function renderCalendar(slots, rsvpsOpen) {
       </div>
     </section>
     <p class="calendar-empty" id="calendarNoResults" hidden>Keine Sessions entsprechen diesen Filtern.</p>
-    <div class="calendar-bento">${[...days.values()].map(d => {
+    <div class="calendar-bento">${[...days.entries()].map(([date, d]) => {
     const parts = Object.values(d.parts);
     return `
-    <div class="card cal-day" data-calendar-day>
+    <div class="card cal-day" data-calendar-day="${escapeHtml(date)}">
       <h2>${d.day}</h2>
       <div class="cal-cols" style="--calendar-columns:${Math.min(3, Math.max(1, parts.length))}">
         ${parts.map(slot => {
@@ -2260,9 +2258,9 @@ function renderCalendar(slots, rsvpsOpen) {
           const badge = showBusy ? `${free} frei` : (missing ? `noch +${missing} bis Ziel` : "Ziel erreicht");
           const badgeClass = showBusy || !missing ? "is-good" : "is-warn";
           return `
-          <div class="cal-col" data-calendar-slot="${escapeHtml(slotKey(slot))}">
+          <div class="cal-col" data-calendar-slot>
             <div class="cal-col-head"><h3>${slot.part}</h3><span class="cal-slot-badge ${badgeClass}">${badge}</span></div>
-            ${slot.games.map(game => card(game, slotKey(slot))).join("") || '<p class="hint">– keine Runden –</p>'}
+            ${slot.games.map(game => card(game, slot.date)).join("") || '<p class="hint">– keine Runden –</p>'}
           </div>`;
         }).join("")}
       </div>
@@ -2275,7 +2273,7 @@ function renderCalendar(slots, rsvpsOpen) {
   const freeButton = document.getElementById("calendarFreeFilter");
   const count = document.getElementById("calendarFilterCount");
   const noResults = document.getElementById("calendarNoResults");
-  let selectedSlot = "";
+  let selectedDay = "";
   let freeOnly = false;
   const applyCalendarFilters = () => {
     const query = searchInput.value.trim().toLocaleLowerCase("de");
@@ -2285,7 +2283,7 @@ function renderCalendar(slots, rsvpsOpen) {
     for (const game of cal.querySelectorAll("[data-calendar-game]")) {
       const visible = (!queryTerms.length || queryTerms.every(term => game.dataset.search.includes(term)))
         && (!systemQuery || game.dataset.system.includes(systemQuery))
-        && (!selectedSlot || game.dataset.slot === selectedSlot)
+        && (!selectedDay || game.dataset.day === selectedDay)
         && (!freeOnly || game.dataset.free === "true");
       game.hidden = !visible;
       if (visible) visibleGames += 1;
@@ -2298,14 +2296,14 @@ function renderCalendar(slots, rsvpsOpen) {
     }
     count.textContent = visibleGames === totalGames ? `${totalGames} Runden` : `${visibleGames} von ${totalGames} Runden`;
     noResults.hidden = visibleGames > 0;
-    resetButton.hidden = !(query || systemQuery || selectedSlot || freeOnly);
+    resetButton.hidden = !(query || systemQuery || selectedDay || freeOnly);
   };
   searchInput.addEventListener("input", applyCalendarFilters);
   systemInput.addEventListener("input", applyCalendarFilters);
-  for (const chip of cal.querySelectorAll("[data-slot-filter]")) {
+  for (const chip of cal.querySelectorAll("[data-day-filter]")) {
     chip.addEventListener("click", () => {
-      selectedSlot = chip.dataset.slotFilter;
-      cal.querySelectorAll("[data-slot-filter]").forEach(button => button.setAttribute("aria-pressed", String(button === chip)));
+      selectedDay = chip.dataset.dayFilter;
+      cal.querySelectorAll("[data-day-filter]").forEach(button => button.setAttribute("aria-pressed", String(button === chip)));
       applyCalendarFilters();
     });
   }
@@ -2318,11 +2316,11 @@ function renderCalendar(slots, rsvpsOpen) {
   resetButton.addEventListener("click", () => {
     searchInput.value = "";
     systemInput.value = "";
-    selectedSlot = "";
+    selectedDay = "";
     freeOnly = false;
     freeButton?.setAttribute("aria-pressed", "false");
     if (freeButton) freeButton.querySelector("span").textContent = "○";
-    cal.querySelectorAll("[data-slot-filter]").forEach(button => button.setAttribute("aria-pressed", String(!button.dataset.slotFilter)));
+    cal.querySelectorAll("[data-day-filter]").forEach(button => button.setAttribute("aria-pressed", String(!button.dataset.dayFilter)));
     applyCalendarFilters();
     searchInput.focus();
   });
