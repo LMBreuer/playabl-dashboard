@@ -471,7 +471,6 @@
   .word-context-actions button { min-height:38px; padding:8px 13px; border:var(--border-w) solid var(--border); border-radius:var(--r-sm); background:transparent; color:var(--text-primary); font:700 var(--fs-xs)/1 var(--font-body); cursor:pointer; }
 
   .foot { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-6); }
-  .foot li { margin-bottom: 4px; margin-left: var(--sp-4); }
   .err { color: var(--warn); font-weight: 600; }
 
   .pixel-cat { width: 22px; height: 22px; vertical-align: -6px; }
@@ -686,9 +685,7 @@
   .bento-side-row .card { margin:0; }
   .bento-open { flex:1.5 1 380px; }
   .bento-needs { flex:1 1 300px; }
-  .bento-grid > #funCard, .bento-grid > .bento-full, .bento-grid > .foot { grid-column:1 / -1; }
-  .bento-grid > .foot { margin:8px 0 0; padding:20px 24px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; list-style:none; }
-  .bento-grid > .foot li { margin:0; }
+  .bento-grid > #funCard, .bento-grid > .bento-full { grid-column:1 / -1; }
   .card h2 { margin:0 0 4px; font-family:var(--font-display); font-size:1.15rem; font-weight:700; }
   .card h3 { margin:24px 0 12px; font-family:var(--font-display); font-size:1rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-secondary); }
   .card-title-row { display:flex; align-items:center; justify-content:flex-start; gap:7px; margin-bottom:18px; }
@@ -781,7 +778,7 @@
     .dashboard-hero .sub { margin-left:0; }
     #app { grid-template-columns:1fr; gap:16px; }
     .bento-grid { grid-template-columns:1fr; gap:16px; }
-    .bento-hero, .bento-kpis, .bento-grid > .card, .bento-grid > .bento-side-row, .bento-grid > #funCard, .bento-grid > .bento-full, .bento-grid > .foot { grid-column:1; grid-row:auto; }
+    .bento-hero, .bento-kpis, .bento-grid > .card, .bento-grid > .bento-side-row, .bento-grid > #funCard, .bento-grid > .bento-full { grid-column:1; grid-row:auto; }
     .bento-hero { min-height:0; }
     .bento-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .bento-side-row { flex-direction:column; }
@@ -1845,8 +1842,8 @@ function render(slots, rsvpsOpen) {
       title:en ? "How to read the capacity chart" : "So liest du die Platzgrafik",
       intro:en ? "Meaning of segments, target band, and interactions." : "Bedeutung von Segmenten, Zielband und Interaktionen.",
       html:en
-        ? `<section><h3>Sessions and capacity</h3><p>Each blue segment represents one session. Its width corresponds to the player seats plus the person running it.${showBusy ? " The lighter portion is already occupied." : ""}</p></section><section><h3>Interaction</h3><p>Hover over a segment to see its title and capacity. Clicking opens the session on Playabl; some details may require a login.</p></section><section><h3>Target range</h3><p>The grey band marks the target of ${LO}–${HI} accommodated people per slot.${workshops.length ? " Dashed outlines show additional workshop or special capacity, which is not included in the regular-session totals." : ""}</p></section>`
-        : `<section><h3>Runden und Plätze</h3><p>Jedes blaue Segment steht für eine Session. Seine Breite entspricht den Spielplätzen plus der anbietenden Person.${showBusy ? " Der hellere Anteil ist bereits belegt." : ""}</p></section><section><h3>Interaktion</h3><p>Mouseover zeigt Titel und Kapazität. Ein Klick öffnet die Runde auf Playabl; manche Details sind dort erst nach dem Login sichtbar.</p></section><section><h3>Zielkorridor</h3><p>Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot.${workshops.length ? " Gestrichelte Umrisse zeigen zusätzliche Workshop- oder Special-Plätze; sie zählen nicht zu den regulären Runden." : ""}</p></section>`
+        ? `<section><h3>Sessions and capacity</h3><p>Each blue segment represents one session. Its width corresponds to the player seats plus the person running it.${showBusy ? " The lighter portion is already occupied." : ""} The dashboard includes only sessions recorded on Playabl.</p></section><section><h3>Interaction</h3><p>Hover over a segment to see its title and capacity. Clicking opens the session on Playabl; some details may require a login.</p></section><section><h3>Target range</h3><p>The grey band marks the target of ${LO}–${HI} accommodated people per slot.${workshops.length ? " Dashed outlines show additional workshop or special capacity, which is not included in the regular-session totals." : ""}</p></section>`
+        : `<section><h3>Runden und Plätze</h3><p>Jedes blaue Segment steht für eine Session. Seine Breite entspricht den Spielplätzen plus der anbietenden Person.${showBusy ? " Der hellere Anteil ist bereits belegt." : ""} Das Dashboard berücksichtigt nur Runden, die auf Playabl erfasst sind.</p></section><section><h3>Interaktion</h3><p>Mouseover zeigt Titel und Kapazität. Ein Klick öffnet die Runde auf Playabl; manche Details sind dort erst nach dem Login sichtbar.</p></section><section><h3>Zielkorridor</h3><p>Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot.${workshops.length ? " Gestrichelte Umrisse zeigen zusätzliche Workshop- oder Special-Plätze; sie zählen nicht zu den regulären Runden." : ""}</p></section>`
     }),
     free: en => ({
       title:en ? "Where are seats still available?" : "Wo ist noch Platz?",
@@ -1934,12 +1931,7 @@ function render(slots, rsvpsOpen) {
       <div id="cloud" aria-label="Interaktive Wortwolke"></div>
       <p class="sr-only" id="cloudAlt"></p>
     </div>
-    <ul class="foot">
-      <li>Diese Seite lädt die Daten bei jedem Öffnen direkt von der Playabl-API – einfach neu laden für den aktuellen Stand.</li>
-      <li>${slotRuleHint}</li>
-      <li>Plätze = Spielplätze laut Playabl <strong>plus 1 anbietende Person</strong> (SL/Moderation) je Session – auch GMs sind ja untergebracht. Two-Shots zählen in jedem ihrer Slots.</li>
-      <li>Programm außerhalb von Playabl ist nicht enthalten.</li>
-    </ul></div>`;
+    </div>`;
 
   const chart = document.getElementById("chart");
   for (const slot of slots) {
@@ -2352,17 +2344,22 @@ async function findSlotBuckets(conId) {
     return await r.json();
   } catch { return []; }
 }
-function renderCredits(con) {
+let activeCreditsCon = null;
+function renderCredits(con = activeCreditsCon) {
+  activeCreditsCon = con;
+  const en = document.documentElement.lang === "en";
   const slug = con?.slug || null;
   const raumplanLink = slug ? `${RAUMPLAN_URL}plan.html?con=${encodeURIComponent(slug)}` : RAUMPLAN_URL;
   document.getElementById("credits").innerHTML = `
-    <span>Playabl Slot-Dashboard</span> ·
-    <a href="https://playabl.io" target="_blank" rel="noopener" style="color:inherit">Playabl</a> ·
-    <a href="https://www.3w6-podcast.com/" target="_blank" rel="noopener" style="color:inherit">3W6-Community</a> ·
-    <a href="${raumplanLink}" style="color:inherit">Raumverteilung${slug ? " für dieses Event" : ""}</a> ·
-    <a href="https://commons.wikimedia.org/wiki/File:Airship-Zeppelin-LZ-127.svg" target="_blank" rel="noopener" style="color:inherit">Solarpunk-Zeppelin: Public Domain (Myriam Thyes)</a> ·
-    <a href="impressum.html" style="color:inherit">Impressum</a>`;
+    <span>Playabl Dashboard</span>
+    <span aria-hidden="true">·</span>
+    <a href="https://playabl.io" target="_blank" rel="noopener" style="color:inherit">${en ? "Data source: Playabl" : "Datenquelle: Playabl"}</a>
+    <span aria-hidden="true">·</span>
+    <a href="${raumplanLink}" style="color:inherit">${en ? `Con room plan${slug ? " for this event" : ""}` : `Con-Raumplan${slug ? " für dieses Event" : ""}`}</a>
+    <span aria-hidden="true">·</span>
+    <a href="impressum.html" style="color:inherit">${en ? "Legal notice" : "Impressum"}</a>`;
 }
+window.addEventListener("uilanguagechange", () => renderCredits());
 
 // ---------- Start ----------
 Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon(EVENT)]).then(async ([sessions, games, ev, eventsList, con]) => {
