@@ -24,11 +24,11 @@
   :root {
     --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
     --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
-    --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
+    --r-sm: 8px; --r-md: 10px; --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
     --fs-xs: .76rem; --fs-sm: .86rem; --fs-base: 1rem; --fs-md: 1.05rem;
     --fs-lg: 1.3rem; --fs-xl: 1.6rem; --fs-2xl: 1.7rem;
-    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-display: var(--font-body);
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Manrope", var(--font-body);
     --shadow-card: none;
     --border-w: 1px;
   }
@@ -52,7 +52,7 @@
     --good:  #35c266;
     --warn:  #ff8a80;
     --band:  #1c2027;
-    --shadow-card: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.55);
+    --shadow-card: 0 1px 2px rgba(0,0,0,.35), 0 20px 44px -22px rgba(0,0,0,.6);
   }
   :root[data-theme="light"] {
     color-scheme: light;
@@ -73,7 +73,7 @@
     --good:  #0f7a3d;
     --warn:  #b3261e;
     --band:  #f0eee8;
-    --shadow-card: 0 1px 2px rgba(30,20,0,.05), 0 6px 16px -10px rgba(30,20,0,.16);
+    --shadow-card: 0 1px 2px rgba(30,20,0,.04), 0 18px 40px -20px rgba(30,20,0,.18);
   }
   :root[data-theme="contrast"] {
     color-scheme: light;
@@ -231,6 +231,7 @@
     background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
   body {
     background: var(--page);
     color: var(--text-primary);
@@ -257,13 +258,18 @@
      ============================================================ */
   @media (prefers-reduced-motion: no-preference) {
     .card, .kpi, .fact, .cal-card, #tooltip, .banner {
-      transition: transform .16s ease, box-shadow .16s ease;
+      transition:transform .28s cubic-bezier(.34,1.56,.64,1),box-shadow .28s ease;
     }
-    .card:hover, .kpi:hover, .fact:hover, .cal-card:hover { transform: translateY(-2px); }
-    .card, .kpi, .fact, .cal-card { animation: rp-fadein .28s ease-out both; }
+    .card:hover, .kpi:hover, .fact:hover, .cal-card:hover { transform:translateY(-3px); }
+    /* Kein dauerhaftes fill-mode: Sonst überschreibt die beendete
+       Einblend-Animation später den eigentlichen Hover-Lift. */
+    .card, .kpi, .fact, .cal-card { animation:rp-fadein .5s ease-out; }
   }
   @keyframes rp-fadein { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition:none !important; animation:none !important; }
+    .card:hover, .kpi:hover, .fact:hover, .cal-card:hover, #cloud button:hover { transform:none !important; }
+  }
 
   .banner {
     margin: var(--sp-3) 0; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md);
@@ -273,11 +279,18 @@
   .banner.open { border-color: var(--good); }
 
   .controls {
-    display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-4); align-items: end;
-    margin: var(--sp-4) 0 var(--sp-2); padding: var(--sp-3);
+    display: flex; flex-direction: column; gap: 14px;
+    margin: var(--sp-4) 0 var(--sp-2); padding: 20px 24px;
     background: var(--surface-1); border: var(--border-w) solid var(--border); border-radius: var(--r-md);
     box-shadow: var(--shadow-card);
   }
+  .controls-primary { display:grid; grid-template-columns:auto minmax(150px,.7fr) minmax(250px,1.15fr) auto; gap:18px; align-items:end; }
+  .controls-settings { display:flex; flex-wrap:wrap; gap:10px 24px; align-items:center; padding-top:14px; border-top:var(--border-w) solid var(--grid); }
+  .setting-summary { display:flex; align-items:center; gap:8px; min-width:0; font-size:var(--fs-xs); }
+  .setting-summary-label { color:var(--text-muted); }
+  .setting-summary-value { color:var(--text-secondary); font-weight:700; }
+  .setting-source { color:var(--text-muted); font-weight:500; }
+  .settings-info-button { margin-left:auto; width:26px; height:26px; padding:0 !important; border:var(--border-w) solid var(--border) !important; border-radius:50% !important; background:transparent !important; color:var(--text-secondary) !important; font:800 .78rem/1 var(--font-body) !important; }
   .controls .field { display: flex; flex-direction: column; gap: 3px; }
   .controls label { font-size: var(--fs-xs); color: var(--text-secondary); }
   .controls select, .controls input, .controls button {
@@ -286,6 +299,7 @@
     padding: var(--sp-2) var(--sp-3); max-width: 300px;
   }
   .controls button { cursor: pointer; }
+  .setup-button { min-width:92px; font-weight:800 !important; white-space:nowrap; }
 
   /* Segmented-Control — dasselbe Muster wie .slot-tabs/.theme-switch in
      con-raumplan: transparente Buttons, aktiver Button surface-1+Schatten. */
@@ -327,6 +341,7 @@
     border-left: 1px dashed var(--band-edge);
     border-right: 1px dashed var(--band-edge);
   }
+  .band-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:.6rem; font-weight:600; letter-spacing:.02em; white-space:nowrap; opacity:.65; }
   .bar { position: absolute; top: 4px; bottom: 4px; left: 0; display: flex; gap: 2px; }
   .seg { background: var(--accent); position: relative; cursor: pointer; overflow: hidden; display: block; }
   .seg .fill { position: absolute; inset: 0; background: var(--series-soft); transform-origin: left; }
@@ -334,7 +349,7 @@
   .seg:last-child { border-radius: 0 var(--r-sm) var(--r-sm) 0; }
   .seg:only-child { border-radius: var(--r-sm); }
   .seg:hover { filter: brightness(1.15); }
-  .val { position: absolute; top: 50%; transform: translateY(-50%); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
+  .val { position: absolute; top: 50%; transform: translateY(-50%); font-size:.9rem; font-weight:700; white-space:nowrap; }
   .gap-note { position: absolute; top: 50%; transform: translateY(-50%); font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
   .ghost { position: absolute; top: 4px; bottom: 4px; border: 1.5px dashed var(--band-edge); border-radius: var(--r-sm); pointer-events: none; }
   .baseline-x { display: grid; grid-template-columns: 160px 1fr; gap: var(--sp-3); margin-top: 4px; }
@@ -393,29 +408,67 @@
   .cal-card .t { font-weight: 600; font-size: var(--fs-sm); }
   .cal-card .m { font-size: var(--fs-xs); color: var(--text-secondary); display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; margin-top: 2px; }
 
-  .facts { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  .facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:8px; }
   .fact {
-    background: var(--surface-1); border: var(--border-w) solid var(--border); border-radius: var(--r-lg);
-    padding: var(--sp-3) var(--sp-4); flex: 1 1 160px; min-width: 160px; box-shadow: var(--shadow-card);
+    min-width:0; padding:16px; border:0; border-radius:16px;
+    background:var(--surface-2); box-shadow:none; text-align:center;
   }
-  .fact .v { font-size: var(--fs-lg); font-weight: 700; }
-  .fact .l { font-size: var(--fs-xs); color: var(--text-secondary); }
-  .hp-row { display: grid; grid-template-columns: minmax(120px, 240px) 1fr 34px; gap: var(--sp-3); align-items: center; margin: 5px 0; font-size: var(--fs-sm); border-radius: var(--r-sm); }
-  .hp-row:hover { background: var(--band); }
+  .fact .v { font-family:var(--font-display); font-size:1.5rem; font-weight:800; }
+  .fact .l { margin-top:4px; font-size:.75rem; color:var(--text-secondary); }
+  :root[data-theme="contrast"] .fact {
+    border:var(--border-w) solid var(--border);
+    background:var(--surface-1);
+  }
+  .hp-row { display:grid; width:100%; grid-template-columns:220px 1fr 30px; gap:10px; align-items:center; margin:8px 0; padding:4px 6px; border:0; border-radius:var(--r-sm); color:inherit; background:transparent; font:inherit; font-size:.85rem; cursor:pointer; }
+  .hp-row:hover, .hp-row:focus-visible { background:var(--accent-soft); }
   .hp-row .hp-name { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hp-row .hp-bar { height: 14px; background: var(--accent); border-radius: 3px; }
-  .hp-row .hp-n { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .hp-row .hp-track { display:block; }
+  .hp-row .hp-bar { display:block; height:10px; background:var(--accent); border-radius:5px; }
+  .hp-row .hp-n { color:var(--text-primary); font-weight:700; font-variant-numeric:tabular-nums; }
   .hp-more { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-2); }
   .inline-select {
     font: inherit; font-size: var(--fs-xs); color: var(--text-primary);
     background: var(--page); border: var(--border-w) solid var(--baseline); border-radius: var(--r-sm); padding: 3px var(--sp-2);
   }
-  #cloud { line-height: 1.15; text-align: center; padding: var(--sp-2) 0 4px; }
-  #cloud span { display: inline-block; padding: 2px 7px; white-space: nowrap; }
+  #cloud { line-height:1.35; text-align:center; padding:var(--sp-3) 0 8px; overflow:hidden; }
+  #cloud button {
+    --cloud-x-start:0px; --cloud-y-start:0px; --cloud-rotate-start:0deg;
+    --cloud-x:0px; --cloud-y:0px; --cloud-rotate:0deg;
+    display:inline-block; padding:3px 8px; border:0; border-radius:var(--r-pill);
+    color:inherit; background:transparent; font:inherit; white-space:nowrap; cursor:pointer;
+    animation:cloud-drift var(--cloud-duration,8s) ease-in-out var(--cloud-delay,0s) infinite alternate;
+    transition:color .18s ease,transform .22s cubic-bezier(.34,1.56,.64,1);
+  }
+  #cloud button:nth-child(even) { --cloud-hover-rotate:1.2deg; }
+  #cloud button:nth-child(odd) { --cloud-hover-rotate:-1.2deg; }
+  #cloud button:hover {
+    z-index:1; color:var(--accent); background:transparent; box-shadow:none;
+    animation:none;
+    transform:translateY(-3px) scale(1.07) rotate(var(--cloud-hover-rotate));
+  }
+  #cloud button:focus-visible {
+    z-index:1; color:var(--accent); background:var(--accent-soft);
+    animation-play-state:paused;
+    outline:2px solid var(--accent); outline-offset:2px;
+  }
+  @keyframes cloud-drift {
+    from { transform:translate(var(--cloud-x-start),var(--cloud-y-start)) rotate(var(--cloud-rotate-start)); }
+    to { transform:translate(var(--cloud-x),var(--cloud-y)) rotate(var(--cloud-rotate)); }
+  }
   #cloud .c0 { color: var(--accent); }
   #cloud .c1 { color: var(--text-primary); }
   #cloud .c2 { color: var(--text-secondary); }
   #cloud .c3 { color: var(--text-muted); }
+  .word-context-content { overflow:auto; padding:18px 26px 26px; }
+  .word-context-meta { margin:0 0 14px; color:var(--text-secondary); font-size:var(--fs-xs); }
+  .word-context-list { display:grid; gap:10px; }
+  .word-context-quote { margin:0; padding:14px 16px; border:var(--border-w) solid var(--grid); border-radius:var(--r-md); background:var(--band); }
+  .word-context-quote p { color:var(--text-secondary); font-size:var(--fs-sm); line-height:1.55; }
+  .word-context-quote footer { margin-top:8px; color:var(--text-muted); font-size:var(--fs-xs); }
+  .word-context-quote a { color:inherit; font-weight:700; }
+  .word-context-quote mark { padding:0 2px; background:var(--accent-soft); color:var(--accent-soft-ink,#111); }
+  .word-context-actions { display:flex; justify-content:flex-end; padding:0 26px 22px; }
+  .word-context-actions button { min-height:38px; padding:8px 13px; border:var(--border-w) solid var(--border); border-radius:var(--r-sm); background:transparent; color:var(--text-primary); font:700 var(--fs-xs)/1 var(--font-body); cursor:pointer; }
 
   .foot { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-6); }
   .foot li { margin-bottom: 4px; margin-left: var(--sp-4); }
@@ -460,7 +513,7 @@
     --accent-soft:#cfe6c5; --series-soft:#9dc69a; --good:#28794a; --warn:#c96538; --band:#e2e4c5;
     --shadow-card:0 2px 4px rgba(37,83,43,.06),0 22px 46px -24px rgba(60,105,54,.36);
     --font-display:"Space Grotesk",var(--font-body); --font-body:"Nunito",system-ui,sans-serif;
-    --r-sm:14px; --r-md:18px; --r-pill:999px; --r-lg:30px 14px 30px 14px;
+    --r-sm:14px; --r-md:18px; --r-pill:999px; --r-lg:18px; --r-xl:30px 14px 30px 14px;
   }
   :root[data-theme="glass"] {
     color-scheme:dark;
@@ -471,7 +524,7 @@
     --accent-soft:rgba(142,231,255,.17); --series-soft:rgba(142,231,255,.40); --good:#86efbd; --warn:#ff9fb9; --band:rgba(255,255,255,.10);
     --shadow-card:0 24px 60px -28px rgba(0,0,0,.68),inset 0 1px 0 rgba(255,255,255,.18);
     --font-display:"Manrope",var(--font-body); --font-body:"Inter",system-ui,sans-serif;
-    --r-sm:14px; --r-md:18px; --r-pill:999px; --r-lg:28px;
+    --r-sm:14px; --r-md:18px; --r-pill:999px; --r-lg:18px; --r-xl:28px;
   }
   :root[data-theme="punk"] {
     color-scheme:light;
@@ -480,7 +533,7 @@
     --grid:#85857f; --baseline:#0b0b0b; --band-edge:#0b0b0b; --border:#0b0b0b;
     --accent:#ff3d00; --accent-ink:#fff; --accent-soft:#c7ff00; --series-soft:#0057ff; --good:#008f51; --warn:#ff3d00; --band:#c7ff00;
     --shadow-card:none; --font-display:"Arial Black",Arial,sans-serif; --font-body:"Arial Narrow",Arial,sans-serif;
-    --border-w:3px; --r-sm:0; --r-md:0; --r-pill:0; --r-lg:0;
+    --border-w:3px; --r-sm:0; --r-md:0; --r-pill:0; --r-lg:0; --r-xl:0;
   }
   :root[data-theme="comic"] {
     color-scheme:light;
@@ -489,7 +542,7 @@
     --grid:#f0d9a0; --baseline:#181418; --band-edge:#181418; --border:#181418;
     --accent:#e8283c; --accent-ink:#fff; --accent-soft:#ffe15c; --series-soft:#83cdf3; --good:#1ea672; --warn:#ff8a00; --band:#ffe15c;
     --shadow-card:6px 6px 0 #181418; --font-display:"Bangers",cursive; --font-body:"Poppins",system-ui,sans-serif;
-    --border-w:3px; --r-sm:6px; --r-md:8px; --r-pill:999px; --r-lg:14px;
+    --border-w:3px; --r-sm:6px; --r-md:8px; --r-pill:999px; --r-lg:14px; --r-xl:14px;
   }
   :root[data-theme="solarpunk"] body {
     position:relative; isolation:isolate;
@@ -520,26 +573,41 @@
   body { padding:40px 32px 64px; min-height:100vh; }
   .dashboard-page .wrap { max-width:none; margin:0; position:relative; z-index:1; }
   .dashboard-page main, .dashboard-page .foot { max-width:1400px; margin-left:auto; margin-right:auto; }
-  .dashboard-topbar { max-width:1400px; margin:0 auto 30px; padding:0 0 14px; display:flex; align-items:center; justify-content:space-between; gap:18px; border-bottom:var(--border-w) solid var(--border); position:relative; z-index:3; }
-  .dashboard-brand { color:var(--text-primary); font-family:var(--font-display); font-size:1.08rem; font-weight:800; letter-spacing:.01em; text-decoration:none; }
-  .dashboard-actions { display:flex; align-items:center; gap:12px; }
-  .language-switch { display:flex; align-items:center; gap:2px; padding:4px; border:var(--border-w) solid var(--border); border-radius:var(--r-pill); background:var(--surface-1); box-shadow:var(--shadow-card); }
-  .language-switch button { min-width:38px; padding:6px 9px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font:700 .82rem/1 var(--font-display); cursor:pointer; }
+  .dashboard-actions { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; }
+  .language-switch { display:flex; align-items:center; gap:2px; }
+  .language-switch button { padding:6px 10px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font:700 .78rem/1 var(--font-body); cursor:pointer; }
   .language-switch button[aria-pressed="true"] { background:var(--accent-soft); color:var(--accent); }
-  .dashboard-head { max-width:1400px; margin:0 auto 28px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:24px; position:relative; z-index:2; }
-  .dashboard-hero { max-width:none; margin:0; padding:8px 0 4px; text-align:left; }
-  .dashboard-eyebrow { margin-bottom:6px; color:var(--accent); font-size:.8rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+  .dashboard-head { max-width:1400px; margin:0 auto 28px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:20px; position:relative; z-index:2; }
+  .dashboard-hero { max-width:none; margin:0; padding:0; text-align:left; }
+  .dashboard-eyebrow { margin-bottom:6px; color:var(--accent); font-size:.8rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
   .brand-cursor { display:none; }
-  .dashboard-hero h1 { font-size:2.4rem; line-height:normal; }
-  .dashboard-hero .sub { max-width:620px; margin:10px 0 0; font-size:.98rem; }
-  .dashboard-hero .banner { display:inline-block; margin:12px 0 0; }
+  .dashboard-hero h1 { font-size:2.4rem; line-height:1.15; font-weight:800; }
+  .dashboard-hero .sub { max-width:none; margin:6px 0 0; font-size:.95rem; }
+  .dashboard-hero .event-date, .dashboard-hero .event-source { display:block; }
+  .dashboard-hero .event-source { margin-top:2px; }
+  .dashboard-hero .banner { display:inline-block; margin:10px 0 0; padding:6px 12px; border:0; border-radius:10px; font-size:.82rem; }
   .dashboard-theme { justify-self:end; align-self:start; }
   .slot-tabs { display:flex; gap:2px; padding:4px; border-radius:14px; background:var(--band); }
   .slot-tabs a { display:inline-flex; align-items:center; padding:9px 18px; border-radius:var(--r-md); color:var(--text-secondary); font-family:Arial,sans-serif; font-size:.85rem; font-weight:700; text-decoration:none; }
   .slot-tabs a[aria-pressed="true"] { background:var(--surface-1); color:var(--text-primary); box-shadow:var(--shadow-card); }
-  .controls-group { position:relative; display:flex; align-items:center; padding:4px; border:var(--border-w) solid var(--border); border-radius:var(--r-pill); background:var(--surface-1); box-shadow:var(--shadow-card); }
+  :root, :root[data-theme="dark"] { --chrome-border:rgba(255,255,255,.06); }
+  :root[data-theme="light"] { --chrome-border:rgba(20,20,20,.06); }
+  :root[data-theme="contrast"] { --chrome-border:#000; }
+  :root[data-theme="colorful"] { --chrome-border:rgba(70,34,184,.10); }
+  :root[data-theme="terminal"] { --chrome-border:rgba(80,255,140,.22); }
+  :root[data-theme="cyberpunk"] { --chrome-border:rgba(0,240,255,.18); }
+  :root[data-theme="ukiyo"] { --chrome-border:rgba(43,38,32,.12); }
+  :root[data-theme="terminal"], :root[data-theme="ukiyo"] { --r-xl:2px; }
+  .controls-group { position:relative; display:flex; align-items:center; gap:6px; padding:4px; border:var(--border-w) solid var(--chrome-border,var(--border)); border-radius:var(--r-pill); background:var(--surface-1); box-shadow:var(--shadow-card); }
+  .contrast-aid-slot { display:flex; align-items:center; padding:3px; border:var(--border-w) solid var(--border); border-radius:var(--r-pill); background:var(--surface-1); box-shadow:var(--shadow-card); }
+  .contrast-aid-toggle { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:30px; padding:4px 10px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font:800 var(--fs-xs)/1 var(--font-body); white-space:nowrap; cursor:pointer; }
+  .contrast-aid-toggle:hover { color:var(--text-primary); }
+  .contrast-aid-toggle[aria-checked="true"] { background:var(--accent-soft); color:var(--accent); }
+  .contrast-aid-glyphs { display:inline-flex; min-width:22px; align-items:center; justify-content:center; font-size:.72rem; letter-spacing:-1px; }
+  .controls-divider { width:1px; height:18px; flex:0 0 auto; background:var(--border); }
   .theme-switch-group, .theme-switch { display:flex; align-items:center; gap:2px; }
   .theme-switch-group { gap:6px; }
+  .theme-switch { padding:0; border-radius:0; background:transparent; }
   .theme-switch button, .theme-more-trigger { padding:6px 9px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font-size:.9rem; cursor:pointer; }
   .theme-switch button[aria-pressed="true"], .theme-more-trigger.is-active { background:var(--accent-soft); color:var(--accent); box-shadow:none; }
   .theme-more-wrap { display:flex; align-items:center; gap:6px; }
@@ -548,64 +616,133 @@
   .theme-more-popover { position:fixed; z-index:9000; width:190px; padding:6px; border:var(--border-w) solid var(--border); border-radius:var(--r-md); background:var(--surface-1); box-shadow:var(--shadow-card); }
   .theme-more-row { display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:var(--text-primary); font-size:.85rem; text-align:left; cursor:pointer; }
   .theme-more-row[aria-pressed="true"] { background:var(--accent-soft); }
-  .controls { margin:0 0 20px; padding:16px 20px; border-radius:var(--r-lg); }
+  .controls { margin:0 0 28px; padding:18px 24px; gap:16px; border-color:var(--chrome-border,var(--border)); border-radius:var(--r-xl); }
+  .dashboard-page #status { margin:-24px 0 6px; }
+  .controls-primary { gap:20px; }
+  .tabs { padding:4px; border-radius:var(--r-lg); }
+  .tabs button { padding:9px 16px; border-radius:var(--r-md); font-size:.82rem; }
+  .controls label { font-size:.72rem; }
+  .controls select, .controls input, .controls button { padding:8px 12px; font-size:.85rem; border-color:var(--border); border-radius:var(--r-md); }
+  .controls .tabs button { padding:9px 16px; border:0; border-radius:var(--r-md); }
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
-  .kpi { min-width:0; border-radius:var(--r-lg); }
-  .card { padding:24px 28px; }
+  .kpi { min-width:0; border-color:var(--chrome-border,var(--border)); border-radius:var(--r-xl); }
+  .card { padding:28px; border-color:var(--chrome-border,var(--border)); border-radius:var(--r-xl); }
   /* Bento-Struktur der Designvorlage: großes Angebot-Panel, Kennzahlen
      rechts, danach die breite Slot-Visualisierung und die Detailkarten. */
-  #app { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; align-items:stretch; }
-  #app .kpis { display:contents; }
-  #app .kpi { min-height:132px; padding:22px; }
-  #app .kpi:first-child { grid-column:1 / 3; grid-row:1 / 3; min-height:288px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(145deg,var(--surface-1),var(--surface-2)); }
-  #app .kpi:first-child .v { font-size:clamp(3rem,7vw,5.8rem); line-height:.9; }
-  #app .kpi:nth-child(2) { grid-column:3; grid-row:1; }
-  #app .kpi:nth-child(3) { grid-column:4; grid-row:1; }
-  #app .kpi:nth-child(4) { grid-column:3; grid-row:2; }
-  #app .kpi:nth-child(5) { grid-column:4; grid-row:2; }
-  #app > .card { grid-column:1 / -1; margin:0; }
-  #app > .card:not(:first-of-type) { grid-column:span 2; }
-  #app > .card:last-of-type { grid-column:1 / -1; }
   #app { display:block; }
   .bento-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; align-items:stretch; }
-  .bento-hero { grid-column:1 / 3; grid-row:1 / 3; min-height:288px; display:flex; flex-direction:column; justify-content:flex-end; padding:32px; background:linear-gradient(145deg,var(--surface-1),var(--surface-2)); }
-  .bento-hero .v { margin-top:8px; font-size:clamp(3rem,7vw,5.8rem); line-height:.9; }
-  .bento-hero-copy { margin-top:16px; max-width:26ch; color:var(--text-secondary); font-size:var(--fs-sm); }
-  .bento-slot-bars { display:grid; grid-template-columns:repeat(auto-fit,minmax(34px,1fr)); gap:10px; margin-top:28px; }
-  .bento-slot-bars span { position:relative; height:14px; overflow:hidden; border-radius:var(--r-pill); background:var(--band); }
-  .bento-slot-bars span::after { content:""; position:absolute; inset:0 auto 0 0; width:var(--slot-fill); border-radius:inherit; background:var(--warn); transition:width .35s ease; }
-  .bento-slot-bars .is-on-target::after { background:var(--good); }
-  .bento-hero-legend { margin-top:auto; padding-top:20px; border-top:1px solid var(--border); color:var(--text-muted); font-size:var(--fs-xs); }
+  .bento-hero { grid-column:1 / 3; grid-row:1 / 3; min-height:278px; display:flex; flex-direction:column; justify-content:space-between; padding:32px; background:var(--surface-1); }
+  .bento-hero .l { color:var(--text-secondary); font-size:.85rem; font-weight:600; }
+  .bento-hero .v { margin:10px 0; font-family:var(--font-display); font-size:4.2rem; font-weight:800; line-height:1; }
+  .bento-hero-copy { margin:0; max-width:none; color:var(--text-secondary); font-size:.9rem; }
+  .bento-slot-bars { display:flex; gap:6px; margin-top:20px; }
+  .bento-slot-bars span { flex:1; position:relative; height:8px; overflow:hidden; border-radius:4px; background:var(--warn); opacity:.85; }
+  .bento-slot-bars span::after { content:none; }
+  .bento-slot-bars .is-on-target { background:var(--good); }
+  .bento-hero-legend { margin-top:38px; padding-top:12px; border-top:1px solid var(--border); color:var(--text-muted); font-size:.56rem; line-height:1.3; opacity:.65; }
+  :root[data-theme="contrast"][data-color-aid] .bento-slot-bars span {
+    display:grid; place-items:center; height:24px; border:2px solid #000; border-radius:3px;
+    background:#fff; color:#000; opacity:1; font:900 14px/1 var(--font-body);
+  }
+  :root[data-theme="contrast"][data-color-aid] .bento-slot-bars .is-on-target { border-style:solid; }
+  :root[data-theme="contrast"][data-color-aid] .bento-slot-bars .is-on-target::after { content:"✓"; }
+  :root[data-theme="contrast"][data-color-aid] .bento-slot-bars .is-below-target { border-style:dashed; }
+  :root[data-theme="contrast"][data-color-aid] .bento-slot-bars .is-below-target::after { content:"!"; }
+  :root[data-theme="contrast"][data-color-aid] .cal-slot-badge.is-good::before { content:"✓ "; }
+  :root[data-theme="contrast"][data-color-aid] .cal-slot-badge.is-warn::before { content:"! "; }
+  :root[data-theme="contrast"] a:not(.seg):not(.cal-card):not(.dashboard-brand) { text-decoration-thickness:2px; text-underline-offset:3px; }
+  :root[data-theme="contrast"] a:focus-visible,
+  :root[data-theme="contrast"] button:focus-visible,
+  :root[data-theme="contrast"] select:focus-visible,
+  :root[data-theme="contrast"] input:focus-visible,
+  :root[data-theme="contrast"] summary:focus-visible {
+    outline:3px solid var(--accent); outline-offset:3px;
+  }
+  :root[data-theme="contrast"] .settings-info-button,
+  :root[data-theme="contrast"] .slot-config-close { min-width:30px; min-height:30px; }
   .bento-target .v { color:var(--accent); }
-  .calendar-bento { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:24px; }
+  .kpi-good .v { color:var(--good); }
+  .calendar-bento { display:flex; flex-direction:column; gap:24px; }
   .calendar-bento .cal-day { margin:0; padding:26px; }
   .calendar-bento .cal-day > h2 { margin-bottom:18px; }
   .calendar-bento .cal-cols { grid-template-columns:repeat(var(--calendar-columns,2),minmax(0,1fr)); gap:14px; }
-  .calendar-bento .cal-col { min-width:0; padding:16px; background:var(--band); border-radius:var(--r-lg); }
+  .calendar-bento .cal-col { min-width:0; padding:16px; background:var(--band); border-radius:14px; }
   .calendar-bento .cal-col-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding-bottom:10px; }
   .calendar-bento .cal-col h3 { margin:0; }
-  .calendar-bento .cal-card { display:block; margin:0 0 10px; padding:12px 14px; background:var(--surface-2); border:0; border-radius:var(--r-md); color:var(--text-primary); text-decoration:none; transition:transform .2s ease; }
+  .calendar-bento .cal-card { display:block; margin:0 0 10px; padding:12px 14px; background:var(--surface-2); border:0; border-radius:14px; color:var(--text-primary); text-decoration:none; transition:transform .2s ease; }
   .calendar-bento .cal-card:last-child { margin-bottom:0; }
   .calendar-bento .cal-card:hover { transform:translateX(4px); border-color:transparent; }
   .cal-slot-badge { font-size:.7rem; font-weight:700; white-space:nowrap; }
   .cal-slot-badge.is-good { color:var(--good); }
   .cal-slot-badge.is-warn { color:var(--warn); }
   .bento-kpis { grid-column:3 / 5; grid-row:1 / 3; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-  .bento-kpis .kpi { min-height:132px; padding:22px; }
+  .bento-kpis .kpi { min-height:0; padding:22px; }
+  .bento-kpis .kpi .l { color:var(--text-secondary); font-size:.78rem; font-weight:600; }
+  .bento-kpis .kpi .v { margin-top:6px; font-family:var(--font-display); font-size:1.9rem; font-weight:800; line-height:1.12; }
   .bento-grid > .card { grid-column:1 / -1; margin:0; }
-  .bento-grid > .card:not(.bento-chart):not(#funCard) { grid-column:span 2; }
-  .bento-grid > #funCard, .bento-grid > .foot { grid-column:1 / -1; }
+  .bento-chart, #funCard { padding:32px; }
+  .bento-side-row { grid-column:1 / -1; display:flex; gap:24px; align-items:stretch; }
+  .bento-side-row .card { margin:0; }
+  .bento-open { flex:1.5 1 380px; }
+  .bento-needs { flex:1 1 300px; }
+  .bento-grid > #funCard, .bento-grid > .bento-full, .bento-grid > .foot { grid-column:1 / -1; }
+  .bento-grid > .foot { margin:8px 0 0; padding:20px 24px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; list-style:none; }
+  .bento-grid > .foot li { margin:0; }
+  .card h2 { margin:0 0 4px; font-family:var(--font-display); font-size:1.15rem; font-weight:700; }
+  .card h3 { margin:24px 0 12px; font-family:var(--font-display); font-size:1rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-secondary); }
+  .card .hint { max-width:640px; margin:0 0 20px; color:var(--text-secondary); font-size:.85rem; }
+  .row { grid-template-columns:160px 1fr; gap:16px; margin:18px 0; }
+  .row .lbl { font-size:.9rem; }
+  .row .lbl span { margin-top:2px; font-size:.75rem; }
+  .track { height:32px; }
+  .bar { top:2px; bottom:2px; }
+  .baseline-x { grid-template-columns:160px 1fr; gap:16px; }
+  .free-row, .ws-row { align-items:center; padding:12px 0; font-size:.9rem; }
+  .free-row span, .ws-row span { font-size:.75rem; }
+  .needs-list { display:flex; flex-direction:column; gap:12px; margin-top:18px; }
+  .needs-row { display:grid; grid-template-columns:110px 1fr 40px; gap:10px; align-items:center; margin:10px 0; font-size:.85rem; }
+  .needs-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-secondary); text-align:right; }
+  .needs-track { height:8px; overflow:hidden; border-radius:4px; background:var(--band); }
+  .needs-fill { display:block; height:100%; min-width:3px; border-radius:inherit; background:var(--accent); }
+  .needs-value { font-weight:700; font-variant-numeric:tabular-nums; }
   .punk-zine-banner { position:fixed; z-index:3; right:-12vw; bottom:1.2rem; width:124vw; padding:7px 0 6px; border-block:3px solid #0b0b0b; background:var(--accent-soft); color:#0b0b0b; font:1000 clamp(.66rem,1.05vw,.98rem)/1 "Arial Black",Arial,sans-serif; letter-spacing:.03em; text-align:center; text-transform:uppercase; transform:rotate(1.4deg); white-space:nowrap; overflow:hidden; }
   .punk-zine-banner a { color:inherit; text-decoration:none; }
-  #slotConfigDlg { max-width:min(610px,calc(100vw - 28px)); padding:0; color:var(--text-primary); background:var(--surface-1); border:var(--border-w) solid var(--border); border-radius:var(--r-lg); box-shadow:var(--shadow-card); }
-  #slotConfigDlg::backdrop { background:rgba(0,0,0,.56); backdrop-filter:blur(3px); }
-  .slot-config-form { padding:24px; }
-  .slot-config-form h2 { margin:0 0 8px; }
-  .slot-config-row { display:grid; grid-template-columns:minmax(0,1fr) 86px 86px auto; gap:8px; align-items:end; margin-top:12px; }
+  #slotConfigDlg, #settingsInfoDlg, #wordContextDlg { position:fixed; inset:50% auto auto 50%; width:min(680px,calc(100vw - 32px)); max-width:none; max-height:min(82vh,760px); margin:0; padding:0; overflow:hidden; transform:translate(-50%,-50%); color:var(--text-primary); background:var(--surface-1); border:var(--border-w) solid var(--chrome-border,var(--border)); border-radius:var(--r-lg); box-shadow:0 28px 80px -24px rgba(0,0,0,.72),var(--shadow-card); }
+  #slotConfigDlg::backdrop, #settingsInfoDlg::backdrop, #wordContextDlg::backdrop { background:rgba(0,0,0,.56); backdrop-filter:blur(3px); }
+  .slot-config-form { display:flex; flex-direction:column; max-height:min(82vh,760px); }
+  .slot-config-header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:24px 26px 18px; border-bottom:var(--border-w) solid var(--grid); cursor:grab; user-select:none; touch-action:none; }
+  .slot-config-header:active { cursor:grabbing; }
+  .slot-config-header h2 { font-family:var(--font-display); font-size:var(--fs-lg); line-height:1.2; }
+  .slot-config-header p { max-width:54ch; margin-top:7px; color:var(--text-secondary); font-size:var(--fs-xs); }
+  .slot-config-close { flex:0 0 auto; width:34px; height:34px; padding:0; border:0; border-radius:var(--r-pill); background:var(--band); color:var(--text-secondary); font:700 1.1rem/1 var(--font-body); cursor:pointer; }
+  .slot-config-body { overflow:auto; padding:8px 26px 20px; }
+  .setup-target { padding:16px 0 14px; border-bottom:var(--border-w) solid var(--grid); }
+  .setup-target h3, .setup-slots-title { margin:0 0 8px; color:var(--text-primary); font-size:var(--fs-sm); }
+  .setup-target p { margin-bottom:10px; color:var(--text-secondary); font-size:var(--fs-xs); }
+  .setup-target-fields { display:flex; align-items:end; gap:8px; }
+  .setup-target-fields label { display:flex; flex-direction:column; gap:4px; color:var(--text-secondary); font-size:var(--fs-xs); }
+  .setup-target-fields input { width:92px; min-height:40px; padding:9px 11px; color:var(--text-primary); background:var(--page); border:var(--border-w) solid var(--baseline); border-radius:var(--r-sm); font:inherit; }
+  .setup-target-separator { padding-bottom:9px; color:var(--text-muted); }
+  .target-reset { margin-top:10px; padding:0; border:0; background:transparent; color:var(--accent); font:700 var(--fs-xs)/1.4 var(--font-body); cursor:pointer; }
+  .target-reset:hover { text-decoration:underline; }
+  .setup-slots-title { margin-top:18px; }
+  .slot-config-row { display:grid; grid-template-columns:minmax(0,1fr) 92px 92px 38px; gap:10px; align-items:end; padding:14px 0; border-bottom:var(--border-w) solid var(--grid); }
   .slot-config-row label { display:flex; flex-direction:column; gap:4px; font-size:var(--fs-xs); color:var(--text-secondary); }
-  .slot-config-row input { width:100%; padding:8px; color:var(--text-primary); background:var(--page); border:var(--border-w) solid var(--border); border-radius:var(--r-sm); font:inherit; }
-  .slot-config-row button { padding:8px 10px; }
-  .slot-config-actions { display:grid; grid-template-columns:auto 1fr auto auto auto; gap:8px; margin-top:18px; }
+  .slot-config-row input { width:100%; min-height:40px; padding:9px 11px; color:var(--text-primary); background:var(--page); border:var(--border-w) solid var(--baseline); border-radius:var(--r-sm); font:inherit; }
+  .slot-config-row button { width:38px; height:40px; padding:0; border:var(--border-w) solid var(--border); border-radius:var(--r-sm); background:transparent; color:var(--warn); font-size:1.1rem; cursor:pointer; }
+  .slot-config-actions { display:flex; align-items:center; gap:8px; padding:16px 26px 20px; border-top:var(--border-w) solid var(--grid); }
+  .slot-config-actions .action-spacer { flex:1; }
+  .slot-config-actions button { min-height:40px; padding:9px 14px; border:var(--border-w) solid var(--border); border-radius:var(--r-sm); background:transparent; color:var(--text-primary); font:700 var(--fs-xs)/1 var(--font-body); cursor:pointer; }
+  .slot-config-actions .secondary-action { color:var(--text-secondary); }
+  .slot-config-actions .primary-action { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+  .settings-info-content { overflow:auto; padding:4px 26px 26px; }
+  .settings-info-content section { padding:18px 0 2px; border-bottom:var(--border-w) solid var(--grid); }
+  .settings-info-content section:last-child { border-bottom:0; }
+  .settings-info-content h3 { margin:0 0 7px; font-size:var(--fs-sm); }
+  .settings-info-content p, .settings-info-content li { color:var(--text-secondary); font-size:var(--fs-xs); line-height:1.65; }
+  .settings-info-content ul, .settings-info-content ol { margin:8px 0 12px 20px; }
+  .settings-info-content strong { color:var(--text-primary); }
+  .settings-info-note { margin-top:10px; padding:10px 12px; border-radius:var(--r-sm); background:var(--band); }
   :root[data-theme="glass"] .card, :root[data-theme="glass"] .kpi, :root[data-theme="glass"] .cal-card, :root[data-theme="glass"] .controls { background-color:var(--surface-1); background-image:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025) 48%,rgba(255,255,255,.06)); border-color:rgba(255,255,255,.20); backdrop-filter:blur(22px) saturate(145%); }
   :root[data-theme="solarpunk"] .card, :root[data-theme="solarpunk"] .kpi, :root[data-theme="solarpunk"] .cal-card, :root[data-theme="solarpunk"] .controls { border-color:rgba(37,83,43,.22); background-image:linear-gradient(145deg,rgba(255,255,255,.38),transparent 42%); }
   :root[data-theme="solarpunk"] .slot-tabs { border-radius:24px 10px 24px 10px; }
@@ -615,7 +752,6 @@
   :root[data-theme="punk"] .dashboard-page .wrap { position:relative; z-index:1; }
   :root[data-theme="punk"] .slot-tabs, :root[data-theme="punk"] .slot-tabs a, :root[data-theme="punk"] .controls-group, :root[data-theme="punk"] .theme-switch button, :root[data-theme="punk"] .theme-more-trigger, :root[data-theme="punk"] .theme-more-row { border-radius:0; }
   :root[data-theme="punk"] .language-switch, :root[data-theme="punk"] .language-switch button { border-radius:0; }
-  :root[data-theme="punk"] .dashboard-topbar { border-bottom:7px solid #0b0b0b; transform:rotate(-.25deg); }
   :root[data-theme="punk"] .slot-tabs { background:var(--accent-soft); }
   :root[data-theme="punk"] .slot-tabs a[aria-pressed="true"] { background:#111; color:var(--accent-soft); }
   :root[data-theme="punk"] .dashboard-hero h1 { display:inline-block; max-width:min(100%,18ch); padding:7px 16px 9px; background:#0b0b0b; color:#fff; box-shadow:18px 0 0 var(--accent),-9px 9px 0 #0057ff; font-size:clamp(2.3rem,7vw,6.8rem); line-height:.82; transform:rotate(-1.5deg) skewX(-4deg); }
@@ -625,10 +761,12 @@
   :root[data-theme="punk"] .card h2 { display:inline; padding:1px 5px; background:var(--accent-soft); color:#0b0b0b; font-weight:1000; text-transform:uppercase; }
   :root[data-theme="punk"] .kpi:nth-child(odd) { transform:rotate(-.35deg); }
   :root[data-theme="punk"] .kpi:nth-child(even) { transform:rotate(.35deg); }
-  @media (prefers-reduced-motion: reduce) { :root[data-theme="solarpunk"] body::before, :root[data-theme="solarpunk"] body::after, :root[data-theme="solarpunk"] .solarpunk-airship { display:none; } }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="solarpunk"] body::before, :root[data-theme="solarpunk"] body::after, :root[data-theme="solarpunk"] .solarpunk-airship { display:none; }
+    #cloud button { animation:none; }
+  }
   @media (max-width:720px) {
     body { padding:24px 16px 48px; }
-    .dashboard-topbar { margin-bottom:22px; }
     .dashboard-actions { gap:8px; }
     .dashboard-head { grid-template-columns:1fr; gap:14px; margin-bottom:22px; }
     .dashboard-theme { justify-self:start; }
@@ -636,17 +774,26 @@
     .dashboard-hero .sub { margin-left:0; }
     #app { grid-template-columns:1fr; gap:16px; }
     .bento-grid { grid-template-columns:1fr; gap:16px; }
-    .bento-hero, .bento-kpis, .bento-grid > .card, .bento-grid > .card:not(.bento-chart):not(#funCard), .bento-grid > #funCard, .bento-grid > .foot { grid-column:1; grid-row:auto; }
+    .bento-hero, .bento-kpis, .bento-grid > .card, .bento-grid > .bento-side-row, .bento-grid > #funCard, .bento-grid > .bento-full, .bento-grid > .foot { grid-column:1; grid-row:auto; }
     .bento-hero { min-height:0; }
     .bento-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .calendar-bento { grid-template-columns:1fr; gap:16px; }
+    .bento-side-row { flex-direction:column; }
+    .bento-open, .bento-needs { flex:1 1 auto; }
+    .facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .calendar-bento { gap:16px; }
     .calendar-bento .cal-cols { grid-template-columns:1fr; }
-    #app .kpi, #app .kpi:first-child, #app .kpi:nth-child(n) { grid-column:1; grid-row:auto; min-height:0; }
-    #app > .card, #app > .card:not(:first-of-type), #app > .card:last-of-type { grid-column:1; }
+    .needs-row { grid-template-columns:minmax(90px,125px) 1fr 38px; gap:8px; }
+    .controls { padding:16px; }
+    .controls-primary { grid-template-columns:1fr; gap:12px; }
+    .controls-settings { align-items:flex-start; flex-direction:column; }
+    .settings-info-button { margin-left:0; }
+    .slot-config-header, .slot-config-body, .slot-config-actions, .settings-info-content { padding-left:18px; padding-right:18px; }
+    .slot-config-header { cursor:default; touch-action:auto; }
     .slot-config-row { grid-template-columns:1fr 1fr auto; }
     .slot-config-row label:first-child { grid-column:1 / -1; }
-    .slot-config-actions { grid-template-columns:auto 1fr auto; }
-    .slot-config-actions button:last-child { grid-column:3; }
+    .slot-config-actions { flex-wrap:wrap; }
+    .slot-config-actions .action-spacer { display:none; }
+    .slot-config-actions button { flex:1 1 auto; }
     .card { padding:18px; }
   }
 </style>
@@ -654,19 +801,6 @@
 <body class="dashboard-page">
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="wrap">
-  <div class="dashboard-topbar" aria-label="Seitenkopf">
-    <a class="dashboard-brand" href="index.html" aria-label="Playabl Dashboard">Playabl Dashboard</a>
-    <div class="dashboard-actions">
-      <div class="language-switch" role="group" aria-label="Sprache wählen">
-        <button type="button" data-language="de" aria-pressed="true" aria-label="Deutsch">DE</button>
-        <button type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button>
-      </div>
-      <div class="controls-group">
-        <span class="sr-only">Farbschema wählen</span>
-        <div id="themeSwitch"></div>
-      </div>
-    </div>
-  </div>
   <header class="dashboard-head" aria-label="Dashboard-Kopfzeile">
     <section class="dashboard-hero" aria-labelledby="pageTitle">
       <div class="dashboard-eyebrow">Playabl · Spielangebot pro Slot<span class="brand-cursor" aria-hidden="true">_</span></div>
@@ -674,44 +808,52 @@
       <p class="sub" id="pageSub">Daten werden live von Playabl geladen …</p>
       <p id="rsvpBanner" class="banner" role="status" hidden></p>
     </section>
+    <div class="dashboard-actions">
+      <div id="contrastAidSwitch" class="contrast-aid-slot" hidden></div>
+      <div class="controls-group">
+        <div class="language-switch" role="group" aria-label="Sprache wählen">
+          <button type="button" data-language="de" aria-pressed="true" aria-label="Deutsch">DE</button>
+          <button type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button>
+        </div>
+        <span class="controls-divider" aria-hidden="true"></span>
+        <span class="sr-only">Farbschema wählen</span>
+        <div id="themeSwitch"></div>
+      </div>
+    </div>
   </header>
 
   <main id="main">
     <nav class="controls" aria-label="Ansicht, Event und Ziel wählen">
-      <div class="tabs" role="group" aria-label="Ansicht">
-        <button id="tabOverview" type="button" aria-pressed="true">Übersicht</button>
-        <button id="tabCalendar" type="button" aria-pressed="false">Kalender</button>
-      </div>
-      <div class="field">
-        <label for="communitySelect">Community</label>
-        <select id="communitySelect"><option value="">– lädt –</option></select>
-      </div>
-      <div class="field">
-        <label for="eventSelect">Event wechseln</label>
-        <select id="eventSelect"><option value="">– lädt –</option></select>
-      </div>
-      <div class="field">
-        <label for="eventInput">… oder Playabl-URL / Event-ID</label>
-        <div style="display:flex;gap:6px">
-          <input id="eventInput" type="text" inputmode="numeric" placeholder="z.B. 104" size="10">
-          <button id="eventGo" type="button">Anzeigen</button>
+      <div class="controls-primary">
+        <div class="tabs" role="group" aria-label="Ansicht">
+          <button id="tabOverview" type="button" aria-pressed="true">Übersicht</button>
+          <button id="tabCalendar" type="button" aria-pressed="false">Kalender</button>
         </div>
-      </div>
-      <div class="field">
-        <label for="zielMin">Ziel-Plätze pro Slot (von–bis)</label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input id="zielMin" type="number" min="1" max="999" style="width:70px" aria-label="Ziel von">
-          <span aria-hidden="true">–</span>
-          <input id="zielMax" type="number" min="1" max="999" style="width:70px" aria-label="Ziel bis">
-          <button id="zielGo" type="button">Anwenden</button>
+        <div class="field">
+          <label for="communitySelect">Community</label>
+          <select id="communitySelect"><option value="">– lädt –</option></select>
         </div>
+        <div class="field">
+          <label for="eventSelect">Event wechseln</label>
+          <select id="eventSelect"><option value="">– lädt –</option></select>
+        </div>
+        <button id="slotConfigOpen" class="setup-button" type="button">Setup</button>
       </div>
-      <div class="field">
-        <label>Slot-Zeiten</label>
-        <button id="slotConfigOpen" type="button">Slots definieren</button>
+      <div class="controls-settings" aria-label="Aktive Einstellungen">
+        <div class="setting-summary">
+          <span class="setting-summary-label">Ziel-Plätze pro Slot</span>
+          <span class="setting-summary-value" id="targetSummary">70–80</span>
+          <span class="setting-source" id="targetSourceSummary"></span>
+        </div>
+        <div class="setting-summary">
+          <span class="setting-summary-label">Slots</span>
+          <span class="setting-summary-value" id="slotsSummary">werden geladen …</span>
+          <span class="setting-source" id="slotsSourceSummary"></span>
+        </div>
+        <button class="settings-info-button" id="settingsInfoOpen" type="button" aria-label="Informationen zu Zielplätzen und Slots">i</button>
       </div>
     </nav>
-    <p id="status">Lade Daten von Playabl …</p>
+    <p id="status" role="status" aria-live="polite">Lade Daten von Playabl …</p>
     <div id="app"></div>
     <section id="calView" hidden aria-label="Kalender-Ansicht"></section>
   </main>
@@ -719,13 +861,91 @@
 </div>
 <div id="tooltip" aria-hidden="true"></div>
 <img class="solarpunk-airship" src="https://commons.wikimedia.org/wiki/Special:FilePath/Airship-Zeppelin-LZ-127.svg" alt="" aria-hidden="true">
-<dialog id="slotConfigDlg" aria-labelledby="slotConfigTitle">
+<dialog id="slotConfigDlg" aria-labelledby="slotConfigTitle" aria-describedby="slotConfigIntro">
   <form method="dialog" class="slot-config-form">
-    <h2 id="slotConfigTitle">Slots für dieses Event</h2>
-    <p class="hint">Nur lokal in diesem Browser gespeichert. Die Zeiten überschreiben im Dashboard die automatisch gelesenen Slot-Zeiten.</p>
-    <div id="slotConfigRows"></div>
-    <div class="slot-config-actions"><button type="button" id="slotConfigAdd">+ Slot</button><span></span><button type="button" id="slotConfigReset">Zurücksetzen</button><button value="cancel">Abbrechen</button><button type="button" id="slotConfigSave">Speichern</button></div>
+    <div class="slot-config-header">
+      <div>
+        <h2 id="slotConfigTitle">Dashboard-Setup</h2>
+        <p id="slotConfigIntro">Passe Zielkorridor und Zeitfenster für dieses Event an. Die Slot-Einstellung bleibt lokal in diesem Browser.</p>
+      </div>
+      <button id="slotConfigClose" class="slot-config-close" value="cancel" formnovalidate aria-label="Dialog schließen">×</button>
+    </div>
+    <div class="slot-config-body">
+      <section class="setup-target" aria-labelledby="setupTargetTitle">
+        <h3 id="setupTargetTitle">Ziel-Plätze pro Slot</h3>
+        <p id="targetEstimateNote">Der Zielkorridor wird in den Kennzahlen und Auswertungen verwendet.</p>
+        <div class="setup-target-fields">
+          <label for="zielMin"><span id="targetMinLabel">Von</span><input id="zielMin" type="number" min="1" max="999" aria-label="Ziel von"></label>
+          <span class="setup-target-separator" aria-hidden="true">–</span>
+          <label for="zielMax"><span id="targetMaxLabel">Bis</span><input id="zielMax" type="number" min="1" max="999" aria-label="Ziel bis"></label>
+        </div>
+        <button type="button" id="targetConfigReset" class="target-reset">Ziel neu ermitteln</button>
+      </section>
+      <h3 id="setupSlotsTitle" class="setup-slots-title">Slot-Zeiten</h3>
+      <div id="slotConfigRows"></div>
+    </div>
+    <div class="slot-config-actions">
+      <button type="button" id="slotConfigAdd">+ Slot hinzufügen</button>
+      <span class="action-spacer"></span>
+      <button type="button" id="slotConfigReset" class="secondary-action">Slots neu ermitteln</button>
+      <button id="slotConfigCancel" value="cancel" formnovalidate class="secondary-action">Abbrechen</button>
+      <button type="button" id="slotConfigSave" class="primary-action">Setup speichern</button>
+    </div>
   </form>
+</dialog>
+<dialog id="settingsInfoDlg" aria-labelledby="settingsInfoTitle">
+  <div class="slot-config-form">
+    <div class="slot-config-header">
+      <div>
+        <h2 id="settingsInfoTitle">Wie funktionieren Zielplätze und Slots?</h2>
+        <p id="settingsInfoIntro">Hintergrund zur Auswertung, automatischen Erkennung und lokalen Konfiguration.</p>
+      </div>
+      <button class="slot-config-close" id="settingsInfoClose" type="button" aria-label="Informationen schließen">×</button>
+    </div>
+    <div class="settings-info-content">
+      <section>
+        <h3 id="settingsInfoTargetTitle">Ziel-Plätze pro Slot</h3>
+        <p id="settingsInfoTargetText">Der Zielkorridor beschreibt, wie viele Personen in jedem Zeitfenster durch angebotene Runden untergebracht werden sollen. Das Dashboard vergleicht die aktuell angebotenen Spielplätze mit diesem Korridor und zeigt, in welchen Slots weitere Runden gebraucht werden.</p>
+        <p class="settings-info-note" id="settingsInfoCountText"><strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro Session. Der Zielwert verändert keine Daten auf Playabl; er steuert ausschließlich die Darstellung und Berechnung in diesem Dashboard.</p>
+      </section>
+      <section>
+        <h3 id="settingsInfoSourcesTitle">Woher kommen die Slots?</h3>
+        <ol>
+          <li id="settingsInfoSourceManual"><strong>Manuelle Einstellung:</strong> Eine im Setup gespeicherte Konfiguration hat immer Vorrang.</li>
+          <li id="settingsInfoSourcePlan"><strong>Con-Raumplan:</strong> Ist das Event mit einer Raumplanung verbunden, werden deren Zeitfenster übernommen.</li>
+          <li id="settingsInfoSourceAuto"><strong>Automatische Erkennung:</strong> Ohne diese Quellen untersucht das Dashboard beim ersten Laden die Startzeiten aller Sessions.</li>
+          <li id="settingsInfoSourceFallback"><strong>Fallback:</strong> Reichen die Daten für eine verlässliche Schätzung nicht aus, gilt Vormittag 0–14 Uhr und Nachmittag 14–24 Uhr.</li>
+        </ol>
+      </section>
+      <section>
+        <h3 id="settingsInfoDetectionTitle">Wie funktioniert die automatische Erkennung?</h3>
+        <p id="settingsInfoDetectionText">Nahe beieinanderliegende Startzeiten werden zu Gruppen zusammengefasst. Eine größere zeitliche Lücke deutet auf einen neuen Slot hin. Aus der Lage dieser Gruppen entstehen Bezeichnungen wie Vormittag, Nachmittag oder Abend sowie passende Grenzen zwischen den Zeitfenstern.</p>
+        <p id="settingsInfoDetectionStable">Die Schätzung wird nur einmal angelegt. Danach bleibt sie stabil, auch wenn später neue Sessions dazukommen. Im Setup kann sie jederzeit geprüft und korrigiert werden.</p>
+      </section>
+      <section>
+        <h3 id="settingsInfoStorageTitle">Speicherung und erneute Ermittlung</h3>
+        <p id="settingsInfoStorageText">Manuell eingestellte oder automatisch erkannte Slots werden nur lokal in diesem Browser gespeichert. Sie verändern weder Playabl noch die Con-Raumplanung. <strong>„Slots neu ermitteln“</strong> entfernt die lokale Slot-Konfiguration und führt die Quellenlogik erneut aus: Raumplanung, automatische Erkennung und zuletzt der Standard-Fallback. Der Zielkorridor bleibt dabei unverändert.</p>
+      </section>
+    </div>
+  </div>
+</dialog>
+<dialog id="wordContextDlg" aria-labelledby="wordContextTitle">
+  <div class="slot-config-form">
+    <div class="slot-config-header">
+      <div>
+        <h2 id="wordContextTitle">Kontext</h2>
+        <p id="wordContextIntro">Zufällige Ausschnitte aus Rundenbeschreibungen.</p>
+      </div>
+      <button class="slot-config-close" id="wordContextClose" type="button" aria-label="Kontext schließen">×</button>
+    </div>
+    <div class="word-context-content">
+      <p class="word-context-meta" id="wordContextMeta"></p>
+      <div class="word-context-list" id="wordContextList"></div>
+    </div>
+    <div class="word-context-actions">
+      <button type="button" id="wordContextRefresh">Andere Ausschnitte</button>
+    </div>
+  </div>
 </dialog>
 <script src="https://lmbreuer.github.io/con-raumplan/punk-zine-quotes.js"></script>
 
@@ -815,14 +1035,56 @@ function renderPunkZineBanner() {
   el.hidden = false;
   el.innerHTML = `<a href="${pick.url}" target="_blank" rel="noopener" title="${pick.source}" aria-label="${pick.quote} — ${pick.source}">${pick.quote}</a>`;
 }
+function colorVisionAidIsOn() {
+  try { return localStorage.getItem("raumplan-color-vision-aid") === "1"; } catch { return false; }
+}
+function updateColorVisionAidAttribute() {
+  const enabled = document.documentElement.getAttribute("data-theme") === "contrast" && colorVisionAidIsOn();
+  document.documentElement.toggleAttribute("data-color-aid", enabled);
+  return enabled;
+}
+function setColorVisionAid(enabled) {
+  try { localStorage.setItem("raumplan-color-vision-aid", enabled ? "1" : "0"); } catch {}
+  updateColorVisionAidAttribute();
+  const legend = document.querySelector(".bento-hero-legend");
+  if (legend) {
+    legend.textContent = enabled
+      ? `Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter`
+      : `Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`;
+  }
+}
+function renderContrastAidSwitch() {
+  const slot = document.getElementById("contrastAidSwitch");
+  if (!slot) return;
+  const visible = document.documentElement.getAttribute("data-theme") === "contrast";
+  slot.hidden = !visible;
+  if (!visible) { slot.innerHTML = ""; updateColorVisionAidAttribute(); return; }
+  const enabled = updateColorVisionAidAttribute();
+  const en = document.documentElement.lang === "en";
+  const label = en ? "Distinguish target status colours with additional symbols" : "Zielfarben zusätzlich mit Symbolen unterscheiden";
+  slot.innerHTML = `<button type="button" class="contrast-aid-toggle" data-color-vision-aid role="switch" aria-checked="${String(enabled)}" aria-label="${label}" title="${label}">
+    <span class="contrast-aid-glyphs" aria-hidden="true">✓!</span><span>${en ? "Symbols" : "Symbole"}</span>
+  </button>`;
+  if (!slot.dataset.wired) {
+    slot.dataset.wired = "1";
+    slot.addEventListener("click", event => {
+      const toggle = event.target.closest("[data-color-vision-aid]");
+      if (!toggle) return;
+      setColorVisionAid(toggle.getAttribute("aria-checked") !== "true");
+      renderContrastAidSwitch();
+    });
+  }
+}
 function applyTheme(key) {
   document.documentElement.setAttribute("data-theme", key);
   try { localStorage.setItem("raumplan-theme", key); } catch {}
+  updateColorVisionAidAttribute();
   if (key === "terminal") terminalEasterEgg();
   updateCatEasterEgg();
   renderPunkZineBanner();
   if (key === "ukiyo") pickUkiyoBackground();
   if (key === "solarpunk") randomizeSolarClouds(true);
+  renderContrastAidSwitch();
 }
 function ensureThemeMorePopover() {
   let el = document.getElementById("themeMorePopover");
@@ -847,6 +1109,11 @@ function closeThemeMorePopover() {
 }
 function renderThemeSwitch(container) {
   const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const en = document.documentElement.lang === "en";
+  const coreNames = en ? { dark:"Dark", light:"Light", contrast:"High contrast" } : {};
+  const themeName = theme => coreNames[theme.key] || theme.name;
+  const groupLabel = en ? "Choose colour scheme" : "Farbschema wählen";
+  const moreLabel = en ? "More themes" : "Weitere Themes";
   if (current === "terminal") terminalEasterEgg();
   if (current === "ukiyo") pickUkiyoBackground();
   if (current === "solarpunk") randomizeSolarClouds();
@@ -857,10 +1124,10 @@ function renderThemeSwitch(container) {
   const activeSpecial = specials.find(theme => theme.key === current);
   container.className = "theme-switch-group";
   container.setAttribute("role", "group");
-  container.setAttribute("aria-label", "Farbschema wählen");
+  container.setAttribute("aria-label", groupLabel);
   container.innerHTML = `<div class="theme-switch">${core.map(t =>
-    `<button type="button" data-theme-key="${t.key}" aria-pressed="${String(t.key === current)}" title="${t.name}" aria-label="${t.name}">${t.label}</button>`
-  ).join("")}</div><div class="theme-more-wrap"><button type="button" class="theme-more-trigger${activeSpecial ? " is-active" : ""}" aria-haspopup="true" aria-expanded="false" aria-label="Weitere Themes" title="Weitere Themes"><span>${activeSpecial ? activeSpecial.label : "✨"}</span><span aria-hidden="true">⌄</span></button></div>`;
+    `<button type="button" data-theme-key="${t.key}" aria-pressed="${String(t.key === current)}" title="${themeName(t)}" aria-label="${themeName(t)}">${t.label}</button>`
+  ).join("")}</div><div class="theme-more-wrap"><button type="button" class="theme-more-trigger${activeSpecial ? " is-active" : ""}" aria-haspopup="true" aria-expanded="false" aria-label="${moreLabel}" title="${moreLabel}"><span>${activeSpecial ? activeSpecial.label : "✨"}</span><span aria-hidden="true">⌄</span></button></div>`;
   container.onclick = e => {
     const btn = e.target.closest("button[data-theme-key]");
     if (btn) { applyTheme(btn.dataset.themeKey); closeThemeMorePopover(); document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch); return; }
@@ -870,12 +1137,13 @@ function renderThemeSwitch(container) {
     const rect = trigger.getBoundingClientRect();
     popover.style.top = `${rect.bottom + 8}px`;
     popover.style.left = `${Math.max(8, rect.right - 190)}px`;
-    popover.innerHTML = specials.map(theme => `<button type="button" data-theme-key="${theme.key}" class="theme-more-row" aria-pressed="${String(theme.key === current)}"><span>${theme.label}</span><span style="flex:1">${theme.name}</span><span>${theme.key === current ? "✓" : ""}</span></button>`).join("");
+    popover.innerHTML = specials.map(theme => `<button type="button" data-theme-key="${theme.key}" class="theme-more-row" aria-pressed="${String(theme.key === current)}"><span>${theme.label}</span><span style="flex:1">${themeName(theme)}</span><span>${theme.key === current ? "✓" : ""}</span></button>`).join("");
     popover.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
   };
 }
 renderThemeSwitch(document.getElementById("themeSwitch"));
+renderContrastAidSwitch();
 document.addEventListener("click", event => {
   if (event.target.closest(".theme-more-wrap") || event.target.closest("#themeMorePopover")) return;
   closeThemeMorePopover();
@@ -887,13 +1155,51 @@ const UI_LANGUAGE_KEY = "playabl-dashboard-language";
 const UI_COPY = {
   de: {
     skip: "Zum Inhalt springen", nav: "Ansicht, Event und Ziel wählen", overview: "Übersicht", calendar: "Kalender",
-    community: "Community", event: "Event wechseln", url: "… oder Playabl-URL / Event-ID", show: "Anzeigen",
-    target: "Ziel-Plätze pro Slot (von–bis)", apply: "Anwenden", language: "Sprache wählen"
+    community: "Community", event: "Event wechseln", setup: "Setup", language: "Sprache wählen", targetSetting:"Ziel-Plätze pro Slot", slotsSetting:"Slots",
+    setupTitle:"Dashboard-Setup", setupIntro:"Passe Zielkorridor und Zeitfenster für dieses Event an. Die Slot-Einstellung bleibt lokal in diesem Browser.",
+    setupClose:"Dialog schließen", setupTargetTitle:"Ziel-Plätze pro Slot", setupFrom:"Von", setupTo:"Bis", setupMin:"Ziel von", setupMax:"Ziel bis",
+    setupSlotsTitle:"Slot-Zeiten", setupAdd:"+ Slot hinzufügen", setupResetSlots:"Slots neu ermitteln", setupCancel:"Abbrechen", setupSave:"Setup speichern",
+    setupName:"Name", setupRemove:"Slot entfernen", setupInvalidTarget:"Bitte gültige Ziel-Werte angeben (von ≤ bis).", setupInvalidSlots:"Bitte mindestens einen gültigen Slot angeben.",
+    infoOpen: "Informationen zu Zielplätzen und Slots", infoClose: "Informationen schließen",
+    infoTitle: "Wie funktionieren Zielplätze und Slots?",
+    infoIntro: "Hintergrund zur Auswertung, automatischen Erkennung und lokalen Konfiguration.",
+    infoTargetTitle: "Ziel-Plätze pro Slot",
+    infoTargetText: "Der Zielkorridor beschreibt, wie viele Personen in jedem Zeitfenster durch angebotene Runden untergebracht werden sollen. Wenn Playabl Event-Freischaltungen bereitstellt, schätzt das Dashboard daraus automatisch einen Korridor von ungefähr 85–100 Prozent und rundet ihn sinnvoll. Sobald RSVPs vorhanden sind, dient die höchste eindeutige Nachfrage eines Slots zusätzlich als Untergrenze. Manuelle Werte haben Vorrang; „Ziel neu ermitteln“ stellt die automatische Schätzung wieder her.",
+    infoCountText: "<strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro Session. Der Zielwert verändert keine Daten auf Playabl; er steuert ausschließlich die Darstellung und Berechnung in diesem Dashboard.",
+    infoSourcesTitle: "Woher kommen die Slots?",
+    infoSourceManual: "<strong>Manuelle Einstellung:</strong> Eine im Setup gespeicherte Konfiguration hat immer Vorrang.",
+    infoSourcePlan: "<strong>Con-Raumplan:</strong> Ist das Event mit einer Raumplanung verbunden, werden deren Zeitfenster übernommen.",
+    infoSourceAuto: "<strong>Automatische Erkennung:</strong> Ohne diese Quellen untersucht das Dashboard beim ersten Laden die Startzeiten aller Sessions.",
+    infoSourceFallback: "<strong>Fallback:</strong> Reichen die Daten für eine verlässliche Schätzung nicht aus, gilt Vormittag 0–14 Uhr und Nachmittag 14–24 Uhr.",
+    infoDetectionTitle: "Wie funktioniert die automatische Erkennung?",
+    infoDetectionText: "Nahe beieinanderliegende Startzeiten werden zu Gruppen zusammengefasst. Eine größere zeitliche Lücke deutet auf einen neuen Slot hin. Aus der Lage dieser Gruppen entstehen Bezeichnungen wie Vormittag, Nachmittag oder Abend sowie passende Grenzen zwischen den Zeitfenstern.",
+    infoDetectionStable: "Die Schätzung wird nur einmal angelegt. Danach bleibt sie stabil, auch wenn später neue Sessions dazukommen. Im Setup kann sie jederzeit geprüft und korrigiert werden.",
+    infoStorageTitle: "Speicherung und erneute Ermittlung",
+    infoStorageText: "Manuell eingestellte oder automatisch erkannte Slots werden nur lokal in diesem Browser gespeichert. Sie verändern weder Playabl noch die Con-Raumplanung. <strong>„Slots neu ermitteln“</strong> entfernt die lokale Slot-Konfiguration und führt die Quellenlogik erneut aus: Raumplanung, automatische Erkennung und zuletzt der Standard-Fallback. Der Zielkorridor bleibt dabei unverändert."
   },
   en: {
     skip: "Skip to content", nav: "Choose view, event and target", overview: "Overview", calendar: "Calendar",
-    community: "Community", event: "Change event", url: "… or Playabl URL / event ID", show: "Show",
-    target: "Target seats per slot (from–to)", apply: "Apply", language: "Choose language"
+    community: "Community", event: "Change event", setup: "Setup", language: "Choose language", targetSetting:"Target capacity per slot", slotsSetting:"Slots",
+    setupTitle:"Dashboard setup", setupIntro:"Adjust the target range and time windows for this event. Slot settings remain local to this browser.",
+    setupClose:"Close dialog", setupTargetTitle:"Target capacity per slot", setupFrom:"From", setupTo:"To", setupMin:"Target from", setupMax:"Target to",
+    setupSlotsTitle:"Slot times", setupAdd:"+ Add slot", setupResetSlots:"Redetect slots", setupCancel:"Cancel", setupSave:"Save setup",
+    setupName:"Name", setupRemove:"Remove slot", setupInvalidTarget:"Enter a valid target range (from ≤ to).", setupInvalidSlots:"Enter at least one valid slot.",
+    infoOpen: "Information about target capacity and slots", infoClose: "Close information",
+    infoTitle: "How do target capacity and slots work?",
+    infoIntro: "Background on the analysis, automatic detection, and local configuration.",
+    infoTargetTitle: "Target capacity per slot",
+    infoTargetText: "The target range describes how many people should be accommodated by the sessions offered in each time window. When Playabl provides event access data, the dashboard automatically estimates a range of roughly 85–100 percent and rounds it sensibly. Once RSVPs exist, the highest unique demand in any slot also acts as a lower bound. Manual values take priority; “Redetect target” restores the automatic estimate.",
+    infoCountText: "<strong>Capacity includes player seats plus the person running the session</strong> for every session. The target does not change any data on Playabl; it is used only for the dashboard’s display and calculations.",
+    infoSourcesTitle: "Where do the slots come from?",
+    infoSourceManual: "<strong>Manual configuration:</strong> A configuration saved in Setup always takes priority.",
+    infoSourcePlan: "<strong>Con room plan:</strong> If the event is linked to a room plan, its time windows are used.",
+    infoSourceAuto: "<strong>Automatic detection:</strong> Without either source, the dashboard examines all session start times when the event is loaded for the first time.",
+    infoSourceFallback: "<strong>Fallback:</strong> If there is not enough data for a reliable estimate, the defaults are Morning 0–14 and Afternoon 14–24.",
+    infoDetectionTitle: "How does automatic detection work?",
+    infoDetectionText: "Start times that are close together are grouped. A larger gap indicates the beginning of a new slot. The positions of these groups produce labels such as Morning, Afternoon, or Evening, together with suitable boundaries between the time windows.",
+    infoDetectionStable: "The estimate is created only once. It then remains stable even when more sessions are added later. It can be reviewed and corrected in Setup at any time.",
+    infoStorageTitle: "Storage and redetection",
+    infoStorageText: "Manually configured or automatically detected slots are stored only in this browser. They do not change Playabl or the con room plan. <strong>“Redetect slots”</strong> removes the local slot configuration and runs the source logic again: room plan, automatic detection, and finally the standard fallback. The target range remains unchanged."
   }
 };
 function applyLanguage(language) {
@@ -909,10 +1215,56 @@ function applyLanguage(language) {
   document.getElementById("tabCalendar").textContent = copy.calendar;
   document.querySelector("label[for='communitySelect']").textContent = copy.community;
   document.querySelector("label[for='eventSelect']").textContent = copy.event;
-  document.querySelector("label[for='eventInput']").textContent = copy.url;
-  document.getElementById("eventGo").textContent = copy.show;
-  document.querySelector("label[for='zielMin']").textContent = copy.target;
-  document.getElementById("zielGo").textContent = copy.apply;
+  document.getElementById("slotConfigOpen").textContent = copy.setup;
+  document.getElementById("slotConfigTitle").textContent = copy.setupTitle;
+  document.getElementById("slotConfigIntro").textContent = copy.setupIntro;
+  document.getElementById("slotConfigClose").setAttribute("aria-label", copy.setupClose);
+  document.getElementById("setupTargetTitle").textContent = copy.setupTargetTitle;
+  document.getElementById("targetMinLabel").textContent = copy.setupFrom;
+  document.getElementById("zielMin").setAttribute("aria-label", copy.setupMin);
+  document.getElementById("targetMaxLabel").textContent = copy.setupTo;
+  document.getElementById("zielMax").setAttribute("aria-label", copy.setupMax);
+  document.getElementById("setupSlotsTitle").textContent = copy.setupSlotsTitle;
+  document.getElementById("slotConfigAdd").textContent = copy.setupAdd;
+  document.getElementById("slotConfigReset").textContent = copy.setupResetSlots;
+  document.getElementById("slotConfigCancel").textContent = copy.setupCancel;
+  document.getElementById("slotConfigSave").textContent = copy.setupSave;
+  document.querySelectorAll("[data-slot-name-copy]").forEach(element => { element.textContent = copy.setupName; });
+  document.querySelectorAll("[data-slot-from-copy]").forEach(element => { element.textContent = copy.setupFrom; });
+  document.querySelectorAll("[data-slot-to-copy]").forEach(element => { element.textContent = copy.setupTo; });
+  document.querySelectorAll("[data-slot-remove]").forEach(element => { element.setAttribute("aria-label", copy.setupRemove); });
+  const settingLabels = document.querySelectorAll(".setting-summary-label");
+  if (settingLabels[0]) settingLabels[0].textContent = copy.targetSetting;
+  if (settingLabels[1]) settingLabels[1].textContent = copy.slotsSetting;
+  document.getElementById("settingsInfoOpen").setAttribute("aria-label", copy.infoOpen);
+  document.getElementById("settingsInfoClose").setAttribute("aria-label", copy.infoClose);
+  document.getElementById("settingsInfoTitle").textContent = copy.infoTitle;
+  document.getElementById("settingsInfoIntro").textContent = copy.infoIntro;
+  document.getElementById("settingsInfoTargetTitle").textContent = copy.infoTargetTitle;
+  document.getElementById("settingsInfoTargetText").textContent = copy.infoTargetText;
+  document.getElementById("settingsInfoCountText").innerHTML = copy.infoCountText;
+  document.getElementById("settingsInfoSourcesTitle").textContent = copy.infoSourcesTitle;
+  document.getElementById("settingsInfoSourceManual").innerHTML = copy.infoSourceManual;
+  document.getElementById("settingsInfoSourcePlan").innerHTML = copy.infoSourcePlan;
+  document.getElementById("settingsInfoSourceAuto").innerHTML = copy.infoSourceAuto;
+  document.getElementById("settingsInfoSourceFallback").innerHTML = copy.infoSourceFallback;
+  document.getElementById("settingsInfoDetectionTitle").textContent = copy.infoDetectionTitle;
+  document.getElementById("settingsInfoDetectionText").textContent = copy.infoDetectionText;
+  document.getElementById("settingsInfoDetectionStable").textContent = copy.infoDetectionStable;
+  document.getElementById("settingsInfoStorageTitle").textContent = copy.infoStorageTitle;
+  document.getElementById("settingsInfoStorageText").innerHTML = copy.infoStorageText;
+  const germanContent = ["app","calView","status","rsvpBanner","pageSub","credits","slotsSummary","slotsSourceSummary"];
+  for (const id of germanContent) {
+    const element = document.getElementById(id);
+    if (!element) continue;
+    if (key === "en") element.setAttribute("lang", "de");
+    else element.removeAttribute("lang");
+  }
+  document.querySelector(".dashboard-eyebrow")?.toggleAttribute("lang", key === "en");
+  if (key === "en") document.querySelector(".dashboard-eyebrow")?.setAttribute("lang", "de");
+  document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch);
+  renderContrastAidSwitch();
+  window.dispatchEvent(new CustomEvent("uilanguagechange", { detail:{ language:key } }));
 }
 document.querySelector(".language-switch").addEventListener("click", event => {
   const button = event.target.closest("button[data-language]");
@@ -963,11 +1315,14 @@ const WS_RE = /workshop|panel|vortrag/i;
 
 const params  = new URLSearchParams(location.search);
 const EVENT   = params.get("event") || String(CONFIG.eventId);
-const LO      = parseInt(params.get("min") || CONFIG.zielMin, 10);
-const HI      = parseInt(params.get("max") || CONFIG.zielMax, 10);
+let LO        = parseInt(params.get("min") || CONFIG.zielMin, 10);
+let HI        = parseInt(params.get("max") || CONFIG.zielMax, 10);
 const CUTOFF  = CONFIG.cutoffStunde;
 const TZ      = CONFIG.zeitzone;
 const EVENT_URL = `https://app.playabl.io/events/${EVENT}/overview`;
+let activeTargetSource = params.has("min") || params.has("max") ? "manual" : "fallback";
+let eligibleTargetCount = null;
+let peakTargetRsvps = 0;
 
 const SUPABASE = "https://oapuqtuewlvswrdezthc.supabase.co";
 // Öffentlicher anon-Key von Playabl (steckt in deren Web-App, wird an jeden Besucher ausgeliefert):
@@ -982,8 +1337,73 @@ async function api(path) {
 const load = () => api(`sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id)`
   + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`);
 const loadGames = () => api(`games?select=id,title,system,description,participant_count&event_id=eq.${EVENT}&deleted_at=is.null`).catch(() => []);
-const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);
+const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time,event_access_levels&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);
 const loadEventsList = () => api(`community_events?select=id,title,start_time,community_id(id,name)&draft_state=eq.PUBLISHED&deleted_at=is.null&order=start_time.desc&limit=100`).catch(() => []);
+
+async function loadEligibleTargetCount(accessLevels) {
+  const ids = (accessLevels || []).map(Number).filter(Number.isFinite);
+  if (!ids.length) return null;
+  try {
+    const rows = await api(`community_access?select=user_id&access_level_id=in.(${ids.join(",")})`);
+    const users = new Set(rows.map(row => row.user_id).filter(Boolean));
+    return users.size || null;
+  } catch { return null; }
+}
+function estimateTargetRange(eligible, peakRsvps = 0) {
+  const step = eligible >= 40 ? 5 : 1;
+  let high = step === 1 ? eligible : Math.max(step, Math.floor(eligible / step) * step);
+  let low = Math.max(step, Math.ceil((eligible * .85) / step) * step);
+  low = Math.max(low, peakRsvps);
+  if (low > high) high = low;
+  return { low, high };
+}
+function peakUniqueRsvps(sessions, buckets) {
+  const bySlot = new Map();
+  for (const session of sessions) {
+    const date = dayKey.format(new Date(session.start_time));
+    const hour = hourOf(session.start_time);
+    const bucket = buckets.find(item => hour >= item.start_hour && hour < item.end_hour);
+    const key = `${date}|${bucket?.label || "Unsortiert"}`;
+    if (!bySlot.has(key)) bySlot.set(key, new Set());
+    for (const userId of session.rsvps || []) bySlot.get(key).add(userId);
+  }
+  return Math.max(0, ...[...bySlot.values()].map(users => users.size));
+}
+function targetSourceLabel() {
+  const en = document.documentElement.lang === "en";
+  if (activeTargetSource === "manual") return en ? "· manual" : "· manuell";
+  if (activeTargetSource === "access") return en
+    ? `· estimated from ${eligibleTargetCount} event access grants`
+    : `· geschätzt aus ${eligibleTargetCount} Event-Freischaltungen`;
+  return en ? "· standard" : "· Standard";
+}
+function updateTargetMeta() {
+  const source = document.getElementById("targetSourceSummary");
+  const note = document.getElementById("targetEstimateNote");
+  const reset = document.getElementById("targetConfigReset");
+  if (source) source.textContent = targetSourceLabel();
+  const en = document.documentElement.lang === "en";
+  if (reset) reset.textContent = en ? "Redetect target" : "Ziel neu ermitteln";
+  const cloudHeading = document.getElementById("cloudHeading");
+  const cloudHint = document.getElementById("cloudHint");
+  const cloud = document.getElementById("cloud");
+  if (cloudHeading) cloudHeading.textContent = en ? "Word cloud from session descriptions" : "Wortwolke aus den Rundenbeschreibungen";
+  if (cloudHint) cloudHint.textContent = en
+    ? "Hover over a word to see its frequency and share; click it for random excerpts in context."
+    : "Mit der Maus über ein Wort fahren zeigt Häufigkeit und Anteil; ein Klick öffnet zufällige Ausschnitte im Kontext.";
+  if (cloud) cloud.setAttribute("aria-label", en ? "Interactive word cloud" : "Interaktive Wortwolke");
+  if (!note) return;
+  if (activeTargetSource === "access") {
+    note.textContent = en
+      ? `Automatically estimated from ${eligibleTargetCount} event access grants (about 85–100%).${peakTargetRsvps ? ` Current peak slot demand: ${peakTargetRsvps} unique RSVPs.` : ""}`
+      : `Automatisch aus ${eligibleTargetCount} Event-Freischaltungen geschätzt (ca. 85–100 %).${peakTargetRsvps ? ` Bisher höchste Slot-Nachfrage: ${peakTargetRsvps} eindeutige RSVPs.` : ""}`;
+  } else if (activeTargetSource === "manual") {
+    note.textContent = en ? "Manually configured target range." : "Manuell eingestellter Zielkorridor.";
+  } else {
+    note.textContent = en ? "No usable event access data; the configured default is used." : "Keine nutzbaren Event-Freischaltungen; der konfigurierte Standard wird verwendet.";
+  }
+}
+window.addEventListener("uilanguagechange", updateTargetMeta);
 
 const fmt = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" });
 const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
@@ -995,6 +1415,9 @@ const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, ho
 // der verknüpften Con ersetzt (siehe findSlotBuckets/Start unten).
 let slotRuleHint = `Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone ${TZ}).`;
 const localSlotKey = `playabl-dashboard-slot-buckets:${EVENT}`;
+const localSlotSourceKey = `playabl-dashboard-slot-source:${EVENT}`;
+let activeSlotBuckets = [];
+let activeSlotSource = "";
 function loadLocalSlotBuckets() {
   try {
     const rows = JSON.parse(localStorage.getItem(localSlotKey) || "[]");
@@ -1002,14 +1425,256 @@ function loadLocalSlotBuckets() {
       .map(b => ({ label:String(b.label), start_hour:+b.start_hour, end_hour:+b.end_hour })) : [];
   } catch { return []; }
 }
+function sessionStartMinute(session) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone:TZ, hour:"2-digit", minute:"2-digit", hour12:false
+  }).formatToParts(new Date(session.start_time));
+  const hour = +(parts.find(part => part.type === "hour")?.value || 0) % 24;
+  const minute = +(parts.find(part => part.type === "minute")?.value || 0);
+  return hour * 60 + minute;
+}
+function inferSlotBuckets(sessions) {
+  const starts = sessions.map(sessionStartMinute).filter(Number.isFinite).sort((a, b) => a - b);
+  if (starts.length < 4) return [];
+
+  const clusterWithGap = gap => {
+    const clusters = [];
+    for (const minute of starts) {
+      const current = clusters[clusters.length - 1];
+      if (!current || minute - current[current.length - 1] >= gap) clusters.push([minute]);
+      else current.push(minute);
+    }
+    return clusters;
+  };
+  let clusters = clusterWithGap(120);
+  if (clusters.length > 4) clusters = clusterWithGap(180);
+  if (clusters.length < 2 || clusters.length > 4) return [];
+
+  // Sehr kleine Gruppen in der Nähe eines größeren Clusters sind meist
+  // Ausreißer und keine eigenen Programm-Slots.
+  const tinyLimit = Math.max(1, Math.ceil(starts.length * .04));
+  for (let i = clusters.length - 1; i >= 0; i--) {
+    if (clusters.length <= 2 || clusters[i].length > tinyLimit) continue;
+    const prevGap = i > 0 ? clusters[i][0] - clusters[i - 1][clusters[i - 1].length - 1] : Infinity;
+    const nextGap = i < clusters.length - 1 ? clusters[i + 1][0] - clusters[i][clusters[i].length - 1] : Infinity;
+    if (Math.min(prevGap, nextGap) > 240) continue;
+    const neighbor = prevGap <= nextGap ? i - 1 : i + 1;
+    clusters[neighbor].push(...clusters[i]);
+    clusters[neighbor].sort((a, b) => a - b);
+    clusters.splice(i, 1);
+  }
+  if (clusters.length < 2) return [];
+
+  const baseNames = clusters.map(cluster => {
+    const center = cluster[Math.floor(cluster.length / 2)];
+    return center < 12 * 60 ? "Vormittag" : center < 17 * 60 ? "Nachmittag" : "Abend";
+  });
+  const names = baseNames.map((name, index) =>
+    baseNames.indexOf(name) === index && baseNames.lastIndexOf(name) === index ? name : `Slot ${index + 1}`);
+  const boundaries = clusters.slice(1).map(cluster => Math.max(1, Math.min(23, Math.floor(cluster[0] / 60))));
+  if (new Set(boundaries).size !== boundaries.length) return [];
+  return clusters.map((cluster, index) => ({
+    label:names[index],
+    start_hour:index === 0 ? 0 : boundaries[index - 1],
+    end_hour:index === clusters.length - 1 ? 24 : boundaries[index]
+  }));
+}
 function slotConfigRow(bucket = { label:"", start_hour:9, end_hour:13 }) {
-  return `<div class="slot-config-row"><label>Name<input data-slot-label value="${bucket.label.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" required></label><label>Von<input data-slot-start type="number" min="0" max="23" value="${bucket.start_hour}" required></label><label>Bis<input data-slot-end type="number" min="1" max="24" value="${bucket.end_hour}" required></label><button type="button" data-slot-remove aria-label="Slot entfernen">×</button></div>`;
+  const copy = UI_COPY[document.documentElement.lang] || UI_COPY.de;
+  return `<div class="slot-config-row"><label><span data-slot-name-copy>${copy.setupName}</span><input data-slot-label value="${bucket.label.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" required></label><label><span data-slot-from-copy>${copy.setupFrom}</span><input data-slot-start type="number" min="0" max="23" value="${bucket.start_hour}" required></label><label><span data-slot-to-copy>${copy.setupTo}</span><input data-slot-end type="number" min="1" max="24" value="${bucket.end_hour}" required></label><button type="button" data-slot-remove aria-label="${copy.setupRemove}">×</button></div>`;
 }
 function openSlotConfig() {
-  const current = loadLocalSlotBuckets();
-  document.getElementById("slotConfigRows").innerHTML = (current.length ? current : [{ label:"Vormittag", start_hour:0, end_hour:14 }, { label:"Nachmittag", start_hour:14, end_hour:24 }]).map(slotConfigRow).join("");
-  document.getElementById("slotConfigDlg").showModal();
+  const shown = activeSlotBuckets.length ? activeSlotBuckets : [{ label:"Vormittag", start_hour:0, end_hour:14 }, { label:"Nachmittag", start_hour:14, end_hour:24 }];
+  document.getElementById("slotConfigRows").innerHTML = shown.map(slotConfigRow).join("");
+  document.getElementById("zielMin").value = LO;
+  document.getElementById("zielMax").value = HI;
+  const dialog = document.getElementById("slotConfigDlg");
+  clearSlotDrag();
+  dialog.style.left = "50%";
+  dialog.style.right = "auto";
+  dialog.style.top = "50%";
+  dialog.style.bottom = "auto";
+  dialog.style.transform = "translate(-50%,-50%)";
+  dialog.showModal();
 }
+
+// Der Dialog startet mittig und lässt sich am Kopf verschieben. Die Begrenzung
+// hält ihn auch nach einem Resize vollständig im sichtbaren Browserfenster.
+const slotDialog = document.getElementById("slotConfigDlg");
+const slotDialogHandle = slotDialog.querySelector(".slot-config-header");
+let slotDrag = null;
+function clearSlotDrag() {
+  if (slotDrag && slotDialogHandle.hasPointerCapture(slotDrag.pointerId)) slotDialogHandle.releasePointerCapture(slotDrag.pointerId);
+  slotDrag = null;
+}
+slotDialogHandle.addEventListener("pointerdown", event => {
+  if (event.pointerType === "touch" || event.target.closest("button")) return;
+  const rect = slotDialog.getBoundingClientRect();
+  slotDialog.style.left = rect.left + "px";
+  slotDialog.style.top = rect.top + "px";
+  slotDialog.style.transform = "none";
+  slotDrag = { pointerId:event.pointerId, dx:event.clientX - rect.left, dy:event.clientY - rect.top };
+  slotDialogHandle.setPointerCapture(event.pointerId);
+});
+slotDialogHandle.addEventListener("pointermove", event => {
+  if (!slotDrag || event.pointerId !== slotDrag.pointerId) return;
+  const margin = 12;
+  const rect = slotDialog.getBoundingClientRect();
+  const left = Math.min(innerWidth - rect.width - margin, Math.max(margin, event.clientX - slotDrag.dx));
+  const top = Math.min(innerHeight - rect.height - margin, Math.max(margin, event.clientY - slotDrag.dy));
+  slotDialog.style.left = left + "px";
+  slotDialog.style.top = top + "px";
+});
+function stopSlotDrag(event) {
+  if (!slotDrag || event.pointerId !== slotDrag.pointerId) return;
+  slotDrag = null;
+  if (slotDialogHandle.hasPointerCapture(event.pointerId)) slotDialogHandle.releasePointerCapture(event.pointerId);
+}
+slotDialogHandle.addEventListener("pointerup", stopSlotDrag);
+slotDialogHandle.addEventListener("pointercancel", stopSlotDrag);
+slotDialogHandle.addEventListener("lostpointercapture", () => { slotDrag = null; });
+slotDialog.addEventListener("close", clearSlotDrag);
+
+const infoDialog = document.getElementById("settingsInfoDlg");
+const infoDialogHandle = infoDialog.querySelector(".slot-config-header");
+let infoDrag = null;
+function clearInfoDrag() {
+  if (infoDrag && infoDialogHandle.hasPointerCapture(infoDrag.pointerId)) infoDialogHandle.releasePointerCapture(infoDrag.pointerId);
+  infoDrag = null;
+}
+function openInfoDialog() {
+  clearInfoDrag();
+  infoDialog.style.inset = "50% auto auto 50%";
+  infoDialog.style.transform = "translate(-50%,-50%)";
+  infoDialog.showModal();
+}
+document.getElementById("settingsInfoOpen").addEventListener("click", openInfoDialog);
+document.getElementById("settingsInfoClose").addEventListener("click", () => infoDialog.close());
+infoDialogHandle.addEventListener("pointerdown", event => {
+  if (event.pointerType === "touch" || event.target.closest("button")) return;
+  const rect = infoDialog.getBoundingClientRect();
+  infoDialog.style.inset = `${rect.top}px auto auto ${rect.left}px`;
+  infoDialog.style.transform = "none";
+  infoDrag = { pointerId:event.pointerId, dx:event.clientX - rect.left, dy:event.clientY - rect.top };
+  infoDialogHandle.setPointerCapture(event.pointerId);
+});
+infoDialogHandle.addEventListener("pointermove", event => {
+  if (!infoDrag || event.pointerId !== infoDrag.pointerId) return;
+  const margin = 12;
+  const rect = infoDialog.getBoundingClientRect();
+  infoDialog.style.left = Math.min(innerWidth - rect.width - margin, Math.max(margin, event.clientX - infoDrag.dx)) + "px";
+  infoDialog.style.top = Math.min(innerHeight - rect.height - margin, Math.max(margin, event.clientY - infoDrag.dy)) + "px";
+});
+function stopInfoDrag(event) {
+  if (!infoDrag || event.pointerId !== infoDrag.pointerId) return;
+  infoDrag = null;
+  if (infoDialogHandle.hasPointerCapture(event.pointerId)) infoDialogHandle.releasePointerCapture(event.pointerId);
+}
+infoDialogHandle.addEventListener("pointerup", stopInfoDrag);
+infoDialogHandle.addEventListener("pointercancel", stopInfoDrag);
+infoDialogHandle.addEventListener("lostpointercapture", () => { infoDrag = null; });
+infoDialog.addEventListener("close", clearInfoDrag);
+
+const wordContextDialog = document.getElementById("wordContextDlg");
+const wordContextHandle = wordContextDialog.querySelector(".slot-config-header");
+let wordContextDrag = null;
+let activeWordContext = null;
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+  "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+})[char]);
+function wordContextSnippet(text, word) {
+  const lower = text.toLocaleLowerCase();
+  const index = lower.indexOf(word.toLocaleLowerCase());
+  if (index < 0) return escapeHtml(text.slice(0, 210));
+  let start = Math.max(0, index - 90);
+  let end = Math.min(text.length, index + word.length + 125);
+  if (start) {
+    const nextSpace = text.indexOf(" ", start);
+    if (nextSpace > -1 && nextSpace < index) start = nextSpace + 1;
+  }
+  if (end < text.length) {
+    const previousSpace = text.lastIndexOf(" ", end);
+    if (previousSpace > index) end = previousSpace;
+  }
+  const before = escapeHtml(text.slice(start, index));
+  const match = escapeHtml(text.slice(index, index + word.length));
+  const after = escapeHtml(text.slice(index + word.length, end));
+  return `${start ? "…" : ""}${before}<mark>${match}</mark>${after}${end < text.length ? "…" : ""}`;
+}
+function renderWordContexts() {
+  if (!activeWordContext) return;
+  const en = document.documentElement.lang === "en";
+  const refresh = document.getElementById("wordContextRefresh");
+  if (activeWordContext.type === "system") {
+    const { name, matches, family } = activeWordContext;
+    document.getElementById("wordContextTitle").textContent = en ? `Games using “${name}”` : `Spiele mit „${name}“`;
+    document.getElementById("wordContextIntro").textContent = family
+      ? (en ? "Sessions whose system, title, or description mentions this system family." : "Runden, die diese Systemfamilie im Systemfeld, Titel oder in der Beschreibung erwähnen.")
+      : (en ? "Sessions that use this entry in their system field." : "Runden, die diesen Eintrag im Systemfeld verwenden.");
+    document.getElementById("wordContextMeta").textContent = en
+      ? `${matches.length} ${matches.length === 1 ? "session" : "sessions"}.`
+      : `${matches.length} ${matches.length === 1 ? "Runde" : "Runden"}.`;
+    refresh.hidden = true;
+    document.getElementById("wordContextClose").setAttribute("aria-label", en ? "Close game list" : "Spieleliste schließen");
+    document.getElementById("wordContextList").innerHTML = matches.map(game =>
+      `<article class="word-context-quote"><p><a href="https://app.playabl.io/games/${game.id}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a></p><footer>${escapeHtml(game.system || (en ? "No system specified" : "Kein System angegeben"))}</footer></article>`
+    ).join("");
+    return;
+  }
+  const { word, n, matches, total } = activeWordContext;
+  const percent = Math.round(matches.length / Math.max(1, total) * 100);
+  document.getElementById("wordContextTitle").textContent = en ? `“${word}” in context` : `„${word}“ im Kontext`;
+  document.getElementById("wordContextIntro").textContent = en
+    ? "Random excerpts from the descriptions in which the word appears."
+    : "Zufällige Ausschnitte aus Beschreibungen, in denen das Wort vorkommt.";
+  document.getElementById("wordContextMeta").textContent = en
+    ? `${n} mentions across ${matches.length} of ${total} sessions (${percent}%).`
+    : `${n} Nennungen in ${matches.length} von ${total} Runden (${percent} %).`;
+  refresh.hidden = false;
+  refresh.textContent = en ? "Different excerpts" : "Andere Ausschnitte";
+  document.getElementById("wordContextClose").setAttribute("aria-label", en ? "Close context" : "Kontext schließen");
+  const shuffled = [...matches].sort(() => Math.random() - .5).slice(0, 3);
+  document.getElementById("wordContextList").innerHTML = shuffled.map(({ game, text }) =>
+    `<blockquote class="word-context-quote"><p>${wordContextSnippet(text, word)}</p><footer>— <a href="https://app.playabl.io/games/${game.id}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a></footer></blockquote>`
+  ).join("");
+}
+function openWordContext(context) {
+  activeWordContext = context;
+  renderWordContexts();
+  wordContextDrag = null;
+  wordContextDialog.style.inset = "50% auto auto 50%";
+  wordContextDialog.style.transform = "translate(-50%,-50%)";
+  wordContextDialog.showModal();
+}
+document.getElementById("wordContextClose").addEventListener("click", () => wordContextDialog.close());
+document.getElementById("wordContextRefresh").addEventListener("click", renderWordContexts);
+window.addEventListener("uilanguagechange", () => {
+  if (wordContextDialog.open) renderWordContexts();
+});
+wordContextHandle.addEventListener("pointerdown", event => {
+  if (event.pointerType === "touch" || event.target.closest("button")) return;
+  const rect = wordContextDialog.getBoundingClientRect();
+  wordContextDialog.style.inset = `${rect.top}px auto auto ${rect.left}px`;
+  wordContextDialog.style.transform = "none";
+  wordContextDrag = { pointerId:event.pointerId, dx:event.clientX - rect.left, dy:event.clientY - rect.top };
+  wordContextHandle.setPointerCapture(event.pointerId);
+});
+wordContextHandle.addEventListener("pointermove", event => {
+  if (!wordContextDrag || event.pointerId !== wordContextDrag.pointerId) return;
+  const margin = 12;
+  const rect = wordContextDialog.getBoundingClientRect();
+  wordContextDialog.style.left = Math.min(innerWidth - rect.width - margin, Math.max(margin, event.clientX - wordContextDrag.dx)) + "px";
+  wordContextDialog.style.top = Math.min(innerHeight - rect.height - margin, Math.max(margin, event.clientY - wordContextDrag.dy)) + "px";
+});
+function stopWordContextDrag(event) {
+  if (!wordContextDrag || event.pointerId !== wordContextDrag.pointerId) return;
+  wordContextDrag = null;
+  if (wordContextHandle.hasPointerCapture(event.pointerId)) wordContextHandle.releasePointerCapture(event.pointerId);
+}
+wordContextHandle.addEventListener("pointerup", stopWordContextDrag);
+wordContextHandle.addEventListener("pointercancel", stopWordContextDrag);
+wordContextHandle.addEventListener("lostpointercapture", () => { wordContextDrag = null; });
+wordContextDialog.addEventListener("close", () => { wordContextDrag = null; });
 
 // buckets: aktive Zeitabschnitte der verknüpften con-raumplan-Con (falls
 // vorhanden) — ersetzen den hart codierten CUTOFF-Vergleich. Ohne
@@ -1066,10 +1731,10 @@ function eventRangeText(a, b) {
 function applyEvent(ev, rsvpsOpen) {
   const name = ev?.title || `Playabl-Event ${EVENT}`;
   document.title = `${name} – Spielangebot pro Slot`;
-  document.getElementById("pageTitle").textContent = `${name} – Spielangebot pro Slot`;
-  const range = ev?.start_time && ev?.end_time ? eventRangeText(ev.start_time, ev.end_time) + " · " : "";
+  document.getElementById("pageTitle").textContent = name;
+  const range = ev?.start_time && ev?.end_time ? eventRangeText(ev.start_time, ev.end_time) : "";
   document.getElementById("pageSub").innerHTML =
-    `${range}Datenquelle: <a href="${EVENT_URL}" style="color:inherit">${name} auf Playabl</a> · lädt bei jedem Öffnen live`;
+    `${range ? `<span class="event-date">${range}</span>` : ""}<span class="event-source">Datenquelle: <a href="${EVENT_URL}" style="color:inherit">${name} auf Playabl</a> · lädt bei jedem Öffnen live</span>`;
 
   const banner = document.getElementById("rsvpBanner");
   if (ev?.fixed_access_time) {
@@ -1096,46 +1761,44 @@ function render(slots, rsvpsOpen) {
   const avgSeats = totalSeats / Math.max(1, totalSessions);
   const MAX = Math.max(90, HI + 10, ...slots.map(s => seatsOf(s) + 5));
   const pct = v => (v / MAX * 100) + "%";
-  const minSeats = Math.min(...slots.map(seatsOf));
   const allReg = slots.flatMap(s => reg(s).map(g => ({ ...g, slot: s })));
   const freeTotal = allReg.reduce((a, g) => a + frei(g), 0);
 
   app.innerHTML = `
     <div class="bento-grid">
-      <section class="kpi bento-hero"><div class="l">Sessions gesamt</div><div class="v">${totalSessions}</div><div class="bento-hero-copy">${totalSeats} Spielplätze über ${slots.length} Slots · ø ${avgSeats.toFixed(1).replace(".", ",")} pro Runde</div><div class="bento-slot-bars" aria-label="Plätze pro Slot; grün: Ziel erreicht, rot: unter Ziel">${slots.map(s => { const seats = seatsOf(s); return `<span class="${seats >= LO ? "is-on-target" : "is-below-target"}" style="--slot-fill:${Math.min(100, seats / LO * 100)}%" title="${slotName(s)}: ${seats} Plätze${seats >= LO ? " · Ziel erreicht" : ` · noch ${LO - seats} bis Ziel`}"></span>`; }).join("")}</div><div class="bento-hero-legend">Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter</div></section>
-      <section class="bento-kpis">
-      <div class="kpi"><div class="v">${totalSeats}</div><div class="l">Spielplätze gesamt</div></div>
-      ${workshops.length ? `<div class="kpi"><div class="v">${workshops.length}</div><div class="l">Workshops &amp; Specials (separat gezählt)</div></div>` : ""}
-      ${showBusy ? `<div class="kpi"><div class="v">${freeTotal}</div><div class="l">Spielplätze noch frei</div></div>` : ""}
-      <div class="kpi bento-target"><div class="v">${LO}–${HI}</div><div class="l">Ziel-Plätze je Slot</div></div>
-      ${CONFIG.erwartete ? `<div class="kpi"><div class="v">${CONFIG.erwartete}</div><div class="l">erwartete Teilnehmende je Tag</div></div>` : ""}
+      <section class="kpi bento-hero" aria-labelledby="heroKpiLabel"><div class="l" id="heroKpiLabel">Sessions gesamt</div><div class="v">${totalSessions}</div><div class="bento-hero-copy">${totalSeats} Spielplätze über ${slots.length} Slots · ø ${avgSeats.toFixed(1).replace(".", ",")} pro Runde</div><div class="bento-slot-bars" role="list" aria-label="Zielstatus der Plätze pro Slot">${slots.map(s => { const seats = seatsOf(s); const status = seats >= LO ? "Ziel erreicht" : `noch ${LO - seats} Plätze bis zum Ziel`; const label = `${slotName(s)}: ${seats} Plätze, ${status}`; return `<span role="listitem" aria-label="${escapeHtml(label)}" class="${seats >= LO ? "is-on-target" : "is-below-target"}" style="--slot-fill:${Math.min(100, seats / LO * 100)}%" title="${escapeHtml(label)}"></span>`; }).join("")}</div><div class="bento-hero-legend" aria-hidden="true">${document.documentElement.hasAttribute("data-color-aid") ? `Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter` : `Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`}</div></section>
+      <section class="bento-kpis" aria-label="Kennzahlen">
+      <div class="kpi"><div class="l">Spielplätze gesamt</div><div class="v">${totalSeats}</div></div>
+      ${workshops.length ? `<div class="kpi"><div class="l">Workshops &amp; Specials</div><div class="v">${workshops.length}</div></div>` : ""}
+      ${showBusy ? `<div class="kpi kpi-good"><div class="l">Spielplätze noch frei</div><div class="v">${freeTotal}</div></div>` : ""}
+      <div class="kpi bento-target"><div class="l">Ziel je Slot</div><div class="v">${LO}–${HI}</div></div>
+      ${CONFIG.erwartete ? `<div class="kpi"><div class="l">erwartete Teilnehmende</div><div class="v">${CONFIG.erwartete}/Tag</div></div>` : ""}
+      ${!showBusy && !workshops.length ? `<div class="kpi"><div class="l">Slots im Programm</div><div class="v">${slots.length}</div></div>` : ""}
       </section>
     <section class="card bento-chart">
       <h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2>
-      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz && LO === CONFIG.zielMin && HI === CONFIG.zielMax ? ` (${CONFIG.zielNotiz})` : ""}.${workshops.length ? " Gestrichelt umrandet: zusätzliche Plätze durch Workshops/Specials – sie zählen nicht in die Runden-Zahlen, bringen aber Teilnehmende unter." : ""} Dieselben Zahlen stehen in der Tabelle darunter.</p>
+      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz && activeTargetSource === "fallback" ? ` (${CONFIG.zielNotiz})` : activeTargetSource === "access" ? ` (automatisch aus ${eligibleTargetCount} Event-Freischaltungen geschätzt)` : ""}.${workshops.length ? " Gestrichelt umrandet: zusätzliche Plätze durch Workshops/Specials – sie zählen nicht in die Runden-Zahlen, bringen aber Teilnehmende unter." : ""} Dieselben Zahlen stehen in der Tabelle darunter.</p>
       <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
       <div class="baseline-x" aria-hidden="true"><div></div><div class="xticks" id="xticks"></div></div>
     </section>
-    ${showBusy ? `<div class="card">
-      <h2>Wo ist noch Platz?</h2>
-      <p class="hint">Reguläre Runden mit freien Spielplätzen, sortiert nach den meisten freien Plätzen.</p>
-      <div id="freeList"></div>
-      <p class="hp-more" id="freeMore"></p>
-    </div>` : ""}
-    <div class="card">
-      <h2>Wo werden noch Runden gebraucht?</h2>
-      <p class="hint">Fehlende Plätze bis zum unteren (${LO}) bzw. oberen Zielwert (${HI}); umgerechnet in Runden bei ø ${avgSeats.toFixed(1).replace(".", ",")} Plätzen pro Runde.</p>
-      <div class="tscroll"><table>
-        <caption class="sr-only">Runden, Plätze und fehlende Plätze je Slot</caption>
-        <thead><tr><th scope="col">Slot</th><th scope="col">Runden</th><th scope="col">Plätze</th>${showBusy ? '<th scope="col">belegt</th>' : ""}<th scope="col">fehlt bis ${LO}</th><th scope="col">fehlt bis ${HI}</th><th scope="col">≈ Runden zusätzlich</th></tr></thead>
-        <tbody id="needsBody"></tbody>
-      </table></div>
-      ${workshops.length ? `<p class="hint" style="margin-top:10px">* In diesem Slot gibt es zusätzlich Workshops/Specials (eigene Sektion unten) – sie bringen Teilnehmende unter, tendenziell werden dort also weniger zusätzliche Runden gebraucht.</p>` : ""}
+    <div class="bento-side-row">
+      <div class="card bento-open">
+        <h2>Wo ist noch Platz?</h2>
+        <p class="hint">Reguläre Runden mit freien Spielplätzen, sortiert nach den meisten freien Plätzen.</p>
+        <div id="freeList"></div>
+        <p class="hp-more" id="freeMore"></p>
+      </div>
+      <div class="card bento-needs">
+        <h2>Wo werden noch Runden gebraucht?</h2>
+        <p class="hint">Fehlende Plätze bis zum unteren Zielwert von ${LO} je Slot.</p>
+        <div class="needs-list" id="needsList" role="list"></div>
+        ${workshops.length ? `<p class="hint" style="margin-top:10px">* In diesem Slot gibt es zusätzlich Workshops/Specials (eigene Sektion unten) – sie bringen Teilnehmende unter, tendenziell werden dort also weniger zusätzliche Runden gebraucht.</p>` : ""}
+      </div>
     </div>
-    <div class="card"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
-    ${workshops.length ? `<div class="card"><h2>Workshops &amp; Specials</h2>
+    <div class="card bento-full"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
+    ${workshops.length ? `<div class="card bento-full"><h2>Workshops &amp; Specials</h2>
       <p class="hint">Erkannt an „Workshop/Panel/Vortrag" in Titel oder System. Sie zählen oben nicht in Runden und Plätze, damit sie die Übersicht nicht verzerren.</p>
-      <div id="wsList"></div></div>` : ""}
+      <div id="wsList" role="list"></div></div>` : ""}
     <div class="card" id="funCard" hidden>
       <h2>Insights</h2>
       <p class="hint">Auswertungen über alle angebotenen Runden – wird bei jedem Öffnen live neu berechnet.</p>
@@ -1151,7 +1814,8 @@ function render(slots, rsvpsOpen) {
       <div id="sysList"></div>
       <p class="hp-more" id="sysMore"></p>
       <h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3>
-      <div id="cloud" aria-hidden="true"></div>
+      <p class="hint" id="cloudHint">Mit der Maus über ein Wort fahren zeigt Häufigkeit und Anteil; ein Klick öffnet zufällige Ausschnitte im Kontext.</p>
+      <div id="cloud" aria-label="Interaktive Wortwolke"></div>
       <p class="sr-only" id="cloudAlt"></p>
     </div>
     <ul class="foot">
@@ -1168,12 +1832,15 @@ function render(slots, rsvpsOpen) {
     const nWs = wsOf(slot).length;
     const row = document.createElement("div");
     row.className = "row";
+    row.setAttribute("role", "group");
+    row.setAttribute("aria-label", `${slotName(slot)}: ${seats} Plätze; ${seats >= LO ? "Ziel erreicht" : `${LO - seats} Plätze fehlen bis zum Ziel`}`);
     row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${showBusy ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span><span class="mstats">${seats} Plätze${LO - seats > 0 ? ` · noch +${LO - seats} bis Ziel` : " · Ziel erreicht"}</span></div>`;
     const track = document.createElement("div");
     track.className = "track";
     const band = document.createElement("div");
     band.className = "band";
     band.setAttribute("aria-hidden", "true");
+    band.innerHTML = `<span class="band-label">Ziel ${LO}–${HI}</span>`;
     band.style.left = pct(LO);
     band.style.width = ((HI - LO) / MAX * 100) + "%";
     track.appendChild(band);
@@ -1239,18 +1906,14 @@ function render(slots, rsvpsOpen) {
     xt.appendChild(s);
   }
 
-  const needsBody = document.getElementById("needsBody");
-  for (const slot of slots) {
-    const seats = seatsOf(slot);
-    const rsvps = reg(slot).reduce((x, g) => x + g.rsvps, 0);
-    const n70 = Math.max(0, LO - seats), n80 = Math.max(0, HI - seats);
-    const tr = document.createElement("tr");
-    if (seats === minSeats) tr.className = "worst";
-    tr.innerHTML = `<td>${slotName(slot)}</td><td>${reg(slot).length}</td><td>${seats}</td>`
-      + (showBusy ? `<td>${rsvps + reg(slot).length}</td>` : "")
-      + `<td class="need">${n70}</td><td>${n80}</td><td class="need">${Math.ceil(n70 / avgSeats)}–${Math.ceil(n80 / avgSeats)}${wsOf(slot).length ? " *" : ""}</td>`;
-    needsBody.appendChild(tr);
-  }
+  const needs = slots.map(slot => ({ slot, missing: Math.max(0, LO - seatsOf(slot)) }));
+  const maxMissing = Math.max(1, ...needs.map(item => item.missing));
+  document.getElementById("needsList").innerHTML = needs.map(({ slot, missing }) =>
+    `<div class="needs-row" role="listitem" aria-label="${slotName(slot)}: ${missing ? `${missing} Plätze fehlen bis zum Ziel` : "Ziel erreicht"}">
+      <span class="needs-name">${slotName(slot)}</span>
+      <span class="needs-track" aria-hidden="true"><span class="needs-fill" style="width:${missing / maxMissing * 100}%"></span></span>
+      <span class="needs-value">${missing ? `+${missing}` : "✓"}</span>
+    </div>`).join("");
 
   const detail = document.getElementById("detail");
   for (const slot of slots) {
@@ -1262,18 +1925,24 @@ function render(slots, rsvpsOpen) {
 
   if (workshops.length) {
     document.getElementById("wsList").innerHTML = workshops.map(w =>
-      `<div class="ws-row"><a href="${w.url}" target="_blank" rel="noopener">${w.title}</a>
+      `<div class="ws-row" role="listitem"><a href="${w.url}" target="_blank" rel="noopener">${w.title}</a>
        <span>${slotName(w.slot)} · ${w.start}–${w.end} · ${w.playerSeats} Plätze</span></div>`).join("");
   }
 
   if (showBusy) {
     const open = allReg.filter(g => frei(g) > 0).sort((a, b) => frei(b) - frei(a));
     const full = allReg.length - open.length;
+    if (open.length) document.getElementById("freeList").setAttribute("role", "list");
+    else document.getElementById("freeList").removeAttribute("role");
     document.getElementById("freeList").innerHTML = open.map(g =>
-      `<div class="free-row"><a href="${g.url}" target="_blank" rel="noopener">${g.title}</a>
+      `<div class="free-row" role="listitem"><a href="${g.url}" target="_blank" rel="noopener">${g.title}</a>
        <span>${slotName(g.slot)} · ${g.start}–${g.end} <span class="badge frei">${frei(g)} von ${g.playerSeats} frei</span></span></div>`).join("")
       || '<p class="hint">Aktuell sind alle Runden voll.</p>';
     document.getElementById("freeMore").textContent = full > 0 ? `${full} weitere Runden sind bereits voll.` : "";
+  } else {
+    document.getElementById("freeList").removeAttribute("role");
+    document.getElementById("freeList").innerHTML =
+      '<p class="hint">Die Anmeldung ist noch geschlossen. Freie Plätze werden hier angezeigt, sobald RSVPs geöffnet sind.</p>';
   }
 }
 
@@ -1333,13 +2002,6 @@ function gotoEvent(id) {
   p.set("event", id);
   location.href = location.pathname + "?" + p.toString() + location.hash;
 }
-document.getElementById("eventGo").addEventListener("click", () => {
-  const raw = document.getElementById("eventInput").value.trim();
-  const m = raw.match(/events\/(\d+)/) || raw.match(/^(\d+)$/);
-  if (m) gotoEvent(m[1]);
-  else alert("Bitte eine Event-ID (z.B. 104) oder eine Playabl-Event-URL eingeben.");
-});
-document.getElementById("eventInput").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("eventGo").click(); });
 document.getElementById("eventSelect").addEventListener("change", e => gotoEvent(e.target.value));
 
 let allEvents = [];
@@ -1380,31 +2042,35 @@ document.getElementById("communitySelect").addEventListener("change", fillEventO
 document.getElementById("slotConfigOpen").addEventListener("click", openSlotConfig);
 document.getElementById("slotConfigAdd").addEventListener("click", () => document.getElementById("slotConfigRows").insertAdjacentHTML("beforeend", slotConfigRow()));
 document.getElementById("slotConfigRows").addEventListener("click", event => event.target.closest("[data-slot-remove]")?.closest(".slot-config-row")?.remove());
-document.getElementById("slotConfigReset").addEventListener("click", () => { localStorage.removeItem(localSlotKey); location.reload(); });
+document.getElementById("slotConfigReset").addEventListener("click", () => {
+  localStorage.removeItem(localSlotKey);
+  localStorage.removeItem(localSlotSourceKey);
+  location.reload();
+});
+document.getElementById("targetConfigReset").addEventListener("click", () => {
+  const p = new URLSearchParams(location.search);
+  p.set("event", EVENT);
+  p.delete("min");
+  p.delete("max");
+  location.href = location.pathname + "?" + p.toString() + location.hash;
+});
 document.getElementById("slotConfigSave").addEventListener("click", () => {
+  const copy = UI_COPY[document.documentElement.lang] || UI_COPY.de;
+  const lo = parseInt(document.getElementById("zielMin").value, 10);
+  const hi = parseInt(document.getElementById("zielMax").value, 10);
+  if (!lo || !hi || lo < 1 || hi < lo) return alert(copy.setupInvalidTarget);
   const buckets = [...document.querySelectorAll(".slot-config-row")].map(row => ({
     label:row.querySelector("[data-slot-label]").value.trim(), start_hour:+row.querySelector("[data-slot-start]").value, end_hour:+row.querySelector("[data-slot-end]").value
   })).filter(b => b.label && b.start_hour >= 0 && b.end_hour <= 24 && b.start_hour < b.end_hour);
-  if (!buckets.length) return alert("Bitte mindestens einen gültigen Slot angeben.");
+  if (!buckets.length) return alert(copy.setupInvalidSlots);
   localStorage.setItem(localSlotKey, JSON.stringify(buckets));
-  location.reload();
-});
-
-// ---------- Ziel-Plätze anpassen ----------
-function applyZiel() {
-  const lo = parseInt(document.getElementById("zielMin").value, 10);
-  const hi = parseInt(document.getElementById("zielMax").value, 10);
-  if (!lo || !hi || lo < 1 || hi < lo) { alert("Bitte gültige Ziel-Werte angeben (von ≤ bis)."); return; }
+  localStorage.setItem(localSlotSourceKey, "manual");
   const p = new URLSearchParams(location.search);
   p.set("event", EVENT);
   p.set("min", lo);
   p.set("max", hi);
   location.href = location.pathname + "?" + p.toString() + location.hash;
-}
-document.getElementById("zielGo").addEventListener("click", applyZiel);
-for (const id of ["zielMin", "zielMax"]) {
-  document.getElementById(id).addEventListener("keydown", e => { if (e.key === "Enter") applyZiel(); });
-}
+});
 
 // ---------- Insights ----------
 function renderFun(games) {
@@ -1428,15 +2094,15 @@ function renderFun(games) {
   for (const g of games) {
     const s = cleanSys(g.system);
     const k = s.toLowerCase();
-    systems.set(k, { name: systems.get(k)?.name || s, n: (systems.get(k)?.n || 0) + 1 });
+    const current = systems.get(k);
+    systems.set(k, { name: current?.name || s, n: (current?.n || 0) + 1, matches:[...(current?.matches || []), g] });
   }
   // Familien: Volltext-Zählung über System + Titel + Beschreibung
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const families = famNames.map(name => ({
-    name,
-    fam: true,
-    n: games.filter(g => new RegExp(esc(name), "i").test((g.system || "") + " " + g.title + " " + plain(g))).length
-  })).filter(f => f.n >= 2);
+  const families = famNames.map(name => {
+    const matches = games.filter(g => new RegExp(esc(name), "i").test((g.system || "") + " " + g.title + " " + plain(g)));
+    return { name, fam:true, n:matches.length, matches };
+  }).filter(f => f.n >= 2);
   const facts = [
     { v: (seats.reduce((a, b) => a + b, 0) / seats.length).toFixed(1).replace(".", ","), l: "Personen pro Runde (ø, inkl. SL)" },
     { v: systems.size, l: "verschiedene Systeme – Vielfalt!" },
@@ -1459,10 +2125,17 @@ function renderFun(games) {
     document.getElementById("sysHint").textContent = mode === "mentions"
       ? "Zählt, in wie vielen Runden die Spielfamilie erwähnt wird – im System-Feld, Titel oder in der Beschreibung. Eine Runde kann zu mehreren Familien passen."
       : "Zählt schlicht, was im System-Feld der Runden steht (gleiche Schreibweisen zusammengefasst).";
-    document.getElementById("sysList").innerHTML = rows.map(s =>
-      `<div class="hp-row"><div class="hp-name" title="${s.name}">${s.name}</div>
-       <div><div class="hp-bar" style="width:${s.n / maxN * 100}%"></div></div>
-       <div class="hp-n">${s.n}×</div></div>`).join("") || '<p class="hint">Keine Einträge.</p>';
+    const list = document.getElementById("sysList");
+    list.innerHTML = rows.map((s, index) =>
+      `<button type="button" class="hp-row" data-system-index="${index}" aria-label="${escapeHtml(`${s.name}: ${s.n} Runden. Klick zeigt die Spiele.`)}"><span class="hp-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
+       <span class="hp-track"><span class="hp-bar" style="width:${s.n / maxN * 100}%"></span></span>
+       <span class="hp-n">${s.n}×</span></button>`).join("") || '<p class="hint">Keine Einträge.</p>';
+    for (const button of list.querySelectorAll("[data-system-index]")) {
+      const system = rows[+button.dataset.systemIndex];
+      button.addEventListener("click", () => openWordContext({
+        type:"system", name:system.name, matches:system.matches, family:Boolean(system.fam)
+      }));
+    }
     document.getElementById("sysMore").textContent =
       mode === "field" && singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
   };
@@ -1488,9 +2161,10 @@ function renderFun(games) {
     "dieser diesem diesen jeweils sowie bzw ggf inkl nötig notwendig hilfreich benötigt wird " +
     "verwendete verwendet kommen wollen sondern zwischen spiels spieler spielerinnen beginn teil willkommen " +
     "spielmaterial characters x-karte x-card mitbringen bringe stelle gestellt").split(/\s+/));
+  const descriptions = games.map(game => ({ game, text:plain(game).replace(/\s+/g, " ").trim() }));
   const counts = new Map();
-  for (const g of games) {
-    for (const w of plain(g).toLowerCase().match(/[a-zäöüßæéè][a-zäöüßæéè'-]{3,}/g) || []) {
+  for (const { text } of descriptions) {
+    for (const w of text.toLowerCase().match(/[a-zäöüßæéè][a-zäöüßæéè'-]{3,}/g) || []) {
       if (!stop.has(w)) counts.set(w, (counts.get(w) || 0) + 1);
     }
   }
@@ -1498,13 +2172,42 @@ function renderFun(games) {
   if (words.length) {
     const wMax = words[0][1], wMin = words[words.length - 1][1];
     const shuffled = words.map(([w, n], i) => ({ w, n, key: (i * 2654435761 >>> 8) % 1000 })).sort((a, b) => a.key - b.key);
-    document.getElementById("cloud").innerHTML = shuffled.map(({ w, n }) => {
+    const cloud = document.getElementById("cloud");
+    cloud.innerHTML = shuffled.map(({ w, n }, index) => {
       const t = wMax === wMin ? 0.5 : (Math.sqrt(n) - Math.sqrt(wMin)) / (Math.sqrt(wMax) - Math.sqrt(wMin));
       const size = (0.72 + t * 1.5).toFixed(2);
       const cls = "c" + (w.length + n) % 4;
       const weight = t > 0.55 ? 700 : 400;
-      return `<span class="${cls}" style="font-size:${size}rem;font-weight:${weight}" title="${n}×">${w}</span>`;
+      const motionKey = [...w].reduce((sum, char) => sum + char.charCodeAt(0), n * 17);
+      const x = 2 + motionKey % 7;
+      const y = 1 + (motionKey >> 2) % 5;
+      const rotate = ((motionKey % 5) - 2) * .35;
+      return `<button type="button" class="${cls}" data-cloud-word="${escapeHtml(w)}" style="font-size:${size}rem;font-weight:${weight};--cloud-x-start:${(-x * .45).toFixed(2)}px;--cloud-y-start:${(-y * .45).toFixed(2)}px;--cloud-rotate-start:${(-rotate * .45).toFixed(2)}deg;--cloud-x:${x}px;--cloud-y:${y}px;--cloud-rotate:${rotate}deg;--cloud-duration:${6 + motionKey % 6}s;--cloud-delay:${-(index % 7)}s">${escapeHtml(w)}</button>`;
     }).join(" ");
+    for (const button of cloud.querySelectorAll("[data-cloud-word]")) {
+      const word = button.dataset.cloudWord;
+      const n = counts.get(word) || 0;
+      const matcher = new RegExp(`(^|[^a-zäöüßæéè'-])${esc(word)}(?=$|[^a-zäöüßæéè'-])`, "i");
+      const matches = descriptions.filter(item => matcher.test(item.text));
+      const percent = Math.round(matches.length / Math.max(1, games.length) * 100);
+      const hoverText = () => document.documentElement.lang === "en"
+        ? `${n} mentions · ${matches.length} of ${games.length} sessions (${percent}%) · click for context`
+        : `${n} Nennungen · ${matches.length} von ${games.length} Runden (${percent} %) · Klick für Kontext`;
+      button.setAttribute("aria-label", `${word}: ${hoverText()}`);
+      button.addEventListener("mousemove", event => {
+        const tooltip = document.getElementById("tooltip");
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `<div class="t">${escapeHtml(word)}</div><div class="s">${hoverText()}</div>`;
+        tooltip.style.left = Math.min(event.clientX + 14, innerWidth - tooltip.offsetWidth - 8) + "px";
+        tooltip.style.top = Math.min(event.clientY + 14, innerHeight - tooltip.offsetHeight - 8) + "px";
+      });
+      button.addEventListener("mouseleave", () => document.getElementById("tooltip").style.display = "none");
+      button.addEventListener("focus", () => button.setAttribute("aria-label", `${word}: ${hoverText()}`));
+      button.addEventListener("click", () => {
+        document.getElementById("tooltip").style.display = "none";
+        openWordContext({ word, n, matches, total:games.length });
+      });
+    }
     document.getElementById("cloudAlt").textContent =
       "Häufigste Wörter in den Beschreibungen: " + words.slice(0, 12).map(([w, n]) => `${w} (${n}×)`).join(", ") + ".";
   }
@@ -1552,11 +2255,45 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon
     "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
   const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
   applyEvent(ev, rsvpsOpen);
+  if (activeTargetSource !== "manual") eligibleTargetCount = await loadEligibleTargetCount(ev?.event_access_levels);
   const remoteBuckets = con ? await findSlotBuckets(con.id) : [];
   const localBuckets = loadLocalSlotBuckets();
-  const buckets = localBuckets.length ? localBuckets : remoteBuckets;
+  const storedSlotSource = localStorage.getItem(localSlotSourceKey) || (localBuckets.length ? "manual" : "");
+  const manualBuckets = storedSlotSource === "manual" ? localBuckets : [];
+  const rememberedInference = storedSlotSource === "inferred" ? localBuckets : [];
+  let buckets = manualBuckets.length ? manualBuckets : remoteBuckets.length ? remoteBuckets : rememberedInference;
+  let slotSource = manualBuckets.length
+    ? "manual"
+    : remoteBuckets.length ? "raumplan" : rememberedInference.length ? "inferred" : "";
+  if (!buckets.length) {
+    const inferredBuckets = inferSlotBuckets(sessions);
+    if (inferredBuckets.length) {
+      buckets = inferredBuckets;
+      slotSource = "inferred";
+      localStorage.setItem(localSlotKey, JSON.stringify(inferredBuckets));
+      localStorage.setItem(localSlotSourceKey, slotSource);
+    } else {
+      slotSource = "fallback";
+    }
+  }
+  activeSlotBuckets = buckets.length ? buckets : [
+    { label:"Vormittag", start_hour:0, end_hour:CUTOFF },
+    { label:"Nachmittag", start_hour:CUTOFF, end_hour:24 }
+  ];
+  activeSlotSource = slotSource;
+  if (activeTargetSource !== "manual" && eligibleTargetCount) {
+    peakTargetRsvps = peakUniqueRsvps(sessions, activeSlotBuckets);
+    const estimate = estimateTargetRange(eligibleTargetCount, peakTargetRsvps);
+    LO = estimate.low;
+    HI = estimate.high;
+    activeTargetSource = "access";
+  }
   if (buckets.length) {
-    const origin = localBuckets.length ? "Lokal definierte Slot-Zeiten" : "Zuordnung folgt den Zeitabschnitten der verknüpften Con-Raumplan-Con";
+    const origin = slotSource === "inferred"
+      ? "Automatisch aus den Session-Startzeiten erkannte Slots"
+      : slotSource === "manual"
+        ? "Lokal definierte Slot-Zeiten"
+        : "Zuordnung folgt den Zeitabschnitten der verknüpften Con-Raumplan-Con";
     slotRuleHint = `${origin}: ${buckets.map(b => `${b.label} (${b.start_hour}–${b.end_hour} Uhr)`).join(", ")} (Zeitzone ${TZ}).`;
   }
   const slots = groupSlots(sessions, buckets);
@@ -1566,6 +2303,16 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon
   fillEventsList(eventsList);
   document.getElementById("zielMin").value = LO;
   document.getElementById("zielMax").value = HI;
+  document.getElementById("targetSummary").textContent = `${LO}–${HI}`;
+  updateTargetMeta();
+  document.getElementById("slotsSummary").textContent =
+    activeSlotBuckets.map(bucket => `${bucket.label} ${bucket.start_hour}–${bucket.end_hour} Uhr`).join(" · ");
+  document.getElementById("slotsSourceSummary").textContent = ({
+    manual:"· manuell",
+    inferred:"· automatisch erkannt",
+    raumplan:"· aus der Raumplanung",
+    fallback:"· Standard"
+  })[slotSource] || "";
   setView(location.hash === "#kalender" ? "kalender" : "uebersicht");
 }).catch(err => {
   document.getElementById("status").innerHTML =
