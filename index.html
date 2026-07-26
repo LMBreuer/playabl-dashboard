@@ -391,6 +391,9 @@
   summary { cursor: pointer; font-size: var(--fs-sm); font-weight: 700; padding: var(--sp-2) 0; }
   .games td { padding: 4px var(--sp-3); }
   .games td:last-child { text-align: right; color: var(--text-secondary); white-space: nowrap; }
+  .games th:nth-child(2), .games td:nth-child(2),
+  .games th:nth-child(3), .games td:nth-child(3) { text-align:left; }
+  .games .game-system, .games .game-facilitator { color:var(--text-secondary); }
 
   .free-row, .ws-row {
     display: flex; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
@@ -413,6 +416,38 @@
   .cal-cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
   @media (max-width: 640px) { .cal-cols { grid-template-columns: 1fr; } }
   .cal-col h3 { margin: var(--sp-2) 0; }
+  .calendar-filters {
+    display:grid; grid-template-columns:minmax(220px,340px) minmax(220px,340px) minmax(0,1fr);
+    gap:18px 28px; align-items:end; margin:0 0 var(--sp-5); padding:20px 24px;
+    border:var(--border-w) solid var(--chrome-border,var(--border)); border-radius:var(--r-lg);
+    background:var(--surface-1); box-shadow:var(--shadow-card);
+  }
+  .calendar-filter-field { display:flex; min-width:0; flex-direction:column; gap:6px; }
+  .calendar-filter-label { color:var(--text-readable-muted); font-size:.7rem; font-weight:800; letter-spacing:.055em; text-transform:uppercase; }
+  .calendar-filter-input {
+    width:100%; min-height:42px; padding:9px 12px; border:var(--border-w) solid var(--baseline); border-radius:var(--r-sm);
+    background:var(--page); color:var(--text-primary); font:inherit; font-size:var(--fs-sm);
+  }
+  .calendar-filter-input::placeholder { color:var(--text-readable-muted); opacity:.8; }
+  .calendar-slot-filter { grid-column:1 / -1; min-width:0; }
+  .calendar-slot-chips { display:flex; gap:4px; overflow-x:auto; padding:1px 1px 4px; scrollbar-width:thin; }
+  .calendar-slot-chip, .calendar-free-toggle {
+    flex:0 0 auto; min-height:42px; padding:8px 12px; border:0; border-bottom:2px solid transparent;
+    border-radius:var(--r-sm) var(--r-sm) 2px 2px; background:transparent; color:var(--text-secondary);
+    font:700 var(--fs-xs)/1.2 var(--font-body); white-space:nowrap; cursor:pointer;
+  }
+  .calendar-slot-chip:hover, .calendar-slot-chip:focus-visible,
+  .calendar-slot-chip[aria-pressed="true"] { color:var(--text-primary); background:var(--band); border-bottom-color:var(--accent); }
+  .calendar-filter-footer { grid-column:1 / -1; display:flex; align-items:center; gap:10px; padding-top:14px; border-top:var(--border-w) solid var(--grid); }
+  .calendar-free-toggle {
+    display:inline-flex; align-items:center; gap:7px; min-height:36px; border:var(--border-w) solid var(--border); border-radius:var(--r-pill);
+    padding:7px 12px;
+  }
+  .calendar-free-toggle[aria-pressed="true"] { border-color:var(--good); background:var(--band); color:var(--good-text); }
+  .calendar-filter-count { margin-left:auto; color:var(--text-readable-muted); font-size:var(--fs-xs); }
+  .calendar-filter-reset { border:0; background:transparent; color:var(--accent-text); font:700 var(--fs-xs)/1 var(--font-body); cursor:pointer; }
+  .calendar-filter-reset:hover, .calendar-filter-reset:focus-visible { text-decoration:underline; text-underline-offset:3px; }
+  .calendar-empty { margin:0; padding:24px; border:var(--border-w) dashed var(--baseline); border-radius:var(--r-lg); color:var(--text-secondary); text-align:center; }
   .cal-card {
     display: block; text-decoration: none; color: inherit;
     border: var(--border-w) solid var(--border); border-radius: var(--r-md); padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-2);
@@ -429,6 +464,8 @@
   }
   .fact .v { font-family:var(--font-display); font-size:1.5rem; font-weight:800; }
   .fact .l { margin-top:4px; font-size:.75rem; color:var(--text-secondary); }
+  .fact-button { width:100%; color:inherit; font:inherit; cursor:pointer; appearance:none; }
+  .fact-button:hover, .fact-button:focus-visible { background:var(--accent-soft); transform:translateY(-2px); }
   :root[data-theme="contrast"] .fact {
     border:var(--border-w) solid var(--border);
     background:var(--surface-1);
@@ -440,6 +477,8 @@
   .hp-row .hp-bar { display:block; height:10px; background:var(--accent); border-radius:5px; }
   .hp-row .hp-n { color:var(--text-primary); font-weight:700; font-variant-numeric:tabular-nums; }
   .hp-more { font-size: var(--fs-xs); color: var(--text-readable-muted); margin-top: var(--sp-2); }
+  .system-more-toggle { padding:3px 0; border:0; background:transparent; color:inherit; font:inherit; font-weight:700; cursor:pointer; text-align:left; }
+  .system-more-toggle:hover, .system-more-toggle:focus-visible { color:var(--accent-text); text-decoration:underline; text-underline-offset:3px; }
   .inline-select {
     font: inherit; font-size: var(--fs-xs); color: var(--text-primary);
     background: var(--page); border: var(--border-w) solid var(--baseline); border-radius: var(--r-sm); padding: 3px var(--sp-2);
@@ -787,7 +826,8 @@
   .settings-info-content strong { color:var(--text-primary); }
   .settings-info-note { margin-top:10px; padding:10px 12px; border-radius:var(--r-sm); background:var(--band); }
   :root[data-theme="glass"] .card, :root[data-theme="glass"] .kpi, :root[data-theme="glass"] .cal-card, :root[data-theme="glass"] .controls { background-color:var(--surface-1); background-image:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025) 48%,rgba(255,255,255,.06)); border-color:rgba(255,255,255,.20); backdrop-filter:blur(22px) saturate(145%); }
-  :root[data-theme="solarpunk"] .card, :root[data-theme="solarpunk"] .kpi, :root[data-theme="solarpunk"] .cal-card, :root[data-theme="solarpunk"] .controls { border-color:rgba(37,83,43,.22); background-image:linear-gradient(145deg,rgba(255,255,255,.38),transparent 42%); }
+  :root[data-theme="glass"] .calendar-filters { background-color:var(--surface-1); background-image:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025) 48%,rgba(255,255,255,.06)); border-color:rgba(255,255,255,.20); backdrop-filter:blur(22px) saturate(145%); }
+  :root[data-theme="solarpunk"] .card, :root[data-theme="solarpunk"] .kpi, :root[data-theme="solarpunk"] .cal-card, :root[data-theme="solarpunk"] .controls, :root[data-theme="solarpunk"] .calendar-filters { border-color:rgba(37,83,43,.22); background-image:linear-gradient(145deg,rgba(255,255,255,.38),transparent 42%); }
   :root[data-theme="solarpunk"] .slot-tabs { border-radius:24px 10px 24px 10px; }
   :root[data-theme="solarpunk"] .slot-tabs a { border-radius:16px 7px 16px 7px; }
   :root[data-theme="terminal"] .brand-cursor { display:inline-block; }
@@ -839,6 +879,9 @@
     .slot-config-actions button { flex:1 1 auto; }
     .card { padding:18px; }
     .art-caption { right:8px; bottom:8px; max-width:calc(100vw - 16px); }
+    .calendar-filters { grid-template-columns:1fr; gap:14px; padding:16px; }
+    .calendar-filter-footer { grid-column:1; flex-wrap:wrap; }
+    .calendar-filter-count { margin-left:0; order:3; flex-basis:100%; }
   }
 </style>
 </head>
@@ -1448,7 +1491,7 @@ async function api(path) {
   return resp.json();
 }
 
-const load = () => api(`sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id)`
+const load = () => api(`sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id,creator_id(id,username))`
   + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`);
 const loadGames = () => api(`games?select=id,title,system,description,participant_count&event_id=eq.${EVENT}&deleted_at=is.null`).catch(() => []);
 const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time,event_access_levels&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);
@@ -1870,6 +1913,8 @@ function groupSlots(sessions, buckets) {
     map.get(key).games.push({
       title: s.game_id.title.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || s.game_id.title,
       url: "https://app.playabl.io/games/" + s.game_id.id,
+      system: (s.game_id.system || "").trim() || "Kein System angegeben",
+      facilitator: (s.game_id.creator_id?.username || "").trim() || "Nicht angegeben",
       ws: WS_RE.test((s.game_id.system || "") + " " + s.game_id.title),
       seats: s.participant_count + 1,  // Spielplätze + 1 anbietende Person (SL/Moderation)
       playerSeats: s.participant_count,
@@ -2124,8 +2169,13 @@ function render(slots, rsvpsOpen) {
   const detail = document.getElementById("detail");
   for (const slot of slots) {
     const d = document.createElement("details");
-    const rows = reg(slot).map(g => `<tr><td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${g.title}</a></td><td>${g.start}–${g.end} · ${g.playerSeats}+SL${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td></tr>`).join("");
-    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seatsOf(slot)} Plätze</summary><div class="tscroll"><table class="games"><caption class="sr-only">Runden am ${slot.day} ${slot.part}</caption>${rows}</table></div>`;
+    const rows = reg(slot).map(g => `<tr>
+      <td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${escapeHtml(g.title)}</a></td>
+      <td class="game-system">${escapeHtml(g.system)}</td>
+      <td class="game-facilitator">${escapeHtml(g.facilitator)}</td>
+      <td>${g.start}–${g.end} · ${g.playerSeats}+SL${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td>
+    </tr>`).join("");
+    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seatsOf(slot)} Plätze</summary><div class="tscroll"><table class="games"><caption class="sr-only">Runden am ${slot.day} ${slot.part}</caption><thead><tr><th>Session</th><th>System</th><th>SL</th><th>Zeit &amp; Plätze</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     detail.appendChild(d);
   }
 
@@ -2157,19 +2207,50 @@ function renderCalendar(slots, rsvpsOpen) {
   const cal = document.getElementById("calView");
   const showBusy = rsvpsOpen || slots.some(s => s.games.some(g => g.rsvps > 0));
   const days = new Map();
+  const slotKey = slot => `${slot.date}|${slot.part}`;
+  const slotLabel = slot => `${slot.date.slice(8)}.${slot.date.slice(5, 7)}. ${slot.part}`;
   for (const s of slots) {
     if (!days.has(s.date)) days.set(s.date, { day: s.day, parts: {} });
     days.get(s.date).parts[s.part] = s;
   }
-  const card = g => `
-    <a class="cal-card" href="${g.url}" target="_blank" rel="noopener" aria-label="${g.title}, ${g.start} bis ${g.end}${g.ws ? ", Workshop" : `, ${g.playerSeats} Spielplätze plus Spielleitung${showBusy ? `, ${frei(g)} frei` : ""}`}">
-      <span class="t">${g.title}</span>
+  const systems = [...new Map(slots.flatMap(slot => slot.games).map(game => [game.system.toLocaleLowerCase("de"), game.system])).values()]
+    .sort((a, b) => a.localeCompare(b, "de", { sensitivity:"base", numeric:true }));
+  const totalGames = slots.reduce((sum, slot) => sum + slot.games.length, 0);
+  const card = (g, key) => `
+    <a class="cal-card" data-calendar-game data-slot="${escapeHtml(key)}" data-system="${escapeHtml(g.system.toLocaleLowerCase("de"))}" data-search="${escapeHtml(`${g.title} ${g.system} ${g.facilitator}`.toLocaleLowerCase("de"))}" data-free="${String(!g.ws && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${g.system}, Spielleitung ${g.facilitator}, ${g.start} bis ${g.end}${g.ws ? ", Workshop" : `, ${g.playerSeats} Spielplätze plus Spielleitung${showBusy ? `, ${frei(g)} frei` : ""}`}`)}">
+      <span class="t">${escapeHtml(g.title)}</span>
       <span class="m">${g.start}–${g.end}${g.ws ? ' <span class="badge">Workshop</span>' : ` · ${g.playerSeats}+SL${showBusy ? (frei(g) > 0 ? ` <span class="badge frei">${frei(g)} frei</span>` : ' <span class="badge voll">voll</span>') : ""}`}</span>
+      <span class="m"><span>${escapeHtml(g.system)}</span><span aria-hidden="true">·</span><span>SL: ${escapeHtml(g.facilitator)}</span></span>
     </a>`;
-  cal.innerHTML = `<div class="calendar-bento">${[...days.values()].map(d => {
+  cal.innerHTML = `
+    <section class="calendar-filters" aria-label="Kalender filtern">
+      <label class="calendar-filter-field" for="calendarSearch">
+        <span class="calendar-filter-label">Suche</span>
+        <input class="calendar-filter-input" id="calendarSearch" type="search" autocomplete="off" placeholder="Session, System oder SL …">
+      </label>
+      <label class="calendar-filter-field" for="calendarSystem">
+        <span class="calendar-filter-label">System</span>
+        <input class="calendar-filter-input" id="calendarSystem" type="search" list="calendarSystemSuggestions" autocomplete="off" placeholder="System eingeben …">
+        <datalist id="calendarSystemSuggestions">${systems.map(system => `<option value="${escapeHtml(system)}"></option>`).join("")}</datalist>
+      </label>
+      <div class="calendar-filter-field calendar-slot-filter">
+        <span class="calendar-filter-label" id="calendarSlotFilterLabel">Slot</span>
+        <div class="calendar-slot-chips" role="group" aria-labelledby="calendarSlotFilterLabel">
+          <button type="button" class="calendar-slot-chip" data-slot-filter="" aria-pressed="true">Alle Slots</button>
+          ${slots.map(slot => `<button type="button" class="calendar-slot-chip" data-slot-filter="${escapeHtml(slotKey(slot))}" aria-pressed="false">${escapeHtml(slotLabel(slot))}</button>`).join("")}
+        </div>
+      </div>
+      <div class="calendar-filter-footer">
+        ${rsvpsOpen ? `<button type="button" class="calendar-free-toggle" id="calendarFreeFilter" aria-pressed="false"><span aria-hidden="true">○</span> Nur freie Plätze</button>` : ""}
+        <button type="button" class="calendar-filter-reset" id="calendarFilterReset" hidden>Filter zurücksetzen</button>
+        <span class="calendar-filter-count" id="calendarFilterCount" role="status" aria-live="polite">${totalGames} Runden</span>
+      </div>
+    </section>
+    <p class="calendar-empty" id="calendarNoResults" hidden>Keine Sessions entsprechen diesen Filtern.</p>
+    <div class="calendar-bento">${[...days.values()].map(d => {
     const parts = Object.values(d.parts);
     return `
-    <div class="card cal-day">
+    <div class="card cal-day" data-calendar-day>
       <h2>${d.day}</h2>
       <div class="cal-cols" style="--calendar-columns:${Math.min(3, Math.max(1, parts.length))}">
         ${parts.map(slot => {
@@ -2179,14 +2260,72 @@ function renderCalendar(slots, rsvpsOpen) {
           const badge = showBusy ? `${free} frei` : (missing ? `noch +${missing} bis Ziel` : "Ziel erreicht");
           const badgeClass = showBusy || !missing ? "is-good" : "is-warn";
           return `
-          <div class="cal-col">
+          <div class="cal-col" data-calendar-slot="${escapeHtml(slotKey(slot))}">
             <div class="cal-col-head"><h3>${slot.part}</h3><span class="cal-slot-badge ${badgeClass}">${badge}</span></div>
-            ${slot.games.map(card).join("") || '<p class="hint">– keine Runden –</p>'}
+            ${slot.games.map(game => card(game, slotKey(slot))).join("") || '<p class="hint">– keine Runden –</p>'}
           </div>`;
         }).join("")}
       </div>
     </div>`;
   }).join("")}</div>`;
+
+  const searchInput = document.getElementById("calendarSearch");
+  const systemInput = document.getElementById("calendarSystem");
+  const resetButton = document.getElementById("calendarFilterReset");
+  const freeButton = document.getElementById("calendarFreeFilter");
+  const count = document.getElementById("calendarFilterCount");
+  const noResults = document.getElementById("calendarNoResults");
+  let selectedSlot = "";
+  let freeOnly = false;
+  const applyCalendarFilters = () => {
+    const query = searchInput.value.trim().toLocaleLowerCase("de");
+    const queryTerms = query.split(/\s+/).filter(Boolean);
+    const systemQuery = systemInput.value.trim().toLocaleLowerCase("de");
+    let visibleGames = 0;
+    for (const game of cal.querySelectorAll("[data-calendar-game]")) {
+      const visible = (!queryTerms.length || queryTerms.every(term => game.dataset.search.includes(term)))
+        && (!systemQuery || game.dataset.system.includes(systemQuery))
+        && (!selectedSlot || game.dataset.slot === selectedSlot)
+        && (!freeOnly || game.dataset.free === "true");
+      game.hidden = !visible;
+      if (visible) visibleGames += 1;
+    }
+    for (const column of cal.querySelectorAll("[data-calendar-slot]")) {
+      column.hidden = !column.querySelector("[data-calendar-game]:not([hidden])");
+    }
+    for (const day of cal.querySelectorAll("[data-calendar-day]")) {
+      day.hidden = !day.querySelector("[data-calendar-slot]:not([hidden])");
+    }
+    count.textContent = visibleGames === totalGames ? `${totalGames} Runden` : `${visibleGames} von ${totalGames} Runden`;
+    noResults.hidden = visibleGames > 0;
+    resetButton.hidden = !(query || systemQuery || selectedSlot || freeOnly);
+  };
+  searchInput.addEventListener("input", applyCalendarFilters);
+  systemInput.addEventListener("input", applyCalendarFilters);
+  for (const chip of cal.querySelectorAll("[data-slot-filter]")) {
+    chip.addEventListener("click", () => {
+      selectedSlot = chip.dataset.slotFilter;
+      cal.querySelectorAll("[data-slot-filter]").forEach(button => button.setAttribute("aria-pressed", String(button === chip)));
+      applyCalendarFilters();
+    });
+  }
+  freeButton?.addEventListener("click", () => {
+    freeOnly = !freeOnly;
+    freeButton.setAttribute("aria-pressed", String(freeOnly));
+    freeButton.querySelector("span").textContent = freeOnly ? "✓" : "○";
+    applyCalendarFilters();
+  });
+  resetButton.addEventListener("click", () => {
+    searchInput.value = "";
+    systemInput.value = "";
+    selectedSlot = "";
+    freeOnly = false;
+    freeButton?.setAttribute("aria-pressed", "false");
+    if (freeButton) freeButton.querySelector("span").textContent = "○";
+    cal.querySelectorAll("[data-slot-filter]").forEach(button => button.setAttribute("aria-pressed", String(!button.dataset.slotFilter)));
+    applyCalendarFilters();
+    searchInput.focus();
+  });
 }
 
 // ---------- Ansicht umschalten (Übersicht/Kalender) ----------
@@ -2311,22 +2450,29 @@ function renderFun(games) {
   }).filter(f => f.n >= 2);
   const facts = [
     { v: (seats.reduce((a, b) => a + b, 0) / seats.length).toFixed(1).replace(".", ","), l: "Personen pro Runde (ø, inkl. SL)" },
-    { v: systems.size, l: "verschiedene Systeme – Vielfalt!" },
+    { v: systems.size, l: "verschiedene Systeme – Vielfalt!", action:"systems" },
     { v: `${Math.round(gmless / games.length * 100)} %`, l: "der Runden kommen ohne SL aus" },
     { v: `${Math.round(xcard / games.length * 100)} %`, l: "erwähnen die X-Karte" },
     { v: biggest.participant_count + "+SL", l: `größte Runde: ${cleanTitle(biggest.title)}` },
     { v: smallest.participant_count + "+SL", l: `intimste Runde: ${cleanTitle(smallest.title)}` },
   ];
   document.getElementById("facts").innerHTML =
-    facts.map(f => `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
+    facts.map(f => f.action === "systems"
+      ? `<button type="button" class="fact fact-button" data-show-all-systems aria-controls="sysList" aria-expanded="false" aria-label="${escapeHtml(`${f.v} verschiedene Systeme. Vollständige Liste anzeigen.`)}"><div class="v">${f.v}</div><div class="l">${f.l}</div></button>`
+      : `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
 
   // Systeme-Liste mit umschaltbarer Zählweise:
   //   "field"    = zählt nur das System-Feld der Runden
   //   "mentions" = zählt Erwähnungen der konfigurierten Systemfamilien
-  const ranked = [...systems.values()].sort((a, b) => b.n - a.n);
+  const systemCollator = new Intl.Collator("de", { sensitivity:"base", numeric:true });
+  const byCountThenName = (a, b) => b.n - a.n || systemCollator.compare(a.name, b.name);
+  const ranked = [...systems.values()].sort(byCountThenName);
   const singles = ranked.filter(s => s.n === 1).length;
+  let showAllSystems = false;
   const renderSysList = mode => {
-    const rows = mode === "mentions" ? [...families].sort((a, b) => b.n - a.n) : ranked.filter(s => s.n >= 2);
+    const rows = mode === "mentions"
+      ? [...families].sort(byCountThenName)
+      : showAllSystems ? ranked : ranked.filter(s => s.n >= 2);
     const maxN = rows.length ? rows[0].n : 1;
     document.getElementById("sysHint").textContent = mode === "mentions"
       ? "Zählt, in wie vielen Runden die Spielfamilie erwähnt wird – im System-Feld, Titel oder in der Beschreibung. Eine Runde kann zu mehreren Familien passen."
@@ -2342,15 +2488,34 @@ function renderFun(games) {
         type:"system", name:system.name, matches:system.matches, family:Boolean(system.fam)
       }));
     }
-    document.getElementById("sysMore").textContent =
-      mode === "field" && singles > 0 ? `… plus ${singles} Systeme, die genau einmal angeboten werden.` : "";
+    const more = document.getElementById("sysMore");
+    document.querySelector("[data-show-all-systems]")?.setAttribute("aria-expanded", String(mode === "field" && showAllSystems));
+    more.innerHTML = mode === "field" && singles > 0
+      ? `<button type="button" class="system-more-toggle" aria-expanded="${String(showAllSystems)}">${showAllSystems ? "Weniger Systeme anzeigen" : `… plus ${singles} Systeme, die genau einmal angeboten werden. Alle anzeigen.`}</button>`
+      : "";
+    more.querySelector(".system-more-toggle")?.addEventListener("click", () => {
+      showAllSystems = !showAllSystems;
+      renderSysList("field");
+    });
   };
   const modeSel = document.getElementById("sysMode");
   if (families.length) {
     modeSel.hidden = false;
-    modeSel.onchange = () => renderSysList(modeSel.value);
+    modeSel.onchange = () => {
+      showAllSystems = false;
+      renderSysList(modeSel.value);
+    };
   }
   renderSysList("field");
+  document.querySelector("[data-show-all-systems]")?.addEventListener("click", () => {
+    showAllSystems = true;
+    modeSel.value = "field";
+    renderSysList("field");
+    document.getElementById("sysList").scrollIntoView({
+      behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block:"start"
+    });
+  });
 
   const stop = new Set(("und oder aber auch noch dann wird werden wurde kann können könnt muss müssen darf dürfen soll sollen " +
     "der die das den dem des ein eine einen einem einer eines ist sind war waren sein seine seinem seiner ihr ihre ihrem ihren " +
