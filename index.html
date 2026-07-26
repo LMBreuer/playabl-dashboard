@@ -659,6 +659,7 @@
     outline:3px solid var(--accent); outline-offset:3px;
   }
   :root[data-theme="contrast"] .settings-info-button,
+  :root[data-theme="contrast"] .section-info-button,
   :root[data-theme="contrast"] .slot-config-close { min-width:30px; min-height:30px; }
   .bento-target .v { color:var(--accent); }
   .kpi-good .v { color:var(--good); }
@@ -690,6 +691,12 @@
   .bento-grid > .foot li { margin:0; }
   .card h2 { margin:0 0 4px; font-family:var(--font-display); font-size:1.15rem; font-weight:700; }
   .card h3 { margin:24px 0 12px; font-family:var(--font-display); font-size:1rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-secondary); }
+  .card-title-row { display:flex; align-items:center; justify-content:flex-start; gap:7px; margin-bottom:18px; }
+  .card-title-row h2, .card-title-row h3 { margin:0; }
+  .section-info-button { display:grid; place-items:center; flex:0 0 auto; width:32px; height:32px; padding:0; border:0; border-radius:50%; background:transparent; color:var(--text-secondary); cursor:pointer; }
+  .section-info-button span { display:grid; place-items:center; width:18px; height:18px; border:1px solid currentColor; border-radius:50%; font:800 .68rem/1 var(--font-body); transition:transform .18s ease,background .18s ease,color .18s ease; }
+  .section-info-button:hover span { transform:translateY(-1px); background:var(--accent-soft); color:var(--accent); }
+  :root[data-theme="contrast"] .section-info-button span { border-width:2px; color:#000; }
   .card .hint { max-width:640px; margin:0 0 20px; color:var(--text-secondary); font-size:.85rem; }
   .row { grid-template-columns:160px 1fr; gap:16px; margin:18px 0; }
   .row .lbl { font-size:.9rem; }
@@ -707,8 +714,8 @@
   .needs-value { font-weight:700; font-variant-numeric:tabular-nums; }
   .punk-zine-banner { position:fixed; z-index:3; right:-12vw; bottom:1.2rem; width:124vw; padding:7px 0 6px; border-block:3px solid #0b0b0b; background:var(--accent-soft); color:#0b0b0b; font:1000 clamp(.66rem,1.05vw,.98rem)/1 "Arial Black",Arial,sans-serif; letter-spacing:.03em; text-align:center; text-transform:uppercase; transform:rotate(1.4deg); white-space:nowrap; overflow:hidden; }
   .punk-zine-banner a { color:inherit; text-decoration:none; }
-  #slotConfigDlg, #settingsInfoDlg, #wordContextDlg { position:fixed; inset:50% auto auto 50%; width:min(680px,calc(100vw - 32px)); max-width:none; max-height:min(82vh,760px); margin:0; padding:0; overflow:hidden; transform:translate(-50%,-50%); color:var(--text-primary); background:var(--surface-1); border:var(--border-w) solid var(--chrome-border,var(--border)); border-radius:var(--r-lg); box-shadow:0 28px 80px -24px rgba(0,0,0,.72),var(--shadow-card); }
-  #slotConfigDlg::backdrop, #settingsInfoDlg::backdrop, #wordContextDlg::backdrop { background:rgba(0,0,0,.56); backdrop-filter:blur(3px); }
+  #slotConfigDlg, #settingsInfoDlg, #wordContextDlg, #sectionInfoDlg { position:fixed; inset:50% auto auto 50%; width:min(680px,calc(100vw - 32px)); max-width:none; max-height:min(82vh,760px); margin:0; padding:0; overflow:hidden; transform:translate(-50%,-50%); color:var(--text-primary); background:var(--surface-1); border:var(--border-w) solid var(--chrome-border,var(--border)); border-radius:var(--r-lg); box-shadow:0 28px 80px -24px rgba(0,0,0,.72),var(--shadow-card); }
+  #slotConfigDlg::backdrop, #settingsInfoDlg::backdrop, #wordContextDlg::backdrop, #sectionInfoDlg::backdrop { background:rgba(0,0,0,.56); backdrop-filter:blur(3px); }
   .slot-config-form { display:flex; flex-direction:column; max-height:min(82vh,760px); }
   .slot-config-header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:24px 26px 18px; border-bottom:var(--border-w) solid var(--grid); cursor:grab; user-select:none; touch-action:none; }
   .slot-config-header:active { cursor:grabbing; }
@@ -945,6 +952,18 @@
     <div class="word-context-actions">
       <button type="button" id="wordContextRefresh">Andere Ausschnitte</button>
     </div>
+  </div>
+</dialog>
+<dialog id="sectionInfoDlg" aria-labelledby="sectionInfoTitle" aria-describedby="sectionInfoIntro">
+  <div class="slot-config-form">
+    <div class="slot-config-header">
+      <div>
+        <h2 id="sectionInfoTitle">Information</h2>
+        <p id="sectionInfoIntro"></p>
+      </div>
+      <button class="slot-config-close" id="sectionInfoClose" type="button" aria-label="Information schließen">×</button>
+    </div>
+    <div class="settings-info-content" id="sectionInfoContent"></div>
   </div>
 </dialog>
 <script src="https://lmbreuer.github.io/con-raumplan/punk-zine-quotes.js"></script>
@@ -1676,6 +1695,63 @@ wordContextHandle.addEventListener("pointercancel", stopWordContextDrag);
 wordContextHandle.addEventListener("lostpointercapture", () => { wordContextDrag = null; });
 wordContextDialog.addEventListener("close", () => { wordContextDrag = null; });
 
+const sectionInfoDialog = document.getElementById("sectionInfoDlg");
+const sectionInfoHandle = sectionInfoDialog.querySelector(".slot-config-header");
+let sectionInfoEntries = {};
+let activeSectionInfoKey = "";
+let sectionInfoDrag = null;
+function renderSectionInfo() {
+  const entry = sectionInfoEntries[activeSectionInfoKey];
+  if (!entry) return;
+  const en = document.documentElement.lang === "en";
+  const content = typeof entry === "function" ? entry(en) : entry;
+  document.getElementById("sectionInfoTitle").textContent = content.title;
+  document.getElementById("sectionInfoIntro").textContent = content.intro;
+  document.getElementById("sectionInfoContent").innerHTML = content.html;
+  document.getElementById("sectionInfoClose").setAttribute("aria-label", en ? "Close information" : "Information schließen");
+}
+function openSectionInfo(key) {
+  if (!sectionInfoEntries[key]) return;
+  activeSectionInfoKey = key;
+  renderSectionInfo();
+  sectionInfoDrag = null;
+  sectionInfoDialog.style.inset = "50% auto auto 50%";
+  sectionInfoDialog.style.transform = "translate(-50%,-50%)";
+  sectionInfoDialog.showModal();
+}
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-section-info]");
+  if (button) openSectionInfo(button.dataset.sectionInfo);
+});
+document.getElementById("sectionInfoClose").addEventListener("click", () => sectionInfoDialog.close());
+window.addEventListener("uilanguagechange", () => {
+  if (sectionInfoDialog.open) renderSectionInfo();
+});
+sectionInfoHandle.addEventListener("pointerdown", event => {
+  if (event.pointerType === "touch" || event.target.closest("button")) return;
+  const rect = sectionInfoDialog.getBoundingClientRect();
+  sectionInfoDialog.style.inset = `${rect.top}px auto auto ${rect.left}px`;
+  sectionInfoDialog.style.transform = "none";
+  sectionInfoDrag = { pointerId:event.pointerId, dx:event.clientX - rect.left, dy:event.clientY - rect.top };
+  sectionInfoHandle.setPointerCapture(event.pointerId);
+});
+sectionInfoHandle.addEventListener("pointermove", event => {
+  if (!sectionInfoDrag || event.pointerId !== sectionInfoDrag.pointerId) return;
+  const margin = 12;
+  const rect = sectionInfoDialog.getBoundingClientRect();
+  sectionInfoDialog.style.left = Math.min(innerWidth - rect.width - margin, Math.max(margin, event.clientX - sectionInfoDrag.dx)) + "px";
+  sectionInfoDialog.style.top = Math.min(innerHeight - rect.height - margin, Math.max(margin, event.clientY - sectionInfoDrag.dy)) + "px";
+});
+function stopSectionInfoDrag(event) {
+  if (!sectionInfoDrag || event.pointerId !== sectionInfoDrag.pointerId) return;
+  sectionInfoDrag = null;
+  if (sectionInfoHandle.hasPointerCapture(event.pointerId)) sectionInfoHandle.releasePointerCapture(event.pointerId);
+}
+sectionInfoHandle.addEventListener("pointerup", stopSectionInfoDrag);
+sectionInfoHandle.addEventListener("pointercancel", stopSectionInfoDrag);
+sectionInfoHandle.addEventListener("lostpointercapture", () => { sectionInfoDrag = null; });
+sectionInfoDialog.addEventListener("close", () => { sectionInfoDrag = null; });
+
 // buckets: aktive Zeitabschnitte der verknüpften con-raumplan-Con (falls
 // vorhanden) — ersetzen den hart codierten CUTOFF-Vergleich. Ohne
 // Verknüpfung (buckets leer) bleibt das bisherige Vormittag/Nachmittag-
@@ -1763,6 +1839,49 @@ function render(slots, rsvpsOpen) {
   const pct = v => (v / MAX * 100) + "%";
   const allReg = slots.flatMap(s => reg(s).map(g => ({ ...g, slot: s })));
   const freeTotal = allReg.reduce((a, g) => a + frei(g), 0);
+  const sectionInfoLabel = (de, en) => document.documentElement.lang === "en" ? en : de;
+  sectionInfoEntries = {
+    chart: en => ({
+      title:en ? "How to read the capacity chart" : "So liest du die Platzgrafik",
+      intro:en ? "Meaning of segments, target band, and interactions." : "Bedeutung von Segmenten, Zielband und Interaktionen.",
+      html:en
+        ? `<section><h3>Sessions and capacity</h3><p>Each blue segment represents one session. Its width corresponds to the player seats plus the person running it.${showBusy ? " The lighter portion is already occupied." : ""}</p></section><section><h3>Interaction</h3><p>Hover over a segment to see its title and capacity. Clicking opens the session on Playabl; some details may require a login.</p></section><section><h3>Target range</h3><p>The grey band marks the target of ${LO}–${HI} accommodated people per slot.${workshops.length ? " Dashed outlines show additional workshop or special capacity, which is not included in the regular-session totals." : ""}</p></section>`
+        : `<section><h3>Runden und Plätze</h3><p>Jedes blaue Segment steht für eine Session. Seine Breite entspricht den Spielplätzen plus der anbietenden Person.${showBusy ? " Der hellere Anteil ist bereits belegt." : ""}</p></section><section><h3>Interaktion</h3><p>Mouseover zeigt Titel und Kapazität. Ein Klick öffnet die Runde auf Playabl; manche Details sind dort erst nach dem Login sichtbar.</p></section><section><h3>Zielkorridor</h3><p>Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot.${workshops.length ? " Gestrichelte Umrisse zeigen zusätzliche Workshop- oder Special-Plätze; sie zählen nicht zu den regulären Runden." : ""}</p></section>`
+    }),
+    free: en => ({
+      title:en ? "Where are seats still available?" : "Wo ist noch Platz?",
+      intro:en ? "How the list is sorted and calculated." : "Sortierung und Berechnung der freien Plätze.",
+      html:en
+        ? `<section><p>Only regular sessions with available player seats are shown. They are sorted from most to fewest available seats. The person running the session is not counted as an available player seat.</p></section>`
+        : `<section><p>Gezeigt werden nur reguläre Runden mit freien Spielplätzen – absteigend nach der Zahl der freien Plätze sortiert. Die anbietende Person zählt dabei nicht als freier Spielplatz.</p></section>`
+    }),
+    needs: en => ({
+      title:en ? "Where are more sessions needed?" : "Wo werden noch Runden gebraucht?",
+      intro:en ? "How the remaining demand per slot is calculated." : "Berechnung des zusätzlichen Bedarfs je Slot.",
+      html:en
+        ? `<section><p>The dashboard compares the offered capacity in each slot with the lower target of ${LO}. The number shown is the remaining capacity needed to reach that value.</p>${workshops.length ? "<p>Workshops and specials provide additional capacity but are shown separately, so a slot may in practice need fewer additional regular sessions.</p>" : ""}</section>`
+        : `<section><p>Das Dashboard vergleicht die angebotenen Plätze jedes Slots mit dem unteren Zielwert von ${LO}. Die angezeigte Zahl ist die noch fehlende Kapazität bis zu diesem Wert.</p>${workshops.length ? "<p>Workshops und Specials schaffen zusätzliche Plätze, werden aber getrennt dargestellt. Praktisch kann ein Slot daher weniger zusätzliche reguläre Runden benötigen.</p>" : ""}</section>`
+    }),
+    systems: en => {
+      const familyMode = document.getElementById("sysMode")?.value === "mentions";
+      return {
+        title:en ? "How are systems counted?" : "Wie werden Systeme gezählt?",
+        intro:familyMode
+          ? (en ? "Current mode: system-family mentions." : "Aktueller Modus: Erwähnungen von Systemfamilien.")
+          : (en ? "Current mode: system field only." : "Aktueller Modus: nur das Systemfeld."),
+        html:familyMode
+          ? (en ? `<section><p>A system family is counted when it appears in a session’s system field, title, or description. One session can therefore match several families. Click a row to see the matching games.</p></section>` : `<section><p>Eine Systemfamilie zählt, wenn sie im Systemfeld, Titel oder in der Beschreibung einer Runde erwähnt wird. Eine Runde kann dadurch zu mehreren Familien passen. Ein Klick auf eine Zeile zeigt die zugehörigen Spiele.</p></section>`)
+          : (en ? `<section><p>The list groups identical spellings from the sessions’ system field. Systems offered only once are summarized below the chart. Click a row to see its games.</p></section>` : `<section><p>Die Liste gruppiert gleiche Schreibweisen aus dem Systemfeld der Runden. Systeme, die nur einmal vorkommen, werden unter der Grafik zusammengefasst. Ein Klick auf eine Zeile zeigt die zugehörigen Spiele.</p></section>`)
+      };
+    },
+    cloud: en => ({
+      title:en ? "How does the word cloud work?" : "Wie funktioniert die Wortwolke?",
+      intro:en ? "Frequency, movement, and excerpts in context." : "Häufigkeit, Bewegung und Ausschnitte im Kontext.",
+      html:en
+        ? `<section><p>The cloud analyses the session descriptions after common filler words have been removed. Larger words occur more often.</p><p>Hovering shows the number and share of sessions containing the word. Clicking opens random excerpts so the word can be read in context.</p></section>`
+        : `<section><p>Die Wortwolke wertet die Rundenbeschreibungen aus, nachdem häufige Füllwörter entfernt wurden. Größere Wörter kommen häufiger vor.</p><p>Mouseover zeigt Anzahl und Anteil der Runden mit diesem Wort. Ein Klick öffnet zufällige Textausschnitte, damit es im Kontext gelesen werden kann.</p></section>`
+    })
+  };
 
   app.innerHTML = `
     <div class="bento-grid">
@@ -1774,25 +1893,21 @@ function render(slots, rsvpsOpen) {
       <div class="kpi bento-target"><div class="l">Ziel je Slot</div><div class="v">${LO}–${HI}</div></div>
       ${CONFIG.erwartete ? `<div class="kpi"><div class="l">erwartete Teilnehmende</div><div class="v">${CONFIG.erwartete}/Tag</div></div>` : ""}
       ${!showBusy && !workshops.length ? `<div class="kpi"><div class="l">Slots im Programm</div><div class="v">${slots.length}</div></div>` : ""}
-      </section>
+    </section>
     <section class="card bento-chart">
-      <h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2>
-      <p class="hint">Jedes Segment ist eine Session (Breite = Plätze inkl. der anbietenden Person)${showBusy ? ", der hellere Anteil ist bereits belegt" : ""}. Mit der Maus darüber fahren zeigt den Titel, <strong>Klick öffnet die Runde auf Playabl</strong> (Details dort z.T. erst nach Login). Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot${CONFIG.zielNotiz && activeTargetSource === "fallback" ? ` (${CONFIG.zielNotiz})` : activeTargetSource === "access" ? ` (automatisch aus ${eligibleTargetCount} Event-Freischaltungen geschätzt)` : ""}.${workshops.length ? " Gestrichelt umrandet: zusätzliche Plätze durch Workshops/Specials – sie zählen nicht in die Runden-Zahlen, bringen aber Teilnehmende unter." : ""} Dieselben Zahlen stehen in der Tabelle darunter.</p>
+      <div class="card-title-row"><h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2><button type="button" class="section-info-button" data-section-info="chart" aria-label="${sectionInfoLabel("Erklärung zur Platzgrafik", "Explanation of the capacity chart")}"><span aria-hidden="true">i</span></button></div>
       <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
       <div class="baseline-x" aria-hidden="true"><div></div><div class="xticks" id="xticks"></div></div>
     </section>
     <div class="bento-side-row">
       <div class="card bento-open">
-        <h2>Wo ist noch Platz?</h2>
-        <p class="hint">Reguläre Runden mit freien Spielplätzen, sortiert nach den meisten freien Plätzen.</p>
+        <div class="card-title-row"><h2>Wo ist noch Platz?</h2><button type="button" class="section-info-button" data-section-info="free" aria-label="${sectionInfoLabel("Erklärung zu freien Plätzen", "Explanation of available seats")}"><span aria-hidden="true">i</span></button></div>
         <div id="freeList"></div>
         <p class="hp-more" id="freeMore"></p>
       </div>
       <div class="card bento-needs">
-        <h2>Wo werden noch Runden gebraucht?</h2>
-        <p class="hint">Fehlende Plätze bis zum unteren Zielwert von ${LO} je Slot.</p>
+        <div class="card-title-row"><h2>Wo werden noch Runden gebraucht?</h2><button type="button" class="section-info-button" data-section-info="needs" aria-label="${sectionInfoLabel("Erklärung zum Rundenbedarf", "Explanation of additional session demand")}"><span aria-hidden="true">i</span></button></div>
         <div class="needs-list" id="needsList" role="list"></div>
-        ${workshops.length ? `<p class="hint" style="margin-top:10px">* In diesem Slot gibt es zusätzlich Workshops/Specials (eigene Sektion unten) – sie bringen Teilnehmende unter, tendenziell werden dort also weniger zusätzliche Runden gebraucht.</p>` : ""}
       </div>
     </div>
     <div class="card bento-full"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
@@ -1801,20 +1916,21 @@ function render(slots, rsvpsOpen) {
       <div id="wsList" role="list"></div></div>` : ""}
     <div class="card" id="funCard" hidden>
       <h2>Insights</h2>
-      <p class="hint">Auswertungen über alle angebotenen Runden – wird bei jedem Öffnen live neu berechnet.</p>
+      <p class="hint">Live aus allen angebotenen Runden.</p>
       <div class="facts" id="facts"></div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 8px">
+      <div class="card-title-row" style="justify-content:flex-start;flex-wrap:wrap;margin:20px 0 8px">
         <h3 style="margin:0">Systeme</h3>
+        <button type="button" class="section-info-button" data-section-info="systems" aria-label="${sectionInfoLabel("Erklärung zur Systemauswertung", "Explanation of the system analysis")}"><span aria-hidden="true">i</span></button>
         <select id="sysMode" class="inline-select" aria-label="Zählweise der Systeme" hidden>
           <option value="field">nur System-Feld</option>
           <option value="mentions">Systemfamilien (Erwähnungen)</option>
         </select>
       </div>
-      <p class="hint" id="sysHint"></p>
+      <p class="sr-only" id="sysHint"></p>
       <div id="sysList"></div>
       <p class="hp-more" id="sysMore"></p>
-      <h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3>
-      <p class="hint" id="cloudHint">Mit der Maus über ein Wort fahren zeigt Häufigkeit und Anteil; ein Klick öffnet zufällige Ausschnitte im Kontext.</p>
+      <div class="card-title-row" style="margin-top:24px"><h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3><button type="button" class="section-info-button" data-section-info="cloud" aria-label="${sectionInfoLabel("Erklärung zur Wortwolke", "Explanation of the word cloud")}"><span aria-hidden="true">i</span></button></div>
+      <p class="sr-only" id="cloudHint">Mit der Maus über ein Wort fahren zeigt Häufigkeit und Anteil; ein Klick öffnet zufällige Ausschnitte im Kontext.</p>
       <div id="cloud" aria-label="Interaktive Wortwolke"></div>
       <p class="sr-only" id="cloudAlt"></p>
     </div>
