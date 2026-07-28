@@ -1,4 +1,4 @@
-// Gleicher Schlüssel wie con-raumplan, damit die Theme-Wahl synchron bleibt.
+const VIENNA_ROSETTE_MARKUP = `<span class="vienna-rosette" aria-hidden="true"></span>`;
 const THEMES = [
   { key: "dark", label: "🌙", name: "Dunkel" },
   { key: "light", label: "☀️", name: "Hell" },
@@ -11,6 +11,7 @@ const THEMES = [
   { key: "cyberpunk", label: "⚡", name: "Cyberpunk" },
   { key: "comic", label: "💥", name: "Comic" },
   { key: "punk", label: "✖", name: "Punk" },
+  { key: "vienna", label: VIENNA_ROSETTE_MARKUP, name: "Vienna Nouveau" },
 ];
 const CORE_THEME_KEYS = ["dark", "light", "contrast"];
 const ZEN_MODE_KEY = "raumplan-zen-mode";
@@ -163,6 +164,77 @@ function setZenMode(enabled) {
   document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch);
   window.dispatchEvent(new CustomEvent("raumplan-zen-change", { detail: { enabled } }));
 }
+function closeViennaSources() {
+  const dock = document.getElementById("viennaSources");
+  if (!dock) return;
+  dock.querySelector("[data-vienna-sources-panel]")?.setAttribute("hidden", "");
+  dock.querySelector("[data-vienna-sources-open]")?.setAttribute("aria-expanded", "false");
+}
+function renderViennaSources() {
+  let dock = document.getElementById("viennaSources");
+  if (!dock) {
+    dock = document.createElement("aside");
+    dock.id = "viennaSources";
+    dock.className = "vienna-sources-dock";
+    document.body.appendChild(dock);
+  }
+  const visible = document.documentElement.getAttribute("data-theme") === "vienna";
+  dock.hidden = !visible;
+  if (!visible) {
+    dock.replaceChildren();
+    return;
+  }
+  const en = document.documentElement.lang === "en";
+  const copy = en ? {
+    button: "Inspiration & sources", title: "Inspiration & sources", close: "Close inspiration sources",
+    intro: "An independent digital interpretation of Viennese surface art – bold in expression, calm in use.",
+    history: "Historic surface art, lettering, and ornament of the Vienna Secession.",
+    digital: "A contemporary digital interpretation of Viennese Modernism.",
+    displayFont: "A free OFL display face with a narrow monoline Art Nouveau character.",
+    bodyFont: "A free geometric OFL face providing a readable link to Viennese Modernism.",
+    note: "The linked works are disclosed as inspiration; the theme’s design, components, and ornaments were developed independently for this application."
+  } : {
+    button: "Inspiration & Quellen", title: "Inspiration & Quellen", close: "Inspirationsquellen schließen",
+    intro: "Eine eigenständige digitale Interpretation der Wiener Flächenkunst – kräftig im Ausdruck, ruhig in der Nutzung.",
+    history: "Historische Flächenkunst, Lettering und Ornamentik der Wiener Secession.",
+    digital: "Zeitgenössische digitale Übersetzung der Wiener Moderne.",
+    displayFont: "Freie OFL-Displayschrift mit schmalem, monolinearem Art-Nouveau-Charakter.",
+    bodyFont: "Freie geometrische OFL-Schrift für eine lesbare Verbindung zur Wiener Moderne.",
+    note: "Die verlinkten Arbeiten dienen als offengelegte Inspiration; Gestaltung, Komponenten und Ornamente dieses Themes wurden eigenständig für diese Anwendung entwickelt."
+  };
+  dock.innerHTML = `
+    <button type="button" class="vienna-sources-trigger" data-vienna-sources-open aria-expanded="false" aria-controls="viennaSourcesPanel">
+      ${VIENNA_ROSETTE_MARKUP}<span>${copy.button}</span>
+    </button>
+    <section id="viennaSourcesPanel" class="vienna-sources-panel" data-vienna-sources-panel aria-labelledby="viennaSourcesTitle" hidden>
+      <div class="vienna-sources-head">
+        <div><span class="vienna-sources-kicker">Vienna Nouveau</span><h2 id="viennaSourcesTitle">${copy.title}</h2></div>
+        <button type="button" class="vienna-sources-close" data-vienna-sources-close aria-label="${copy.close}">×</button>
+      </div>
+      <p>${copy.intro}</p>
+      <ul>
+        <li><a href="https://letterformarchive.org/news/die-flache-facsimile-and-the-vienna-secession/" target="_blank" rel="noopener">Die Fläche · Letterform Archive</a><span>${copy.history}</span></li>
+        <li><a href="https://www.awwwards.com/sites/viennese-modernism-2018" target="_blank" rel="noopener">Viennese Modernism 2018</a><span>${copy.digital}</span></li>
+        <li><a href="https://github.com/google/fonts/tree/main/ofl/wireone" target="_blank" rel="noopener">Wire One · Google Fonts</a><span>${copy.displayFont}</span></li>
+        <li><a href="https://github.com/google/fonts/tree/main/ofl/jost" target="_blank" rel="noopener">Jost · Google Fonts</a><span>${copy.bodyFont}</span></li>
+      </ul>
+      <p class="vienna-sources-note">${copy.note}</p>
+    </section>`;
+  const trigger = dock.querySelector("[data-vienna-sources-open]");
+  trigger.addEventListener("click", () => {
+    const panel = dock.querySelector("[data-vienna-sources-panel]");
+    const willOpen = panel.hidden;
+    closeViennaSources();
+    if (willOpen) {
+      panel.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+    }
+  });
+  dock.querySelector("[data-vienna-sources-close]").addEventListener("click", () => {
+    closeViennaSources();
+    trigger.focus();
+  });
+}
 function renderContrastAidSwitch() {
   const slot = document.getElementById("contrastAidSwitch");
   if (!slot) return;
@@ -198,6 +270,7 @@ function applyTheme(key) {
     if (key === "solarpunk") randomizeSolarClouds(true);
     renderArtCaption();
   }
+  renderViennaSources();
   renderContrastAidSwitch();
   window.dispatchEvent(new CustomEvent("raumplan-theme-change", { detail: { key } }));
 }
@@ -246,6 +319,7 @@ function renderThemeSwitch(container) {
   container.innerHTML = `<div class="theme-switch">${core.map(t =>
     `<button type="button" data-theme-key="${t.key}" aria-pressed="${String(t.key === current)}" title="${themeName(t)}" aria-label="${themeName(t)}">${t.label}</button>`
   ).join("")}</div><div class="theme-more-wrap"><button type="button" class="theme-more-trigger${activeSpecial ? " is-active" : ""}" aria-haspopup="true" aria-expanded="false" aria-label="${moreLabel}" title="${moreLabel}"><span>${activeSpecial ? activeSpecial.label : "✨"}</span><span aria-hidden="true">⌄</span></button></div><div class="zen-mode-wrap"><button type="button" class="zen-mode-toggle" data-zen-mode role="switch" aria-checked="${String(zenEnabled)}" aria-label="${zenLabel}" title="${zenLabel}"><span aria-hidden="true">☯</span></button></div>`;
+  renderViennaSources();
   container.onclick = e => {
     const btn = e.target.closest("button[data-theme-key]");
     if (btn) { applyTheme(btn.dataset.themeKey); closeThemeMorePopover(); document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch); return; }
@@ -280,4 +354,11 @@ document.addEventListener("keydown", event => {
   const trigger = document.querySelector(".theme-more-trigger[aria-expanded='true']");
   closeThemeMorePopover();
   trigger?.focus();
+  const sourceTrigger = document.querySelector("[data-vienna-sources-open][aria-expanded='true']");
+  closeViennaSources();
+  sourceTrigger?.focus();
+});
+document.addEventListener("click", event => {
+  if (event.target.closest("#viennaSources")) return;
+  closeViennaSources();
 });

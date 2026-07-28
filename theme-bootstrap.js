@@ -1,8 +1,9 @@
-const THEMES_REMOTE = "https://lmbreuer.github.io/con-raumplan/themes.css";
+const THEMES_VERSION = "20260728-2";
+const THEMES_REMOTE = `https://lmbreuer.github.io/con-raumplan/themes.css?v=${THEMES_VERSION}`;
 const localThemeHost = location.hostname === "127.0.0.1" || location.hostname === "localhost";
 const themes = document.createElement("link");
 themes.rel = "stylesheet";
-themes.href = localThemeHost ? `${location.protocol}//${location.hostname}:8001/themes.css` : THEMES_REMOTE;
+themes.href = localThemeHost ? `${location.protocol}//${location.hostname}:8001/themes.css?v=${THEMES_VERSION}` : THEMES_REMOTE;
 themes.addEventListener("error", () => {
   if (themes.href !== THEMES_REMOTE) themes.href = THEMES_REMOTE;
 }, { once: true });
