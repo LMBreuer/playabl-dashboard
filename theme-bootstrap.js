@@ -1,12 +1,12 @@
-const THEME_TOKENS_REMOTE = "https://lmbreuer.github.io/con-raumplan/theme-tokens.css";
+const THEMES_REMOTE = "https://lmbreuer.github.io/con-raumplan/themes.css";
 const localThemeHost = location.hostname === "127.0.0.1" || location.hostname === "localhost";
-const themeTokens = document.createElement("link");
-themeTokens.rel = "stylesheet";
-themeTokens.href = localThemeHost ? `${location.protocol}//${location.hostname}:8001/theme-tokens.css` : THEME_TOKENS_REMOTE;
-themeTokens.addEventListener("error", () => {
-  if (themeTokens.href !== THEME_TOKENS_REMOTE) themeTokens.href = THEME_TOKENS_REMOTE;
+const themes = document.createElement("link");
+themes.rel = "stylesheet";
+themes.href = localThemeHost ? `${location.protocol}//${location.hostname}:8001/themes.css` : THEMES_REMOTE;
+themes.addEventListener("error", () => {
+  if (themes.href !== THEMES_REMOTE) themes.href = THEMES_REMOTE;
 }, { once: true });
-document.head.appendChild(themeTokens);
+document.head.appendChild(themes);
 
 try {
   const saved = localStorage.getItem("raumplan-theme");

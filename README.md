@@ -20,10 +20,10 @@ Anwendungsserver.
 - **`impressum.html`** / **`impressum.css`** — rechtliche Seite.
 
 Die eigentlichen Theme-Grundwerte liegen zentral in
-[`con-raumplan/theme-tokens.css`](https://github.com/LMBreuer/con-raumplan/blob/main/theme-tokens.css).
+[`con-raumplan/themes.css`](https://github.com/LMBreuer/con-raumplan/blob/main/themes.css).
 `theme-bootstrap.js` lädt diese kanonische Datei produktiv von GitHub Pages und bei lokalen Tests
 direkt vom Raumplan-Testserver auf Port 8001. Theme-Werte werden deshalb nur im Con-Raumplan
-gepflegt; das Dashboard enthält keine zweite Token-Kopie. Komponenten und Seitengeometrie bleiben
+gepflegt; das Dashboard enthält keine zweite Theme-Kopie. Komponenten und Seitengeometrie bleiben
 projektspezifisch.
 
 ## Für ein anderes Event verwenden
