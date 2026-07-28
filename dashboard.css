@@ -449,11 +449,14 @@
   .theme-switch-group, .theme-switch { display:flex; align-items:center; gap:2px; }
   .theme-switch-group { gap:6px; }
   .theme-switch { padding:0; border-radius:0; background:transparent; }
-  .theme-switch button, .theme-more-trigger { padding:6px 9px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font-size:.9rem; cursor:pointer; }
-  .theme-switch button[aria-pressed="true"], .theme-more-trigger.is-active { background:var(--accent-soft); color:var(--accent-text); box-shadow:none; }
+  .theme-switch button, .theme-more-trigger, .zen-mode-toggle { padding:6px 9px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font-size:.9rem; cursor:pointer; }
+  .theme-switch button[aria-pressed="true"], .theme-more-trigger.is-active, .zen-mode-toggle[aria-checked="true"] { background:var(--accent-soft); color:var(--accent-text); box-shadow:none; }
   .theme-more-wrap { display:flex; align-items:center; gap:6px; }
   .theme-more-wrap::before { content:""; width:1px; height:18px; background:var(--border); }
   .theme-more-trigger { display:inline-flex; align-items:center; gap:5px; font-weight:700; }
+  .zen-mode-wrap { display:flex; align-items:center; gap:6px; }
+  .zen-mode-wrap::before { content:""; width:1px; height:18px; background:var(--border); }
+  .zen-mode-toggle { display:inline-flex; align-items:center; justify-content:center; min-width:30px; font-size:1rem; }
   .theme-more-popover { position:fixed; z-index:9000; width:190px; padding:6px; border:var(--border-w) solid var(--border); border-radius:var(--r-md); background:var(--surface-1); box-shadow:var(--shadow-card); }
   .theme-more-row { display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:var(--text-primary); font-size:.85rem; text-align:left; cursor:pointer; }
   .theme-more-row[aria-pressed="true"] { background:var(--accent-soft); }
@@ -618,6 +621,19 @@
     :root[data-theme="solarpunk"] body::before, :root[data-theme="solarpunk"] body::after, :root[data-theme="solarpunk"] .solarpunk-airship { display:none; }
     #cloud button { animation:none; }
   }
+  :root[data-zen] *, :root[data-zen] *::before, :root[data-zen] *::after {
+    animation:none !important;
+    scroll-behavior:auto !important;
+    transition:none !important;
+  }
+  :root[data-zen] .card:hover, :root[data-zen] .kpi:hover, :root[data-zen] .fact:hover,
+  :root[data-zen] .cal-card:hover, :root[data-zen] #cloud button:hover {
+    transform:none !important;
+  }
+  :root[data-zen][data-theme="solarpunk"] body::before,
+  :root[data-zen][data-theme="solarpunk"] body::after,
+  :root[data-zen][data-theme="solarpunk"] .solarpunk-airship,
+  :root[data-zen][data-theme="terminal"] body::after { display:none !important; }
   @media (max-width:720px) {
     body { padding:24px 16px 48px; }
     .dashboard-actions { gap:8px; }

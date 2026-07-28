@@ -12,4 +12,5 @@ try {
   const saved = localStorage.getItem("raumplan-theme");
   const initial = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   document.documentElement.setAttribute("data-theme", initial);
+  document.documentElement.toggleAttribute("data-zen", localStorage.getItem("raumplan-zen-mode") === "1");
 } catch {}

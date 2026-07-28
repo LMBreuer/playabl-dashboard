@@ -13,6 +13,7 @@ const THEMES = [
   { key: "punk", label: "✖", name: "Punk" },
 ];
 const CORE_THEME_KEYS = ["dark", "light", "contrast"];
+const ZEN_MODE_KEY = "raumplan-zen-mode";
 const UKIYO_BACKGROUNDS = [
   { file:"images/ukiyo/great-wave.jpg", name:"Unter der Welle vor Kanagawa · Hokusai", nameEn:"Under the Wave off Kanagawa · Hokusai", sourceUrl:"https://commons.wikimedia.org/wiki/File:The_Great_Wave_off_Kanagawa.png" },
   { file:"images/ukiyo/red-fuji.jpg", name:"Roter Fuji · Hokusai", nameEn:"Red Fuji · Hokusai", sourceUrl:"https://commons.wikimedia.org/wiki/File:Red_Fuji_southern_wind_clear_morning.jpg" },
@@ -148,6 +149,20 @@ function setColorVisionAid(enabled) {
   }
   window.dispatchEvent(new CustomEvent("raumplan-theme-change", { detail: { key: document.documentElement.getAttribute("data-theme"), colorVisionAid: enabled } }));
 }
+function zenModeIsOn() {
+  try { return localStorage.getItem(ZEN_MODE_KEY) === "1"; } catch { return false; }
+}
+function updateZenModeAttribute() {
+  const enabled = zenModeIsOn();
+  document.documentElement.toggleAttribute("data-zen", enabled);
+  return enabled;
+}
+function setZenMode(enabled) {
+  try { localStorage.setItem(ZEN_MODE_KEY, enabled ? "1" : "0"); } catch {}
+  updateZenModeAttribute();
+  document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch);
+  window.dispatchEvent(new CustomEvent("raumplan-zen-change", { detail: { enabled } }));
+}
 function renderContrastAidSwitch() {
   const slot = document.getElementById("contrastAidSwitch");
   if (!slot) return;
@@ -214,6 +229,8 @@ function renderThemeSwitch(container) {
   const themeName = theme => coreNames[theme.key] || theme.name;
   const groupLabel = en ? "Choose colour scheme" : "Farbschema wählen";
   const moreLabel = en ? "More themes" : "Weitere Themes";
+  const zenLabel = en ? "Zen mode – reduce motion and visual effects" : "Zen-Modus – Bewegung und visuelle Effekte reduzieren";
+  const zenEnabled = updateZenModeAttribute();
   if (current === "terminal") terminalEasterEgg();
   if (current === "ukiyo") pickUkiyoBackground();
   if (current === "comic") pickComicBackground();
@@ -228,13 +245,20 @@ function renderThemeSwitch(container) {
   container.setAttribute("aria-label", groupLabel);
   container.innerHTML = `<div class="theme-switch">${core.map(t =>
     `<button type="button" data-theme-key="${t.key}" aria-pressed="${String(t.key === current)}" title="${themeName(t)}" aria-label="${themeName(t)}">${t.label}</button>`
-  ).join("")}</div><div class="theme-more-wrap"><button type="button" class="theme-more-trigger${activeSpecial ? " is-active" : ""}" aria-haspopup="true" aria-expanded="false" aria-label="${moreLabel}" title="${moreLabel}"><span>${activeSpecial ? activeSpecial.label : "✨"}</span><span aria-hidden="true">⌄</span></button></div>`;
+  ).join("")}</div><div class="theme-more-wrap"><button type="button" class="theme-more-trigger${activeSpecial ? " is-active" : ""}" aria-haspopup="true" aria-expanded="false" aria-label="${moreLabel}" title="${moreLabel}"><span>${activeSpecial ? activeSpecial.label : "✨"}</span><span aria-hidden="true">⌄</span></button></div><div class="zen-mode-wrap"><button type="button" class="zen-mode-toggle" data-zen-mode role="switch" aria-checked="${String(zenEnabled)}" aria-label="${zenLabel}" title="${zenLabel}"><span aria-hidden="true">☯</span></button></div>`;
   container.onclick = e => {
     const btn = e.target.closest("button[data-theme-key]");
     if (btn) { applyTheme(btn.dataset.themeKey); closeThemeMorePopover(); document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch); return; }
     const trigger = e.target.closest(".theme-more-trigger");
-    if (!trigger) return;
+    if (!trigger) {
+      const zenToggle = e.target.closest("[data-zen-mode]");
+      if (zenToggle) setZenMode(zenToggle.getAttribute("aria-checked") !== "true");
+      return;
+    }
     const popover = ensureThemeMorePopover();
+    const willOpen = popover.hidden;
+    closeThemeMorePopover();
+    if (!willOpen) return;
     const rect = trigger.getBoundingClientRect();
     popover.style.top = `${rect.bottom + 8}px`;
     popover.style.left = `${Math.max(8, rect.right - 190)}px`;
@@ -248,4 +272,12 @@ renderContrastAidSwitch();
 document.addEventListener("click", event => {
   if (event.target.closest(".theme-more-wrap") || event.target.closest("#themeMorePopover")) return;
   closeThemeMorePopover();
+});
+window.addEventListener("scroll", closeThemeMorePopover, { capture: true, passive: true });
+window.addEventListener("resize", closeThemeMorePopover);
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  const trigger = document.querySelector(".theme-more-trigger[aria-expanded='true']");
+  closeThemeMorePopover();
+  trigger?.focus();
 });
