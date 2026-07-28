@@ -16,6 +16,306 @@
     --band-edge:      #000000;
     --series-soft:    #ccccff;
   }
+
+/* Dark Cosmic: a quiet, deep sky with distinct layers instead of one repeated card treatment. */
+:root[data-theme="cosmic"] body {
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 76% -12%,color-mix(in srgb,var(--cosmic-nebula-blue) 23%,transparent),transparent 39%),
+    radial-gradient(ellipse at 6% 38%,color-mix(in srgb,var(--cosmic-nebula-teal) 18%,transparent),transparent 34%),
+    radial-gradient(ellipse at 96% 63%,color-mix(in srgb,var(--cosmic-nebula-rose) 12%,transparent),transparent 32%),
+    radial-gradient(ellipse at 28% 108%,color-mix(in srgb,var(--cosmic-nebula-ember) 7%,transparent),transparent 35%),
+    linear-gradient(165deg,#010207 0%,#030510 46%,#010207 100%);
+}
+:root[data-theme="cosmic"] body::before,
+:root[data-theme="cosmic"] body::after {
+  content:"";
+  position:fixed;
+  z-index:-1;
+  pointer-events:none;
+}
+:root[data-theme="cosmic"] body::before {
+  inset:-42%;
+  background:
+    radial-gradient(ellipse at 34% 54%,color-mix(in srgb,var(--cosmic-nebula-rose) 15%,transparent) 0 5%,transparent 31%),
+    radial-gradient(ellipse at 63% 43%,color-mix(in srgb,var(--cosmic-nebula-blue) 19%,transparent) 0 6%,transparent 34%),
+    radial-gradient(ellipse at 73% 61%,color-mix(in srgb,var(--cosmic-nebula-teal) 13%,transparent) 0 4%,transparent 28%),
+    radial-gradient(ellipse at 48% 57%,rgba(205,216,255,.11) 0 3%,rgba(87,75,164,.1) 17%,transparent 39%),
+    linear-gradient(102deg,transparent 34%,rgba(64,85,147,.04) 41%,rgba(177,191,235,.13) 48%,rgba(138,63,120,.09) 54%,rgba(33,109,118,.06) 59%,transparent 66%);
+  filter:blur(42px) saturate(1.18);
+  transform:rotate(-17deg) scale(1.06);
+  will-change:transform,opacity;
+  animation:
+    cosmic-milky-way 34s linear infinite alternate,
+    cosmic-nebula-breathe 9s ease-in-out infinite alternate;
+}
+:root[data-theme="cosmic"] body::after {
+  inset:-12%;
+  opacity:.66;
+  background-image:
+    radial-gradient(circle,rgba(240,242,255,.92) 0 1px,transparent 1.35px),
+    radial-gradient(circle,rgba(151,183,255,.68) 0 .8px,transparent 1.2px),
+    radial-gradient(circle,rgba(217,184,118,.55) 0 .7px,transparent 1.1px),
+    radial-gradient(circle,rgba(199,116,181,.42) 0 .65px,transparent 1px);
+  background-size:173px 181px,251px 229px,347px 311px,421px 379px;
+  background-position:21px 9px,91px 47px,13px 151px,187px 83px;
+  will-change:background-position,opacity;
+  animation:
+    cosmic-star-drift 92s linear infinite,
+    cosmic-star-pulse 6s ease-in-out infinite alternate;
+}
+:root[data-theme="cosmic"] body:not(:has(#calView:not([hidden])))::after {
+  background-size:157px 193px,239px 271px,337px 359px,449px 401px;
+  background-position:17px 23px,103px 61px,41px 137px,211px 97px;
+}
+@keyframes cosmic-milky-way {
+  from { transform:translate3d(-4%,-2%,0) rotate(-19deg) scale(1.04); }
+  to { transform:translate3d(5%,3%,0) rotate(-13deg) scale(1.12); }
+}
+@keyframes cosmic-star-drift {
+  to { background-position:194px -172px,342px -182px,360px -160px,608px -296px; }
+}
+@keyframes cosmic-nebula-breathe {
+  from { opacity:.62; }
+  to { opacity:1; }
+}
+@keyframes cosmic-star-pulse {
+  from { opacity:.48; filter:brightness(.86); }
+  to { opacity:.78; filter:brightness(1.18); }
+}
+:root[data-theme="cosmic"] body:has(#calView:not([hidden])) {
+  background:
+    radial-gradient(ellipse at 18% -8%,color-mix(in srgb,var(--cosmic-nebula-rose) 18%,transparent),transparent 36%),
+    radial-gradient(ellipse at 92% 32%,color-mix(in srgb,var(--cosmic-nebula-teal) 18%,transparent),transparent 34%),
+    radial-gradient(ellipse at 58% 110%,color-mix(in srgb,var(--cosmic-nebula-blue) 19%,transparent),transparent 40%),
+    linear-gradient(154deg,#010207 0%,#040411 48%,#010207 100%);
+}
+:root[data-theme="cosmic"] body:has(#calView:not([hidden]))::before {
+  background:
+    radial-gradient(ellipse at 67% 44%,color-mix(in srgb,var(--cosmic-nebula-rose) 16%,transparent) 0 5%,transparent 31%),
+    radial-gradient(ellipse at 38% 57%,color-mix(in srgb,var(--cosmic-nebula-blue) 19%,transparent) 0 6%,transparent 34%),
+    radial-gradient(ellipse at 25% 42%,color-mix(in srgb,var(--cosmic-nebula-teal) 14%,transparent) 0 4%,transparent 28%),
+    linear-gradient(78deg,transparent 34%,rgba(33,109,118,.06) 41%,rgba(177,191,235,.12) 49%,rgba(138,63,120,.1) 56%,transparent 66%);
+  animation:
+    cosmic-calendar-nebula 31s linear infinite alternate,
+    cosmic-nebula-breathe 8s ease-in-out infinite alternate;
+}
+:root[data-theme="cosmic"] body:has(#calView:not([hidden]))::after {
+  background-size:191px 167px,277px 241px,359px 293px,463px 419px;
+  background-position:73px 11px,19px 109px,173px 47px,61px 197px;
+}
+@keyframes cosmic-calendar-nebula {
+  from { transform:translate3d(-4%,3%,0) rotate(10deg) scale(1.04); }
+  to { transform:translate3d(5%,-3%,0) rotate(18deg) scale(1.12); }
+}
+:root[data-theme="cosmic"] .dashboard-head {
+  position:relative;
+  isolation:isolate;
+}
+:root[data-theme="cosmic"] .dashboard-head::after {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  top:-6px;
+  right:clamp(18px,5vw,70px);
+  width:clamp(150px,21vw,285px);
+  height:100px;
+  opacity:.54;
+  background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 110'%3E%3Cg fill='none' stroke='%2397b7ff' stroke-opacity='.34' stroke-width='1'%3E%3Cpath d='M18 72 76 29 134 66 202 22 276 58'/%3E%3Cpath d='M134 66 165 94' stroke-opacity='.18'/%3E%3C/g%3E%3Cg fill='%23eef2ff'%3E%3Ccircle cx='18' cy='72' r='2'/%3E%3Ccircle cx='76' cy='29' r='2.7' fill='%2397b7ff'/%3E%3Ccircle cx='134' cy='66' r='1.8'/%3E%3Ccircle cx='202' cy='22' r='2.4' fill='%23d9b876'/%3E%3Ccircle cx='276' cy='58' r='1.7'/%3E%3Ccircle cx='165' cy='94' r='1.2' fill='%2397b7ff'/%3E%3C/g%3E%3C/svg%3E");
+  filter:drop-shadow(0 0 7px rgba(151,183,255,.34));
+  transform:rotate(-7deg);
+}
+:root[data-theme="cosmic"] body:has(#calView:not([hidden])) .dashboard-head::after {
+  top:-12px;
+  right:clamp(22px,7vw,96px);
+  height:118px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 120'%3E%3Cg fill='none' stroke='%2397b7ff' stroke-opacity='.34' stroke-width='1'%3E%3Cpath d='M32 26 118 58 204 43 272 91'/%3E%3Cpath d='M118 58 147 12M118 58 91 108'/%3E%3C/g%3E%3Cg fill='%23eef2ff'%3E%3Ccircle cx='32' cy='26' r='1.8'/%3E%3Ccircle cx='118' cy='58' r='3' fill='%2397b7ff'/%3E%3Ccircle cx='204' cy='43' r='1.6'/%3E%3Ccircle cx='272' cy='91' r='2.2' fill='%23d9b876'/%3E%3Ccircle cx='147' cy='12' r='1.4'/%3E%3Ccircle cx='91' cy='108' r='1.7' fill='%2397b7ff'/%3E%3C/g%3E%3C/svg%3E");
+  transform:rotate(5deg);
+}
+:root[data-theme="cosmic"] .dashboard-hero h1,
+:root[data-theme="cosmic"] .card h2,
+:root[data-theme="cosmic"] .card h3,
+:root[data-theme="cosmic"] .kpi .v,
+:root[data-theme="cosmic"] .fact .v,
+:root[data-theme="cosmic"] .cal-day > h2 {
+  font-family:var(--font-display);
+  font-weight:500;
+}
+:root[data-theme="cosmic"] .dashboard-hero h1 {
+  max-width:13ch;
+  font-size:clamp(3.05rem,6vw,5.8rem);
+  line-height:.92;
+  letter-spacing:-.045em;
+  text-wrap:balance;
+  text-shadow:0 10px 42px rgba(85,106,187,.24);
+}
+:root[data-theme="cosmic"] .dashboard-hero .sub {
+  color:var(--text-secondary);
+  letter-spacing:.018em;
+}
+:root[data-theme="cosmic"] .card,
+:root[data-theme="cosmic"] .kpi,
+:root[data-theme="cosmic"] .cal-card,
+:root[data-theme="cosmic"] .calendar-filters {
+  border-color:rgba(157,177,232,.15);
+  background:linear-gradient(145deg,rgba(13,17,32,.94),rgba(5,7,15,.97));
+  box-shadow:var(--shadow-card);
+  backdrop-filter:blur(9px);
+}
+:root[data-theme="cosmic"] .controls,
+:root[data-theme="cosmic"] .card,
+:root[data-theme="cosmic"] .kpi,
+:root[data-theme="cosmic"] .calendar-filters,
+:root[data-theme="cosmic"] .calendar-empty {
+  border-radius:16px;
+}
+:root[data-theme="cosmic"] .fact,
+:root[data-theme="cosmic"] .cal-card,
+:root[data-theme="cosmic"] .calendar-bento .cal-col {
+  border-radius:10px;
+}
+:root[data-theme="cosmic"] .bento-hero {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border-color:rgba(151,183,255,.27);
+  background:
+    radial-gradient(ellipse at 82% 18%,color-mix(in srgb,var(--cosmic-nebula-blue) 30%,transparent),transparent 38%),
+    radial-gradient(ellipse at 16% 88%,color-mix(in srgb,var(--cosmic-nebula-teal) 24%,transparent),transparent 42%),
+    radial-gradient(ellipse at 64% 112%,color-mix(in srgb,var(--cosmic-nebula-rose) 15%,transparent),transparent 38%),
+    linear-gradient(145deg,#0a1022 0%,#050711 62%,#020309 100%);
+}
+:root[data-theme="cosmic"] .bento-hero::after {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  background:
+    linear-gradient(112deg,transparent 0 52%,rgba(151,183,255,.055) 52.3% 52.7%,transparent 53%),
+    radial-gradient(circle at 76% 31%,rgba(238,242,255,.8) 0 1.5px,transparent 2.4px),
+    radial-gradient(circle at 89% 63%,rgba(151,183,255,.72) 0 1px,transparent 2px);
+}
+:root[data-theme="cosmic"] .bento-kpis .kpi:nth-child(4n+1) {
+  border-top-color:rgba(151,183,255,.45);
+  background:linear-gradient(155deg,rgba(21,30,59,.96),rgba(5,7,15,.98) 72%);
+}
+:root[data-theme="cosmic"] .bento-kpis .kpi:nth-child(4n+2) {
+  border-top-color:rgba(217,184,118,.42);
+  background:
+    radial-gradient(circle at 86% 12%,rgba(217,184,118,.12),transparent 32%),
+    linear-gradient(155deg,rgba(12,14,25,.96),rgba(4,5,12,.98));
+}
+:root[data-theme="cosmic"] .bento-kpis .kpi:nth-child(4n+3) {
+  border-top-color:rgba(100,207,202,.38);
+  background:linear-gradient(135deg,rgba(12,30,38,.82),rgba(5,7,15,.98) 70%);
+}
+:root[data-theme="cosmic"] .bento-kpis .kpi:nth-child(4n) {
+  background:#03040a;
+}
+:root[data-theme="cosmic"] .kpi .v,
+:root[data-theme="cosmic"] .fact .v {
+  color:var(--text-primary);
+  font-size:clamp(2rem,3.4vw,3.65rem);
+  line-height:.9;
+}
+:root[data-theme="cosmic"] .bento-grid > .card:nth-of-type(3n+1) {
+  background:
+    radial-gradient(ellipse at 100% 0,rgba(119,105,201,.13),transparent 45%),
+    linear-gradient(145deg,rgba(12,15,29,.96),rgba(4,6,13,.98));
+}
+:root[data-theme="cosmic"] .bento-grid > .card:nth-of-type(3n+2) {
+  background:
+    radial-gradient(ellipse at 0 100%,rgba(38,103,122,.12),transparent 44%),
+    linear-gradient(155deg,rgba(8,12,23,.97),rgba(3,4,10,.99));
+}
+:root[data-theme="cosmic"] .seg {
+  filter:saturate(.78);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13);
+}
+:root[data-theme="cosmic"] #funCard {
+  background:
+    radial-gradient(ellipse at 21% -8%,color-mix(in srgb,var(--cosmic-nebula-rose) 15%,transparent),transparent 31%),
+    radial-gradient(ellipse at 76% 2%,rgba(151,183,255,.14),transparent 35%),
+    linear-gradient(180deg,rgba(9,13,27,.96),rgba(2,3,9,.99));
+}
+:root[data-theme="cosmic"] .fact {
+  border-color:rgba(157,177,232,.12);
+  background:rgba(3,5,12,.7);
+}
+:root[data-theme="cosmic"] .fact:nth-child(3n+2) {
+  background:linear-gradient(155deg,rgba(21,18,40,.76),rgba(3,5,12,.82));
+}
+:root[data-theme="cosmic"] .fact:nth-child(3n) {
+  background:linear-gradient(155deg,rgba(10,28,35,.66),rgba(3,5,12,.82));
+}
+:root[data-theme="cosmic"] #cloud {
+  border:1px solid rgba(151,183,255,.13);
+  background:
+    radial-gradient(ellipse at 50% 55%,rgba(119,105,201,.12),transparent 58%),
+    rgba(2,3,9,.78);
+}
+:root[data-theme="cosmic"] .cal-day:nth-child(3n+1) .cal-col {
+  background:linear-gradient(180deg,rgba(16,22,43,.88),rgba(4,6,13,.94));
+}
+:root[data-theme="cosmic"] .cal-day:nth-child(3n+2) .cal-col {
+  background:linear-gradient(180deg,rgba(21,17,38,.82),rgba(4,6,13,.94));
+}
+:root[data-theme="cosmic"] .cal-day:nth-child(3n) .cal-col {
+  background:linear-gradient(180deg,rgba(8,25,31,.78),rgba(4,6,13,.94));
+}
+:root[data-theme="cosmic"] .cal-card {
+  border-left:2px solid var(--room-accent,var(--cosmic-blue));
+}
+:root[data-theme="cosmic"] input,
+:root[data-theme="cosmic"] select,
+:root[data-theme="cosmic"] button,
+:root[data-theme="cosmic"] .inline-select {
+  border-color:rgba(157,177,232,.2);
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+  :root[data-theme="cosmic"] .card,
+  :root[data-theme="cosmic"] .kpi,
+  :root[data-theme="cosmic"] .cal-card {
+    transition:
+      transform .32s ease,
+      border-color .4s ease,
+      box-shadow .5s ease-out;
+  }
+  :root[data-theme="cosmic"] .card:hover,
+  :root[data-theme="cosmic"] .kpi:hover,
+  :root[data-theme="cosmic"] .cal-card:hover {
+    transform:translateY(-3px);
+    border-color:rgba(151,183,255,.34);
+    box-shadow:
+      inset 0 0 0 1px rgba(205,216,255,.12),
+      0 0 27px -8px rgba(82,105,189,.4),
+      0 0 44px -20px rgba(138,63,120,.34),
+      0 32px 72px -36px rgba(40,57,124,.6);
+    transition-duration:.18s,.18s,.22s;
+  }
+}
+:root[data-zen][data-theme="cosmic"] body::before,
+:root[data-zen][data-theme="cosmic"] body::after {
+  animation:none !important;
+}
+:root[data-zen][data-theme="cosmic"] .card:hover,
+:root[data-zen][data-theme="cosmic"] .kpi:hover,
+:root[data-zen][data-theme="cosmic"] .cal-card:hover {
+  transform:none !important;
+}
+@media (max-width:720px) {
+  :root[data-theme="cosmic"] .dashboard-head::after {
+    top:0;
+    right:5px;
+    width:138px;
+    opacity:.32;
+  }
+  :root[data-theme="cosmic"] .dashboard-hero h1 {
+    max-width:11ch;
+    font-size:clamp(2.8rem,15vw,4.7rem);
+  }
+}
   :root[data-theme="contrast"] .seg { border: 1px solid var(--text-primary); }:root[data-theme="colorful"] {
     --text-readable-muted: #625a82;
     --band-edge:      #b8a8dc;

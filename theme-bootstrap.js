@@ -1,4 +1,4 @@
-const THEMES_VERSION = "20260728-2";
+const THEMES_VERSION = "20260728-6";
 const THEMES_REMOTE = `https://lmbreuer.github.io/con-raumplan/themes.css?v=${THEMES_VERSION}`;
 const localThemeHost = location.hostname === "127.0.0.1" || location.hostname === "localhost";
 const themes = document.createElement("link");

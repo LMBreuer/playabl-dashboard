@@ -49,3 +49,25 @@
   :root[data-zen][data-theme="vienna"] .card:hover { transform:none; }
   @keyframes rp-fadein { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   .hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-5); }
+
+  :root[data-theme="cosmic"] body {
+    background:
+      radial-gradient(ellipse at 78% -8%,rgba(87,104,187,.2),transparent 38%),
+      radial-gradient(ellipse at 5% 62%,rgba(24,83,106,.14),transparent 36%),
+      radial-gradient(circle,rgba(240,242,255,.6) 0 .8px,transparent 1.2px) 21px 9px/173px 181px,
+      linear-gradient(165deg,#010207 0%,#030510 46%,#010207 100%);
+    background-attachment:fixed;
+  }
+  :root[data-theme="cosmic"] h1 {
+    font-size:clamp(3rem,11vw,5.4rem);
+    font-weight:500;
+    line-height:.86;
+    letter-spacing:-.03em;
+  }
+  :root[data-theme="cosmic"] .card {
+    border-color:rgba(157,177,232,.18);
+    background:
+      radial-gradient(ellipse at 100% 0,rgba(119,105,201,.14),transparent 42%),
+      linear-gradient(145deg,rgba(13,17,32,.96),rgba(5,7,15,.98));
+    backdrop-filter:blur(9px);
+  }

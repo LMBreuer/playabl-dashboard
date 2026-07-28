@@ -5,6 +5,7 @@ const THEMES = [
   { key: "contrast", label: "◐", name: "Kontrastreich" },
   { key: "colorful", label: "🎨", name: "Playabl" },
   { key: "glass", label: "🫧", name: "Glassmorphism" },
+  { key: "cosmic", label: "✦", name: "Dark Cosmic" },
   { key: "ukiyo", label: "🌸", name: "Ukiyo-e" },
   { key: "solarpunk", label: "🌱", name: "Solarpunk" },
   { key: "terminal", label: "▚", name: "Terminal" },
