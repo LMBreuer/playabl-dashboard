@@ -4,13 +4,31 @@ Ein statisch gehostetes, aber **live aktualisierendes** Dashboard für [Playabl]
 Es zeigt pro Tag und Slot (Vormittag/Nachmittag), wie viele Spielrunden und Plätze angeboten werden,
 wo noch Runden gebraucht werden, plus ein paar Insights (System-Hitparade, Wortwolke u.a.).
 
-**Es gibt nichts zu aktualisieren:** Die Seite holt sich die Daten bei jedem Öffnen direkt von der
-öffentlichen Playabl-API und berechnet alles im Browser. Kein Build, kein Server, keine Abhängigkeiten —
-eine einzige HTML-Datei.
+**Es gibt keine Datenpflege:** Die Seite holt sich die Daten bei jedem Öffnen direkt von der
+öffentlichen Playabl-API und berechnet alles im Browser. Sie benötigt keinen Build und keinen
+Anwendungsserver.
+
+## Aufbau
+
+- **`index.html`** — schlanke Seitenstruktur und Dialoge.
+- **`dashboard.css`** — ausschließlich dashboard-spezifisches Layout.
+- **`theme.js`** / **`theme-bootstrap.js`** — Theme-Auswahl und frühe Aktivierung ohne Aufblitzen.
+- **`i18n.js`** — deutsche und englische UI-Texte.
+- **`config.js`** — Standard-Event und fachliche Standardwerte.
+- **`api.js`** — Playabl-Abfragen.
+- **`dashboard.js`** — Zustand, Berechnungen und Rendering.
+- **`impressum.html`** / **`impressum.css`** — rechtliche Seite.
+
+Die eigentlichen Theme-Grundwerte liegen zentral in
+[`con-raumplan/theme-tokens.css`](https://github.com/LMBreuer/con-raumplan/blob/main/theme-tokens.css).
+`theme-bootstrap.js` lädt diese kanonische Datei produktiv von GitHub Pages und bei lokalen Tests
+direkt vom Raumplan-Testserver auf Port 8001. Theme-Werte werden deshalb nur im Con-Raumplan
+gepflegt; das Dashboard enthält keine zweite Token-Kopie. Komponenten und Seitengeometrie bleiben
+projektspezifisch.
 
 ## Für ein anderes Event verwenden
 
-In [`index.html`](index.html) ganz oben im `<script>`-Teil steht ein kommentierter `CONFIG`-Block:
+In [`config.js`](config.js) steht der `CONFIG`-Block:
 
 ```js
 const CONFIG = {

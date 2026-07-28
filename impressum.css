@@ -1,0 +1,29 @@
+/* Übernimmt das gespeicherte Dashboard-Theme ohne eigenen Umschalter. */
+  :root[data-theme="terminal"] body {
+    background-image: repeating-linear-gradient(180deg,
+      rgba(80,255,140,0.035) 0px, rgba(80,255,140,0.035) 1px, transparent 1px, transparent 3px);
+  }
+  :root[data-theme="cyberpunk"] h1 { text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent); }
+  :root[data-theme="ukiyo"] body {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--page) 95%, transparent), color-mix(in srgb, var(--page) 95%, transparent)),
+      var(--ukiyo-bg, none);
+    background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page); color: var(--text-primary); font-family: var(--font-body); line-height: 1.5; padding: var(--sp-6) var(--sp-4); }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-family: var(--font-display); }
+  a { color: var(--accent); }
+  .card {
+    background: var(--surface-1); border: var(--border-w) solid var(--border); border-radius: var(--r-lg);
+    padding: var(--sp-5) var(--sp-6); margin-top: var(--sp-5); box-shadow: var(--shadow-card);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: transform .16s ease, box-shadow .16s ease; animation: rp-fadein .28s ease-out both; }
+    .card:hover { transform: translateY(-2px); }
+  }
+  @keyframes rp-fadein { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-5); }
