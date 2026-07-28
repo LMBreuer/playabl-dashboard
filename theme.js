@@ -141,9 +141,10 @@ function setColorVisionAid(enabled) {
   updateColorVisionAidAttribute();
   const legend = document.querySelector(".bento-hero-legend");
   if (legend) {
+    const en = document.documentElement.lang === "en";
     legend.textContent = enabled
-      ? `Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter`
-      : `Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`;
+      ? (en ? `One marker per slot · ✓ = target (${LO}+) reached, ! = below target` : `Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter`)
+      : (en ? `One bar per slot · green = target (${LO}+) reached, red = below target` : `Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`);
   }
   window.dispatchEvent(new CustomEvent("raumplan-theme-change", { detail: { key: document.documentElement.getAttribute("data-theme"), colorVisionAid: enabled } }));
 }

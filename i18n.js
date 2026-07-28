@@ -1,7 +1,9 @@
 const UI_LANGUAGE_KEY = "playabl-dashboard-language";
 const UI_COPY = {
   de: {
-    skip: "Zum Inhalt springen", nav: "Ansicht, Event und Ziel wählen", overview: "Übersicht", calendar: "Kalender",
+    skip: "Zum Inhalt springen", header:"Dashboard-Kopfzeile", eyebrow: "Playabl · Spielangebot pro Slot", pageLoading:"Spielangebot pro Slot", dataLoading:"Daten werden live von Playabl geladen …", statusLoading:"Lade Daten von Playabl …", slotsLoading:"werden geladen …",
+    nav: "Ansicht, Event und Ziel wählen", view:"Ansicht", activeSettings:"Aktive Einstellungen", theme:"Farbschema wählen", calendarView:"Kalender-Ansicht", overview: "Übersicht", calendar: "Kalender",
+    contextTitle:"Kontext", contextIntro:"Zufällige Ausschnitte aus Rundenbeschreibungen.", contextClose:"Kontext schließen", contextRefresh:"Andere Ausschnitte", sectionInfoTitle:"Information", sectionInfoClose:"Information schließen",
     community: "Community", event: "Event wechseln", setup: "Setup", language: "Sprache wählen", targetSetting:"Ziel-Plätze pro Slot", slotsSetting:"Slots",
     setupTitle:"Dashboard-Setup", setupIntro:"Passe Zielkorridor und Zeitfenster für dieses Event an. Die Slot-Einstellung bleibt lokal in diesem Browser.",
     setupClose:"Dialog schließen", setupTargetTitle:"Ziel-Plätze pro Slot", setupFrom:"Von", setupTo:"Bis", setupMin:"Ziel von", setupMax:"Ziel bis",
@@ -25,7 +27,9 @@ const UI_COPY = {
     infoStorageText: "Manuell eingestellte oder automatisch erkannte Slots werden nur lokal in diesem Browser gespeichert. Sie verändern weder Playabl noch die Con-Raumplanung. <strong>„Slots neu ermitteln“</strong> entfernt die lokale Slot-Konfiguration und führt die Quellenlogik erneut aus: Raumplanung, automatische Erkennung und zuletzt der Standard-Fallback. Der Zielkorridor bleibt dabei unverändert."
   },
   en: {
-    skip: "Skip to content", nav: "Choose view, event and target", overview: "Overview", calendar: "Calendar",
+    skip: "Skip to content", header:"Dashboard header", eyebrow: "Playabl · Session capacity per slot", pageLoading:"Session capacity per slot", dataLoading:"Data is loaded live from Playabl …", statusLoading:"Loading data from Playabl …", slotsLoading:"loading …",
+    nav: "Choose view, event and target", view:"View", activeSettings:"Active settings", theme:"Choose colour scheme", calendarView:"Calendar view", overview: "Overview", calendar: "Calendar",
+    contextTitle:"Context", contextIntro:"Random excerpts from session descriptions.", contextClose:"Close context", contextRefresh:"Different excerpts", sectionInfoTitle:"Information", sectionInfoClose:"Close information",
     community: "Community", event: "Change event", setup: "Setup", language: "Choose language", targetSetting:"Target capacity per slot", slotsSetting:"Slots",
     setupTitle:"Dashboard setup", setupIntro:"Adjust the target range and time windows for this event. Slot settings remain local to this browser.",
     setupClose:"Close dialog", setupTargetTitle:"Target capacity per slot", setupFrom:"From", setupTo:"To", setupMin:"Target from", setupMax:"Target to",
@@ -56,8 +60,14 @@ function applyLanguage(language) {
   try { localStorage.setItem(UI_LANGUAGE_KEY, key); } catch {}
   document.querySelectorAll("[data-language]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.language === key)));
   document.querySelector(".skip-link").textContent = copy.skip;
+  document.querySelector(".dashboard-head").setAttribute("aria-label", copy.header);
+  document.querySelector(".dashboard-eyebrow").firstChild.nodeValue = copy.eyebrow;
+  document.querySelector(".controls-group .sr-only").textContent = copy.theme;
   document.querySelector(".language-switch").setAttribute("aria-label", copy.language);
   document.querySelector(".controls").setAttribute("aria-label", copy.nav);
+  document.querySelector(".tabs").setAttribute("aria-label", copy.view);
+  document.querySelector(".controls-settings").setAttribute("aria-label", copy.activeSettings);
+  document.getElementById("calView").setAttribute("aria-label", copy.calendarView);
   document.getElementById("tabOverview").textContent = copy.overview;
   document.getElementById("tabCalendar").textContent = copy.calendar;
   document.querySelector("label[for='communitySelect']").textContent = copy.community;
@@ -100,15 +110,18 @@ function applyLanguage(language) {
   document.getElementById("settingsInfoDetectionStable").textContent = copy.infoDetectionStable;
   document.getElementById("settingsInfoStorageTitle").textContent = copy.infoStorageTitle;
   document.getElementById("settingsInfoStorageText").innerHTML = copy.infoStorageText;
-  const germanContent = ["app","calView","status","rsvpBanner","pageSub","credits","slotsSummary","slotsSourceSummary"];
-  for (const id of germanContent) {
-    const element = document.getElementById(id);
-    if (!element) continue;
-    if (key === "en") element.setAttribute("lang", "de");
-    else element.removeAttribute("lang");
+  document.getElementById("wordContextTitle").textContent = copy.contextTitle;
+  document.getElementById("wordContextIntro").textContent = copy.contextIntro;
+  document.getElementById("wordContextClose").setAttribute("aria-label", copy.contextClose);
+  document.getElementById("wordContextRefresh").textContent = copy.contextRefresh;
+  document.getElementById("sectionInfoTitle").textContent = copy.sectionInfoTitle;
+  document.getElementById("sectionInfoClose").setAttribute("aria-label", copy.sectionInfoClose);
+  if (typeof dashboardState === "undefined" || !dashboardState) {
+    document.getElementById("pageTitle").textContent = copy.pageLoading;
+    document.getElementById("pageSub").textContent = copy.dataLoading;
+    document.getElementById("status").textContent = copy.statusLoading;
+    document.getElementById("slotsSummary").textContent = copy.slotsLoading;
   }
-  document.querySelector(".dashboard-eyebrow")?.toggleAttribute("lang", key === "en");
-  if (key === "en") document.querySelector(".dashboard-eyebrow")?.setAttribute("lang", "de");
   document.querySelectorAll(".theme-switch-group").forEach(renderThemeSwitch);
   renderContrastAidSwitch();
   renderArtCaption();

@@ -54,13 +54,16 @@ function updateTargetMeta() {
 }
 window.addEventListener("uilanguagechange", updateTargetMeta);
 
-const fmt = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" });
-const fmtTime = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+const isEnglish = () => document.documentElement.lang === "en";
+const locale = () => isEnglish() ? "en-GB" : "de-AT";
+const formatTime = value => new Intl.DateTimeFormat(locale(), { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+const translateSlotPart = value => {
+  if (!isEnglish()) return value;
+  return ({ Vormittag:"Morning", Nachmittag:"Afternoon", Abend:"Evening", Unsortiert:"Unsorted" })[value] || value;
+};
 const dayKey = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date(t)), 10);
 
-// Nur verwendet, wenn weder konfigurierte noch erkannte Slots vorliegen.
-let slotRuleHint = `Zuordnung: Session-Start vor ${CUTOFF}:00 Uhr = Vormittag, danach = Nachmittag (Zeitzone ${TZ}).`;
 const localSlotKey = `playabl-dashboard-slot-buckets:${EVENT}`;
 const localSlotSourceKey = `playabl-dashboard-slot-source:${EVENT}`;
 let activeSlotBuckets = [];
@@ -132,7 +135,9 @@ function slotConfigRow(bucket = { label:"", start_hour:9, end_hour:13 }) {
 }
 function openSlotConfig() {
   const shown = activeSlotBuckets.length ? activeSlotBuckets : [{ label:"Vormittag", start_hour:0, end_hour:14 }, { label:"Nachmittag", start_hour:14, end_hour:24 }];
-  document.getElementById("slotConfigRows").innerHTML = shown.map(slotConfigRow).join("");
+  document.getElementById("slotConfigRows").innerHTML = shown
+    .map(bucket => slotConfigRow({ ...bucket, label:translateSlotPart(bucket.label) }))
+    .join("");
   document.getElementById("zielMin").value = LO;
   document.getElementById("zielMax").value = HI;
   const dialog = document.getElementById("slotConfigDlg");
@@ -394,18 +399,18 @@ function groupSlots(sessions, buckets) {
       part = hourOf(s.start_time) < CUTOFF ? "Vormittag" : "Nachmittag";
     }
     const key = d + "|" + part;
-    if (!map.has(key)) map.set(key, { date: d, part, day: fmt.format(new Date(s.start_time)), games: [] });
+    if (!map.has(key)) map.set(key, { date: d, part, dayDate:s.start_time, games: [] });
     map.get(key).games.push({
       title: s.game_id.title.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || s.game_id.title,
       url: "https://app.playabl.io/games/" + s.game_id.id,
-      system: (s.game_id.system || "").trim() || "Kein System angegeben",
-      facilitator: (s.game_id.creator_id?.username || "").trim() || "Nicht angegeben",
+      system: (s.game_id.system || "").trim(),
+      facilitator: (s.game_id.creator_id?.username || "").trim(),
       ws: WS_RE.test((s.game_id.system || "") + " " + s.game_id.title),
       seats: s.participant_count + 1,  // Spielplätze + 1 anbietende Person (SL/Moderation)
       playerSeats: s.participant_count,
       rsvps: (s.rsvps || []).length,
-      start: fmtTime.format(new Date(s.start_time)),
-      end: fmtTime.format(new Date(s.end_time))
+      startTime:s.start_time,
+      endTime:s.end_time
     });
   }
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (rank.get(a.part) ?? 99) - (rank.get(b.part) ?? 99));
@@ -414,43 +419,54 @@ function groupSlots(sessions, buckets) {
 const reg = s => s.games.filter(g => !g.ws);
 const wsOf = s => s.games.filter(g => g.ws);
 const seatsOf = s => reg(s).reduce((x, g) => x + g.seats, 0);
-const slotName = s => `${s.day.split(",")[0]} ${s.part}`;
+const slotDay = s => new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long", day:"2-digit", month:"2-digit" }).format(new Date(s.dayDate));
+const slotWeekday = s => new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long" }).format(new Date(s.dayDate));
+const slotName = s => `${slotWeekday(s)} ${translateSlotPart(s.part)}`;
+const gameSystem = g => g.system || (isEnglish() ? "No system specified" : "Kein System angegeben");
+const gameFacilitator = g => g.facilitator || (isEnglish() ? "Not specified" : "Nicht angegeben");
 const frei = g => Math.max(0, g.playerSeats - g.rsvps);
 
 function eventRangeText(a, b) {
-  const full = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric", month: "long", year: "numeric" });
-  const dayOnly = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "numeric" });
-  const monthYear = d => new Intl.DateTimeFormat("de-AT", { timeZone: TZ, month: "numeric", year: "numeric" }).format(d);
+  const full = new Intl.DateTimeFormat(locale(), { timeZone: TZ, day: "numeric", month: "long", year: "numeric" });
+  const dayOnly = new Intl.DateTimeFormat(locale(), { timeZone: TZ, day: "numeric" });
+  const monthYear = d => new Intl.DateTimeFormat(locale(), { timeZone: TZ, month: "numeric", year: "numeric" }).format(d);
   const dA = new Date(a), dB = new Date(b);
   if (dayOnly.format(dA) === dayOnly.format(dB) && monthYear(dA) === monthYear(dB)) return full.format(dA);
   return monthYear(dA) === monthYear(dB)
-    ? `${dayOnly.format(dA)}.–${full.format(dB)}`
+    ? `${dayOnly.format(dA)}${isEnglish() ? "–" : ".–"}${full.format(dB)}`
     : `${full.format(dA)} – ${full.format(dB)}`;
 }
 
 function applyEvent(ev, rsvpsOpen) {
+  const en = isEnglish();
   const name = ev?.title || `Playabl-Event ${EVENT}`;
-  document.title = `${name} – Spielangebot pro Slot`;
+  document.title = `${name} – ${en ? "Session capacity per slot" : "Spielangebot pro Slot"}`;
   document.getElementById("pageTitle").textContent = name;
   const range = ev?.start_time && ev?.end_time ? eventRangeText(ev.start_time, ev.end_time) : "";
   document.getElementById("pageSub").innerHTML =
-    `${range ? `<span class="event-date">${range}</span>` : ""}<span class="event-source">Datenquelle: <a href="${EVENT_URL}" style="color:inherit">${name} auf Playabl</a> · lädt bei jedem Öffnen live</span>`;
+    `${range ? `<span class="event-date">${range}</span>` : ""}<span class="event-source">${en ? "Data source" : "Datenquelle"}: <a href="${EVENT_URL}" style="color:inherit">${name} ${en ? "on Playabl" : "auf Playabl"}</a> · ${en ? "loaded live whenever the page opens" : "lädt bei jedem Öffnen live"}</span>`;
 
   const banner = document.getElementById("rsvpBanner");
+  banner.classList.toggle("open", rsvpsOpen);
   if (ev?.fixed_access_time) {
-    const when = new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(ev.fixed_access_time));
+    const when = new Intl.DateTimeFormat(locale(), { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(ev.fixed_access_time));
     banner.hidden = false;
     if (rsvpsOpen) {
-      banner.classList.add("open");
-      banner.innerHTML = `✅ <strong>Anmeldung ist offen</strong> (seit ${when} Uhr) – freie Plätze siehe „Wo ist noch Platz?" und Kalender.`;
+      banner.innerHTML = en
+        ? `✅ <strong>Registration is open</strong> (since ${when}) – available seats are listed under “Where are seats still available?” and in the calendar.`
+        : `✅ <strong>Anmeldung ist offen</strong> (seit ${when} Uhr) – freie Plätze siehe „Wo ist noch Platz?" und Kalender.`;
     } else {
-      banner.innerHTML = `🔒 <strong>Anmeldung noch gesperrt</strong> – RSVPs öffnen am ${when} Uhr. Bis dahin zeigt die Seite das Angebot.`;
+      banner.innerHTML = en
+        ? `🔒 <strong>Registration is not open yet</strong> – RSVPs open on ${when}. Until then, the dashboard shows the sessions on offer.`
+        : `🔒 <strong>Anmeldung noch gesperrt</strong> – RSVPs öffnen am ${when} Uhr. Bis dahin zeigt die Seite das Angebot.`;
     }
-  }
+  } else banner.hidden = true;
 }
 
 // ---------- Übersichts-Ansicht ----------
 function render(slots, rsvpsOpen) {
+  const en = isEnglish();
+  const t = (de, english) => en ? english : de;
   const app = document.getElementById("app");
   const tooltip = document.getElementById("tooltip");
   const workshops = slots.flatMap(s => wsOf(s).map(g => ({ ...g, slot: s })));
@@ -463,7 +479,7 @@ function render(slots, rsvpsOpen) {
   const pct = v => (v / MAX * 100) + "%";
   const allReg = slots.flatMap(s => reg(s).map(g => ({ ...g, slot: s })));
   const freeTotal = allReg.reduce((a, g) => a + frei(g), 0);
-  const sectionInfoLabel = (de, en) => document.documentElement.lang === "en" ? en : de;
+  const sectionInfoLabel = t;
   sectionInfoEntries = {
     chart: en => ({
       title:en ? "How to read the capacity chart" : "So liest du die Platzgrafik",
@@ -509,53 +525,53 @@ function render(slots, rsvpsOpen) {
 
   app.innerHTML = `
     <div class="bento-grid">
-      <section class="kpi bento-hero" aria-labelledby="heroKpiLabel"><div class="l" id="heroKpiLabel">Sessions gesamt</div><div class="v">${totalSessions}</div><div class="bento-hero-copy">${totalSeats} Spielplätze über ${slots.length} Slots · ø ${avgSeats.toFixed(1).replace(".", ",")} pro Runde</div><div class="bento-slot-bars" role="list" aria-label="Zielstatus der Plätze pro Slot">${slots.map(s => { const seats = seatsOf(s); const status = seats >= LO ? "Ziel erreicht" : `noch ${LO - seats} Plätze bis zum Ziel`; const label = `${slotName(s)}: ${seats} Plätze, ${status}`; return `<span role="listitem" aria-label="${escapeHtml(label)}" class="${seats >= LO ? "is-on-target" : "is-below-target"}" style="--slot-fill:${Math.min(100, seats / LO * 100)}%" title="${escapeHtml(label)}"></span>`; }).join("")}</div><div class="bento-hero-legend" aria-hidden="true">${document.documentElement.hasAttribute("data-color-aid") ? `Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter` : `Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`}</div></section>
-      <section class="bento-kpis" aria-label="Kennzahlen">
-      <div class="kpi"><div class="l">Spielplätze gesamt</div><div class="v">${totalSeats}</div></div>
+      <section class="kpi bento-hero" aria-labelledby="heroKpiLabel"><div class="l" id="heroKpiLabel">${t("Sessions gesamt", "Total sessions")}</div><div class="v">${totalSessions}</div><div class="bento-hero-copy">${t(`${totalSeats} Spielplätze über ${slots.length} Slots · ø ${avgSeats.toFixed(1).replace(".", ",")} pro Runde`, `${totalSeats} seats across ${slots.length} slots · ${avgSeats.toFixed(1)} average per session`)}</div><div class="bento-slot-bars" role="list" aria-label="${t("Zielstatus der Plätze pro Slot", "Capacity target status by slot")}">${slots.map(s => { const seats = seatsOf(s); const status = seats >= LO ? t("Ziel erreicht", "target reached") : t(`noch ${LO - seats} Plätze bis zum Ziel`, `${LO - seats} seats still needed to reach the target`); const label = `${slotName(s)}: ${seats} ${t("Plätze", "seats")}, ${status}`; return `<span role="listitem" aria-label="${escapeHtml(label)}" class="${seats >= LO ? "is-on-target" : "is-below-target"}" style="--slot-fill:${Math.min(100, seats / LO * 100)}%" title="${escapeHtml(label)}"></span>`; }).join("")}</div><div class="bento-hero-legend" aria-hidden="true">${document.documentElement.hasAttribute("data-color-aid") ? t(`Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter`, `One marker per slot · ✓ = target (${LO}+) reached, ! = below target`) : t(`Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`, `One bar per slot · green = target (${LO}+) reached, red = below target`)}</div></section>
+      <section class="bento-kpis" aria-label="${t("Kennzahlen", "Key figures")}">
+      <div class="kpi"><div class="l">${t("Spielplätze gesamt", "Total player seats")}</div><div class="v">${totalSeats}</div></div>
       ${workshops.length ? `<div class="kpi"><div class="l">Workshops &amp; Specials</div><div class="v">${workshops.length}</div></div>` : ""}
-      ${showBusy ? `<div class="kpi kpi-good"><div class="l">Spielplätze noch frei</div><div class="v">${freeTotal}</div></div>` : ""}
-      <div class="kpi bento-target"><div class="l">Ziel je Slot</div><div class="v">${LO}–${HI}</div></div>
-      ${CONFIG.erwartete ? `<div class="kpi"><div class="l">erwartete Teilnehmende</div><div class="v">${CONFIG.erwartete}/Tag</div></div>` : ""}
-      ${!showBusy && !workshops.length ? `<div class="kpi"><div class="l">Slots im Programm</div><div class="v">${slots.length}</div></div>` : ""}
+      ${showBusy ? `<div class="kpi kpi-good"><div class="l">${t("Spielplätze noch frei", "Player seats available")}</div><div class="v">${freeTotal}</div></div>` : ""}
+      <div class="kpi bento-target"><div class="l">${t("Ziel je Slot", "Target per slot")}</div><div class="v">${LO}–${HI}</div></div>
+      ${CONFIG.erwartete ? `<div class="kpi"><div class="l">${t("erwartete Teilnehmende", "expected attendees")}</div><div class="v">${CONFIG.erwartete}/${t("Tag", "day")}</div></div>` : ""}
+      ${!showBusy && !workshops.length ? `<div class="kpi"><div class="l">${t("Slots im Programm", "Slots in the schedule")}</div><div class="v">${slots.length}</div></div>` : ""}
     </section>
     <section class="card bento-chart">
-      <div class="card-title-row"><h2 id="chartHeading">Angebotene Spielplätze pro Slot</h2><button type="button" class="section-info-button" data-section-info="chart" aria-label="${sectionInfoLabel("Erklärung zur Platzgrafik", "Explanation of the capacity chart")}"><span aria-hidden="true">i</span></button></div>
+      <div class="card-title-row"><h2 id="chartHeading">${t("Angebotene Spielplätze pro Slot", "Player seats offered per slot")}</h2><button type="button" class="section-info-button" data-section-info="chart" aria-label="${sectionInfoLabel("Erklärung zur Platzgrafik", "Explanation of the capacity chart")}"><span aria-hidden="true">i</span></button></div>
       <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
       <div class="baseline-x" aria-hidden="true"><div></div><div class="xticks" id="xticks"></div></div>
     </section>
     <div class="bento-side-row">
       <div class="card bento-open">
-        <div class="card-title-row"><h2>Wo ist noch Platz?</h2><button type="button" class="section-info-button" data-section-info="free" aria-label="${sectionInfoLabel("Erklärung zu freien Plätzen", "Explanation of available seats")}"><span aria-hidden="true">i</span></button></div>
+        <div class="card-title-row"><h2>${t("Wo ist noch Platz?", "Where are seats still available?")}</h2><button type="button" class="section-info-button" data-section-info="free" aria-label="${sectionInfoLabel("Erklärung zu freien Plätzen", "Explanation of available seats")}"><span aria-hidden="true">i</span></button></div>
         <div id="freeList"></div>
         <p class="hp-more" id="freeMore"></p>
       </div>
       <div class="card bento-needs">
-        <div class="card-title-row"><h2>Wo werden noch Runden gebraucht?</h2><button type="button" class="section-info-button" data-section-info="needs" aria-label="${sectionInfoLabel("Erklärung zum Rundenbedarf", "Explanation of additional session demand")}"><span aria-hidden="true">i</span></button></div>
+        <div class="card-title-row"><h2>${t("Wo werden noch Runden gebraucht?", "Where are more sessions needed?")}</h2><button type="button" class="section-info-button" data-section-info="needs" aria-label="${sectionInfoLabel("Erklärung zum Rundenbedarf", "Explanation of additional session demand")}"><span aria-hidden="true">i</span></button></div>
         <div class="needs-list" id="needsList" role="list"></div>
       </div>
     </div>
-    <div class="card bento-full"><h2>Alle Sessions im Detail</h2><div id="detail"></div></div>
+    <div class="card bento-full"><h2>${t("Alle Sessions im Detail", "All sessions in detail")}</h2><div id="detail"></div></div>
     ${workshops.length ? `<div class="card bento-full"><h2>Workshops &amp; Specials</h2>
-      <p class="hint">Erkannt an „Workshop/Panel/Vortrag" in Titel oder System. Sie zählen oben nicht in Runden und Plätze, damit sie die Übersicht nicht verzerren.</p>
+      <p class="hint">${t("Erkannt an „Workshop/Panel/Vortrag“ in Titel oder System. Sie zählen oben nicht in Runden und Plätze, damit sie die Übersicht nicht verzerren.", "Detected from “Workshop/Panel/Talk” in the title or system. They are excluded from regular-session and capacity totals so they do not distort the overview.")}</p>
       <div id="wsList" role="list"></div></div>` : ""}
     <div class="card" id="funCard" hidden>
       <h2>Insights</h2>
-      <p class="hint">Live aus allen angebotenen Runden.</p>
+      <p class="hint">${t("Live aus allen angebotenen Runden.", "Calculated live from all sessions on offer.")}</p>
       <div class="facts" id="facts"></div>
       <div class="card-title-row" style="justify-content:flex-start;flex-wrap:wrap;margin:20px 0 8px">
-        <h3 style="margin:0">Systeme</h3>
+        <h3 style="margin:0">${t("Systeme", "Systems")}</h3>
         <button type="button" class="section-info-button" data-section-info="systems" aria-label="${sectionInfoLabel("Erklärung zur Systemauswertung", "Explanation of the system analysis")}"><span aria-hidden="true">i</span></button>
-        <select id="sysMode" class="inline-select" aria-label="Zählweise der Systeme" hidden>
-          <option value="field">nur System-Feld</option>
-          <option value="mentions">Systemfamilien (Erwähnungen)</option>
+        <select id="sysMode" class="inline-select" aria-label="${t("Zählweise der Systeme", "System counting method")}" hidden>
+          <option value="field">${t("nur System-Feld", "system field only")}</option>
+          <option value="mentions">${t("Systemfamilien (Erwähnungen)", "system families (mentions)")}</option>
         </select>
       </div>
       <p class="sr-only" id="sysHint"></p>
       <div id="sysList"></div>
       <p class="hp-more" id="sysMore"></p>
-      <div class="card-title-row" style="margin-top:24px"><h3 id="cloudHeading">Wortwolke aus den Rundenbeschreibungen</h3><button type="button" class="section-info-button" data-section-info="cloud" aria-label="${sectionInfoLabel("Erklärung zur Wortwolke", "Explanation of the word cloud")}"><span aria-hidden="true">i</span></button></div>
-      <p class="sr-only" id="cloudHint">Mit der Maus über ein Wort fahren zeigt Häufigkeit und Anteil; ein Klick öffnet zufällige Ausschnitte im Kontext.</p>
-      <div id="cloud" aria-label="Interaktive Wortwolke"></div>
+      <div class="card-title-row" style="margin-top:24px"><h3 id="cloudHeading">${t("Wortwolke aus den Rundenbeschreibungen", "Word cloud from session descriptions")}</h3><button type="button" class="section-info-button" data-section-info="cloud" aria-label="${sectionInfoLabel("Erklärung zur Wortwolke", "Explanation of the word cloud")}"><span aria-hidden="true">i</span></button></div>
+      <p class="sr-only" id="cloudHint">${t("Mit der Maus über ein Wort fahren zeigt Häufigkeit und Anteil; ein Klick öffnet zufällige Ausschnitte im Kontext.", "Hover over a word to see its frequency and share; click it for random excerpts in context.")}</p>
+      <div id="cloud" aria-label="${t("Interaktive Wortwolke", "Interactive word cloud")}"></div>
       <p class="sr-only" id="cloudAlt"></p>
     </div>
     </div>`;
@@ -568,14 +584,14 @@ function render(slots, rsvpsOpen) {
     const row = document.createElement("div");
     row.className = "row";
     row.setAttribute("role", "group");
-    row.setAttribute("aria-label", `${slotName(slot)}: ${seats} Plätze; ${seats >= LO ? "Ziel erreicht" : `${LO - seats} Plätze fehlen bis zum Ziel`}`);
-    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${slot.date.slice(8)}.${slot.date.slice(5, 7)}. · ${reg(slot).length} Runden${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${showBusy ? ` · ${rsvps + reg(slot).length} belegt` : ""}</span><span class="mstats">${seats} Plätze${LO - seats > 0 ? ` · noch +${LO - seats} bis Ziel` : " · Ziel erreicht"}</span></div>`;
+    row.setAttribute("aria-label", `${slotName(slot)}: ${seats} ${t("Plätze", "seats")}; ${seats >= LO ? t("Ziel erreicht", "target reached") : t(`${LO - seats} Plätze fehlen bis zum Ziel`, `${LO - seats} seats needed to reach the target`)}`);
+    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${new Intl.DateTimeFormat(locale(), { timeZone:TZ, day:"2-digit", month:"2-digit" }).format(new Date(slot.dayDate))} · ${reg(slot).length} ${t("Runden", "sessions")}${nWs ? ` · +${nWs} Workshop${nWs > 1 ? "s" : ""}` : ""}${showBusy ? ` · ${rsvps + reg(slot).length} ${t("belegt", "occupied")}` : ""}</span><span class="mstats">${seats} ${t("Plätze", "seats")}${LO - seats > 0 ? t(` · noch +${LO - seats} bis Ziel`, ` · ${LO - seats} still needed`) : t(" · Ziel erreicht", " · target reached")}</span></div>`;
     const track = document.createElement("div");
     track.className = "track";
     const band = document.createElement("div");
     band.className = "band";
     band.setAttribute("aria-hidden", "true");
-    band.innerHTML = `<span class="band-label">Ziel ${LO}–${HI}</span>`;
+    band.innerHTML = `<span class="band-label">${t("Ziel", "Target")} ${LO}–${HI}</span>`;
     band.style.left = pct(LO);
     band.style.width = ((HI - LO) / MAX * 100) + "%";
     track.appendChild(band);
@@ -589,8 +605,8 @@ function render(slots, rsvpsOpen) {
       seg.target = "_blank";
       seg.rel = "noopener";
       seg.setAttribute("aria-label",
-        `${g.title}, ${slotName(slot)} ${g.start} bis ${g.end}, ${g.playerSeats} Spielplätze plus Spielleitung` +
-        (showBusy ? `, ${g.rsvps} belegt, ${frei(g)} frei` : "") + ". Öffnet die Runde auf Playabl.");
+        `${g.title}, ${slotName(slot)} ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}` +
+        (showBusy ? `, ${g.rsvps} ${t("belegt", "occupied")}, ${frei(g)} ${t("frei", "available")}` : "") + t(". Öffnet die Runde auf Playabl.", ". Opens the session on Playabl."));
       seg.style.flex = g.seats + " 0 0";
       if (showBusy) {
         const fill = document.createElement("div");
@@ -600,7 +616,7 @@ function render(slots, rsvpsOpen) {
       }
       seg.addEventListener("mousemove", e => {
         tooltip.style.display = "block";
-        tooltip.innerHTML = `<div class="t">${g.title}</div><div class="s">${g.start}–${g.end} · ${g.playerSeats} Spielplätze + SL/Mod${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt · ${frei(g)} frei` : ""} · Klick öffnet die Runde</div>`;
+        tooltip.innerHTML = `<div class="t">${g.title}</div><div class="s">${formatTime(g.startTime)}–${formatTime(g.endTime)} · ${g.playerSeats} ${t("Spielplätze + SL/Mod", "player seats + facilitator")}${showBusy ? ` · ${g.rsvps + 1}/${g.seats} ${t("belegt", "occupied")} · ${frei(g)} ${t("frei", "available")}` : ""} · ${t("Klick öffnet die Runde", "click to open the session")}</div>`;
         tooltip.style.left = Math.min(e.clientX + 14, innerWidth - tooltip.offsetWidth - 8) + "px";
         tooltip.style.top = (e.clientY + 14) + "px";
       });
@@ -626,7 +642,7 @@ function render(slots, rsvpsOpen) {
       const gap = document.createElement("div");
       gap.className = "gap-note";
       gap.style.left = `calc(${pct(seats)} + 30px)`;
-      gap.textContent = `+${LO - seats} bis Ziel` + (nWs ? ` · Workshop${nWs > 1 ? "s" : ""} (+${wsSeatsTotal} Pl.) hilft` : "");
+      gap.textContent = t(`+${LO - seats} bis Ziel`, `+${LO - seats} to target`) + (nWs ? t(` · Workshop${nWs > 1 ? "s" : ""} (+${wsSeatsTotal} Pl.) hilft`, ` · workshop${nWs > 1 ? "s" : ""} (+${wsSeatsTotal} seats) help`) : "");
       track.appendChild(gap);
     }
     row.appendChild(track);
@@ -644,7 +660,7 @@ function render(slots, rsvpsOpen) {
   const needs = slots.map(slot => ({ slot, missing: Math.max(0, LO - seatsOf(slot)) }));
   const maxMissing = Math.max(1, ...needs.map(item => item.missing));
   document.getElementById("needsList").innerHTML = needs.map(({ slot, missing }) =>
-    `<div class="needs-row" role="listitem" aria-label="${slotName(slot)}: ${missing ? `${missing} Plätze fehlen bis zum Ziel` : "Ziel erreicht"}">
+    `<div class="needs-row" role="listitem" aria-label="${slotName(slot)}: ${missing ? t(`${missing} Plätze fehlen bis zum Ziel`, `${missing} seats needed to reach the target`) : t("Ziel erreicht", "target reached")}">
       <span class="needs-name">${slotName(slot)}</span>
       <span class="needs-track" aria-hidden="true"><span class="needs-fill" style="width:${missing / maxMissing * 100}%"></span></span>
       <span class="needs-value">${missing ? `+${missing}` : "✓"}</span>
@@ -655,18 +671,18 @@ function render(slots, rsvpsOpen) {
     const d = document.createElement("details");
     const rows = reg(slot).map(g => `<tr>
       <td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${escapeHtml(g.title)}</a></td>
-      <td class="game-system">${escapeHtml(g.system)}</td>
-      <td class="game-facilitator">${escapeHtml(g.facilitator)}</td>
-      <td>${g.start}–${g.end} · ${g.playerSeats}+SL${showBusy ? ` · ${g.rsvps + 1}/${g.seats} belegt` : ""}</td>
+      <td class="game-system">${escapeHtml(gameSystem(g))}</td>
+      <td class="game-facilitator">${escapeHtml(gameFacilitator(g))}</td>
+      <td>${formatTime(g.startTime)}–${formatTime(g.endTime)} · ${g.playerSeats}+${t("SL", "GM")}${showBusy ? ` · ${g.rsvps + 1}/${g.seats} ${t("belegt", "occupied")}` : ""}</td>
     </tr>`).join("");
-    d.innerHTML = `<summary>${slot.day} ${slot.part} — ${reg(slot).length} Runden, ${seatsOf(slot)} Plätze</summary><div class="tscroll"><table class="games"><caption class="sr-only">Runden am ${slot.day} ${slot.part}</caption><thead><tr><th>Session</th><th>System</th><th>SL</th><th>Zeit &amp; Plätze</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    d.innerHTML = `<summary>${slotDay(slot)} ${translateSlotPart(slot.part)} — ${reg(slot).length} ${t("Runden", "sessions")}, ${seatsOf(slot)} ${t("Plätze", "seats")}</summary><div class="tscroll"><table class="games"><caption class="sr-only">${t(`Runden am ${slotDay(slot)} ${translateSlotPart(slot.part)}`, `Sessions on ${slotDay(slot)} ${translateSlotPart(slot.part)}`)}</caption><thead><tr><th>Session</th><th>System</th><th>${t("SL", "GM")}</th><th>${t("Zeit & Plätze", "Time & capacity")}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     detail.appendChild(d);
   }
 
   if (workshops.length) {
     document.getElementById("wsList").innerHTML = workshops.map(w =>
       `<div class="ws-row" role="listitem"><a href="${w.url}" target="_blank" rel="noopener">${w.title}</a>
-       <span>${slotName(w.slot)} · ${w.start}–${w.end} · ${w.playerSeats} Plätze</span></div>`).join("");
+       <span>${slotName(w.slot)} · ${formatTime(w.startTime)}–${formatTime(w.endTime)} · ${w.playerSeats} ${t("Plätze", "seats")}</span></div>`).join("");
   }
 
   if (showBusy) {
@@ -676,75 +692,77 @@ function render(slots, rsvpsOpen) {
     else document.getElementById("freeList").removeAttribute("role");
     document.getElementById("freeList").innerHTML = open.map(g =>
       `<div class="free-row" role="listitem"><a href="${g.url}" target="_blank" rel="noopener">${g.title}</a>
-       <span>${slotName(g.slot)} · ${g.start}–${g.end} <span class="badge frei">${frei(g)} von ${g.playerSeats} frei</span></span></div>`).join("")
-      || '<p class="hint">Aktuell sind alle Runden voll.</p>';
-    document.getElementById("freeMore").textContent = full > 0 ? `${full} weitere Runden sind bereits voll.` : "";
+       <span>${slotName(g.slot)} · ${formatTime(g.startTime)}–${formatTime(g.endTime)} <span class="badge frei">${t(`${frei(g)} von ${g.playerSeats} frei`, `${frei(g)} of ${g.playerSeats} available`)}</span></span></div>`).join("")
+      || `<p class="hint">${t("Aktuell sind alle Runden voll.", "All sessions are currently full.")}</p>`;
+    document.getElementById("freeMore").textContent = full > 0 ? t(`${full} weitere Runden sind bereits voll.`, `${full} more sessions are already full.`) : "";
   } else {
     document.getElementById("freeList").removeAttribute("role");
     document.getElementById("freeList").innerHTML =
-      '<p class="hint">Die Anmeldung ist noch geschlossen. Freie Plätze werden hier angezeigt, sobald RSVPs geöffnet sind.</p>';
+      `<p class="hint">${t("Die Anmeldung ist noch geschlossen. Freie Plätze werden hier angezeigt, sobald RSVPs geöffnet sind.", "Registration is not open yet. Available seats will appear here once RSVPs open.")}</p>`;
   }
 }
 
 // ---------- Kalender-Ansicht ----------
 function renderCalendar(slots, rsvpsOpen) {
+  const en = isEnglish();
+  const t = (de, english) => en ? english : de;
   const cal = document.getElementById("calView");
   const showBusy = rsvpsOpen || slots.some(s => s.games.some(g => g.rsvps > 0));
   const days = new Map();
   for (const s of slots) {
-    if (!days.has(s.date)) days.set(s.date, { day: s.day, parts: {} });
+    if (!days.has(s.date)) days.set(s.date, { dayDate:s.dayDate, parts: {} });
     days.get(s.date).parts[s.part] = s;
   }
-  const systems = [...new Map(slots.flatMap(slot => slot.games).map(game => [game.system.toLocaleLowerCase("de"), game.system])).values()]
-    .sort((a, b) => a.localeCompare(b, "de", { sensitivity:"base", numeric:true }));
+  const systems = [...new Map(slots.flatMap(slot => slot.games).map(game => [gameSystem(game).toLocaleLowerCase(locale()), gameSystem(game)])).values()]
+    .sort((a, b) => a.localeCompare(b, locale(), { sensitivity:"base", numeric:true }));
   const totalGames = slots.reduce((sum, slot) => sum + slot.games.length, 0);
   const card = (g, day) => `
-    <a class="cal-card" data-calendar-game data-day="${escapeHtml(day)}" data-system="${escapeHtml(g.system.toLocaleLowerCase("de"))}" data-search="${escapeHtml(`${g.title} ${g.system} ${g.facilitator}`.toLocaleLowerCase("de"))}" data-free="${String(!g.ws && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${g.system}, Spielleitung ${g.facilitator}, ${g.start} bis ${g.end}${g.ws ? ", Workshop" : `, ${g.playerSeats} Spielplätze plus Spielleitung${showBusy ? `, ${frei(g)} frei` : ""}`}`)}">
+    <a class="cal-card" data-calendar-game data-day="${escapeHtml(day)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)}`.toLocaleLowerCase(locale()))}" data-free="${String(!g.ws && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.ws ? ", Workshop" : `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}`}`)}">
       <span class="t">${escapeHtml(g.title)}</span>
-      <span class="m">${g.start}–${g.end}${g.ws ? ' <span class="badge">Workshop</span>' : ` · ${g.playerSeats}+SL${showBusy ? (frei(g) > 0 ? ` <span class="badge frei">${frei(g)} frei</span>` : ' <span class="badge voll">voll</span>') : ""}`}</span>
-      <span class="m"><span>${escapeHtml(g.system)}</span><span aria-hidden="true">·</span><span>SL: ${escapeHtml(g.facilitator)}</span></span>
+      <span class="m">${formatTime(g.startTime)}–${formatTime(g.endTime)}${g.ws ? ' <span class="badge">Workshop</span>' : ` · ${g.playerSeats}+${t("SL", "GM")}${showBusy ? (frei(g) > 0 ? ` <span class="badge frei">${frei(g)} ${t("frei", "available")}</span>` : ` <span class="badge voll">${t("voll", "full")}</span>`) : ""}`}</span>
+      <span class="m"><span>${escapeHtml(gameSystem(g))}</span><span aria-hidden="true">·</span><span>${t("SL", "GM")}: ${escapeHtml(gameFacilitator(g))}</span></span>
     </a>`;
   cal.innerHTML = `
-    <section class="calendar-filters" aria-label="Kalender filtern">
+    <section class="calendar-filters" aria-label="${t("Kalender filtern", "Filter calendar")}">
       <label class="calendar-filter-field" for="calendarSearch">
-        <span class="calendar-filter-label">Suche</span>
-        <input class="calendar-filter-input" id="calendarSearch" type="search" autocomplete="off" placeholder="Session, System oder SL …">
+        <span class="calendar-filter-label">${t("Suche", "Search")}</span>
+        <input class="calendar-filter-input" id="calendarSearch" type="search" autocomplete="off" placeholder="${t("Session, System oder SL …", "Session, system, or GM …")}">
       </label>
       <label class="calendar-filter-field" for="calendarSystem">
         <span class="calendar-filter-label">System</span>
-        <input class="calendar-filter-input" id="calendarSystem" type="search" list="calendarSystemSuggestions" autocomplete="off" placeholder="System eingeben …">
+        <input class="calendar-filter-input" id="calendarSystem" type="search" list="calendarSystemSuggestions" autocomplete="off" placeholder="${t("System eingeben …", "Enter a system …")}">
         <datalist id="calendarSystemSuggestions">${systems.map(system => `<option value="${escapeHtml(system)}"></option>`).join("")}</datalist>
       </label>
       <div class="calendar-filter-field calendar-slot-filter">
-        <span class="calendar-filter-label" id="calendarDayFilterLabel">Tag</span>
+        <span class="calendar-filter-label" id="calendarDayFilterLabel">${t("Tag", "Day")}</span>
         <div class="calendar-slot-chips" role="group" aria-labelledby="calendarDayFilterLabel">
-          <button type="button" class="calendar-slot-chip" data-day-filter="" aria-pressed="true">Alle Tage</button>
-          ${[...days.entries()].map(([date, day]) => `<button type="button" class="calendar-slot-chip" data-day-filter="${escapeHtml(date)}" aria-pressed="false">${escapeHtml(day.day)}</button>`).join("")}
+          <button type="button" class="calendar-slot-chip" data-day-filter="" aria-pressed="true">${t("Alle Tage", "All days")}</button>
+          ${[...days.entries()].map(([date, day]) => `<button type="button" class="calendar-slot-chip" data-day-filter="${escapeHtml(date)}" aria-pressed="false">${escapeHtml(new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long" }).format(new Date(day.dayDate)))}</button>`).join("")}
         </div>
       </div>
       <div class="calendar-filter-footer">
-        ${rsvpsOpen ? `<button type="button" class="calendar-free-toggle" id="calendarFreeFilter" aria-pressed="false"><span aria-hidden="true">○</span> Nur freie Plätze</button>` : ""}
-        <button type="button" class="calendar-filter-reset" id="calendarFilterReset" hidden>Filter zurücksetzen</button>
-        <span class="calendar-filter-count" id="calendarFilterCount" role="status" aria-live="polite">${totalGames} Runden</span>
+        ${rsvpsOpen ? `<button type="button" class="calendar-free-toggle" id="calendarFreeFilter" aria-pressed="false"><span aria-hidden="true">○</span> ${t("Nur freie Plätze", "Available seats only")}</button>` : ""}
+        <button type="button" class="calendar-filter-reset" id="calendarFilterReset" hidden>${t("Filter zurücksetzen", "Reset filters")}</button>
+        <span class="calendar-filter-count" id="calendarFilterCount" role="status" aria-live="polite">${totalGames} ${t("Runden", "sessions")}</span>
       </div>
     </section>
-    <p class="calendar-empty" id="calendarNoResults" hidden>Keine Sessions entsprechen diesen Filtern.</p>
+    <p class="calendar-empty" id="calendarNoResults" hidden>${t("Keine Sessions entsprechen diesen Filtern.", "No sessions match these filters.")}</p>
     <div class="calendar-bento">${[...days.entries()].map(([date, d]) => {
     const parts = Object.values(d.parts);
     return `
     <div class="card cal-day" data-calendar-day="${escapeHtml(date)}">
-      <h2>${d.day}</h2>
+      <h2>${new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long", day:"2-digit", month:"2-digit" }).format(new Date(d.dayDate))}</h2>
       <div class="cal-cols" style="--calendar-columns:${Math.min(3, Math.max(1, parts.length))}">
         ${parts.map(slot => {
           const seats = seatsOf(slot);
           const free = reg(slot).reduce((sum, game) => sum + frei(game), 0);
           const missing = Math.max(0, LO - seats);
-          const badge = showBusy ? `${free} frei` : (missing ? `noch +${missing} bis Ziel` : "Ziel erreicht");
+          const badge = showBusy ? t(`${free} frei`, `${free} available`) : (missing ? t(`noch +${missing} bis Ziel`, `${missing} still needed`) : t("Ziel erreicht", "Target reached"));
           const badgeClass = showBusy || !missing ? "is-good" : "is-warn";
           return `
           <div class="cal-col" data-calendar-slot>
-            <div class="cal-col-head"><h3>${slot.part}</h3><span class="cal-slot-badge ${badgeClass}">${badge}</span></div>
-            ${slot.games.map(game => card(game, slot.date)).join("") || '<p class="hint">– keine Runden –</p>'}
+            <div class="cal-col-head"><h3>${translateSlotPart(slot.part)}</h3><span class="cal-slot-badge ${badgeClass}">${badge}</span></div>
+            ${slot.games.map(game => card(game, slot.date)).join("") || `<p class="hint">– ${t("keine Runden", "no sessions")} –</p>`}
           </div>`;
         }).join("")}
       </div>
@@ -760,9 +778,9 @@ function renderCalendar(slots, rsvpsOpen) {
   let selectedDay = "";
   let freeOnly = false;
   const applyCalendarFilters = () => {
-    const query = searchInput.value.trim().toLocaleLowerCase("de");
+    const query = searchInput.value.trim().toLocaleLowerCase(locale());
     const queryTerms = query.split(/\s+/).filter(Boolean);
-    const systemQuery = systemInput.value.trim().toLocaleLowerCase("de");
+    const systemQuery = systemInput.value.trim().toLocaleLowerCase(locale());
     let visibleGames = 0;
     for (const game of cal.querySelectorAll("[data-calendar-game]")) {
       const visible = (!queryTerms.length || queryTerms.every(term => game.dataset.search.includes(term)))
@@ -778,7 +796,7 @@ function renderCalendar(slots, rsvpsOpen) {
     for (const day of cal.querySelectorAll("[data-calendar-day]")) {
       day.hidden = !day.querySelector("[data-calendar-slot]:not([hidden])");
     }
-    count.textContent = visibleGames === totalGames ? `${totalGames} Runden` : `${visibleGames} von ${totalGames} Runden`;
+    count.textContent = visibleGames === totalGames ? `${totalGames} ${t("Runden", "sessions")}` : t(`${visibleGames} von ${totalGames} Runden`, `${visibleGames} of ${totalGames} sessions`);
     noResults.hidden = visibleGames > 0;
     resetButton.hidden = !(query || systemQuery || selectedDay || freeOnly);
   };
@@ -838,7 +856,7 @@ function fillEventsList(events) {
   const communities = new Map();
   for (const e of events) { const c = e.community_id; if (c?.id) communities.set(c.id, c.name || "?"); }
   csel.innerHTML = "";
-  csel.appendChild(new Option("Alle Communities", ""));
+  csel.appendChild(new Option(isEnglish() ? "All communities" : "Alle Communities", ""));
   [...communities.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, name]) => csel.appendChild(new Option(name, id)));
   const current = events.find(e => String(e.id) === EVENT);
   csel.value = current?.community_id?.id || "";
@@ -848,11 +866,11 @@ function fillEventsList(events) {
 function fillEventOptions() {
   const cid = document.getElementById("communitySelect").value;
   const sel = document.getElementById("eventSelect");
-  const dFmt = new Intl.DateTimeFormat("de-AT", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  const dFmt = new Intl.DateTimeFormat(locale(), { day: "2-digit", month: "2-digit", year: "2-digit" });
   const list = cid ? allEvents.filter(e => String(e.community_id?.id) === cid) : allEvents;
   sel.innerHTML = "";
   if (!list.some(e => String(e.id) === EVENT)) {
-    const ph = new Option("– Event wählen –", "");
+    const ph = new Option(isEnglish() ? "– Choose event –" : "– Event wählen –", "");
     ph.disabled = true;
     ph.selected = true;
     sel.appendChild(ph);
@@ -900,6 +918,8 @@ document.getElementById("slotConfigSave").addEventListener("click", () => {
 
 // ---------- Insights ----------
 function renderFun(games) {
+  const en = isEnglish();
+  const t = (de, english) => en ? english : de;
   games = games.filter(g => !WS_RE.test((g.system || "") + " " + g.title));
   if (!games.length) return;
   document.getElementById("funCard").hidden = false;
@@ -930,20 +950,20 @@ function renderFun(games) {
     return { name, fam:true, n:matches.length, matches };
   }).filter(f => f.n >= 2);
   const facts = [
-    { v: (seats.reduce((a, b) => a + b, 0) / seats.length).toFixed(1).replace(".", ","), l: "Personen pro Runde (ø, inkl. SL)" },
-    { v: systems.size, l: "verschiedene Systeme – Vielfalt!", action:"systems" },
-    { v: `${Math.round(gmless / games.length * 100)} %`, l: "der Runden kommen ohne SL aus" },
-    { v: `${Math.round(xcard / games.length * 100)} %`, l: "erwähnen die X-Karte" },
-    { v: biggest.participant_count + "+SL", l: `größte Runde: ${cleanTitle(biggest.title)}` },
-    { v: smallest.participant_count + "+SL", l: `intimste Runde: ${cleanTitle(smallest.title)}` },
+    { v: (seats.reduce((a, b) => a + b, 0) / seats.length).toFixed(1).replace(".", en ? "." : ","), l: t("Personen pro Runde (ø, inkl. SL)", "people per session (average, including GM)") },
+    { v: systems.size, l: t("verschiedene Systeme – Vielfalt!", "different systems – variety!"), action:"systems" },
+    { v: `${Math.round(gmless / games.length * 100)} %`, l: t("der Runden kommen ohne SL aus", "of sessions need no GM") },
+    { v: `${Math.round(xcard / games.length * 100)} %`, l: t("erwähnen die X-Karte", "mention the X-Card") },
+    { v: biggest.participant_count + t("+SL", "+GM"), l: `${t("größte Runde", "largest session")}: ${cleanTitle(biggest.title)}` },
+    { v: smallest.participant_count + t("+SL", "+GM"), l: `${t("intimste Runde", "smallest session")}: ${cleanTitle(smallest.title)}` },
   ];
   document.getElementById("facts").innerHTML =
     facts.map(f => f.action === "systems"
-      ? `<button type="button" class="fact fact-button" data-show-all-systems aria-controls="sysList" aria-expanded="false" aria-label="${escapeHtml(`${f.v} verschiedene Systeme. Vollständige Liste anzeigen.`)}"><div class="v">${f.v}</div><div class="l">${f.l}</div></button>`
+      ? `<button type="button" class="fact fact-button" data-show-all-systems aria-controls="sysList" aria-expanded="false" aria-label="${escapeHtml(t(`${f.v} verschiedene Systeme. Vollständige Liste anzeigen.`, `${f.v} different systems. Show the complete list.`))}"><div class="v">${f.v}</div><div class="l">${f.l}</div></button>`
       : `<div class="fact"><div class="v">${f.v}</div><div class="l">${f.l}</div></div>`).join("");
 
   // Feldmodus gruppiert Bezeichnungen, Nennungsmodus zählt konfigurierte Familien.
-  const systemCollator = new Intl.Collator("de", { sensitivity:"base", numeric:true });
+  const systemCollator = new Intl.Collator(locale(), { sensitivity:"base", numeric:true });
   const byCountThenName = (a, b) => b.n - a.n || systemCollator.compare(a.name, b.name);
   const ranked = [...systems.values()].sort(byCountThenName);
   const singles = ranked.filter(s => s.n === 1).length;
@@ -954,13 +974,13 @@ function renderFun(games) {
       : showAllSystems ? ranked : ranked.filter(s => s.n >= 2);
     const maxN = rows.length ? rows[0].n : 1;
     document.getElementById("sysHint").textContent = mode === "mentions"
-      ? "Zählt, in wie vielen Runden die Spielfamilie erwähnt wird – im System-Feld, Titel oder in der Beschreibung. Eine Runde kann zu mehreren Familien passen."
-      : "Zählt schlicht, was im System-Feld der Runden steht (gleiche Schreibweisen zusammengefasst).";
+      ? t("Zählt, in wie vielen Runden die Spielfamilie erwähnt wird – im System-Feld, Titel oder in der Beschreibung. Eine Runde kann zu mehreren Familien passen.", "Counts how many sessions mention the system family in the system field, title, or description. One session can match several families.")
+      : t("Zählt schlicht, was im System-Feld der Runden steht (gleiche Schreibweisen zusammengefasst).", "Counts the entries in the sessions’ system field, grouping identical spellings.");
     const list = document.getElementById("sysList");
     list.innerHTML = rows.map((s, index) =>
-      `<button type="button" class="hp-row" data-system-index="${index}" aria-label="${escapeHtml(`${s.name}: ${s.n} Runden. Klick zeigt die Spiele.`)}"><span class="hp-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
+      `<button type="button" class="hp-row" data-system-index="${index}" aria-label="${escapeHtml(t(`${s.name}: ${s.n} Runden. Klick zeigt die Spiele.`, `${s.name}: ${s.n} sessions. Click to show the games.`))}"><span class="hp-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
        <span class="hp-track"><span class="hp-bar" style="width:${s.n / maxN * 100}%"></span></span>
-       <span class="hp-n">${s.n}×</span></button>`).join("") || '<p class="hint">Keine Einträge.</p>';
+       <span class="hp-n">${s.n}×</span></button>`).join("") || `<p class="hint">${t("Keine Einträge.", "No entries.")}</p>`;
     for (const button of list.querySelectorAll("[data-system-index]")) {
       const system = rows[+button.dataset.systemIndex];
       button.addEventListener("click", () => openWordContext({
@@ -970,7 +990,7 @@ function renderFun(games) {
     const more = document.getElementById("sysMore");
     document.querySelector("[data-show-all-systems]")?.setAttribute("aria-expanded", String(mode === "field" && showAllSystems));
     more.innerHTML = mode === "field" && singles > 0
-      ? `<button type="button" class="system-more-toggle" aria-expanded="${String(showAllSystems)}">${showAllSystems ? "Weniger Systeme anzeigen" : `… plus ${singles} Systeme, die genau einmal angeboten werden. Alle anzeigen.`}</button>`
+      ? `<button type="button" class="system-more-toggle" aria-expanded="${String(showAllSystems)}">${showAllSystems ? t("Weniger Systeme anzeigen", "Show fewer systems") : t(`… plus ${singles} Systeme, die genau einmal angeboten werden. Alle anzeigen.`, `… plus ${singles} systems offered exactly once. Show all.`)}</button>`
       : "";
     more.querySelector(".system-more-toggle")?.addEventListener("click", () => {
       showAllSystems = !showAllSystems;
@@ -1059,7 +1079,7 @@ function renderFun(games) {
       });
     }
     document.getElementById("cloudAlt").textContent =
-      "Häufigste Wörter in den Beschreibungen: " + words.slice(0, 12).map(([w, n]) => `${w} (${n}×)`).join(", ") + ".";
+      t("Häufigste Wörter in den Beschreibungen: ", "Most frequent words in the descriptions: ") + words.slice(0, 12).map(([w, n]) => `${w} (${n}×)`).join(", ") + ".";
   }
 }
 
@@ -1103,12 +1123,44 @@ function renderCredits(con = activeCreditsCon) {
 window.addEventListener("uilanguagechange", () => renderCredits());
 
 // ---------- Start ----------
-Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon(EVENT)]).then(async ([sessions, games, ev, eventsList, con]) => {
+let dashboardState = null;
+function renderLoadedDashboard() {
+  if (!dashboardState) return;
+  const { slots, rsvpsOpen, ev, eventsList, con, slotSource } = dashboardState;
+  const en = isEnglish();
   renderCredits(con);
   document.getElementById("status").textContent =
-    "Stand: " + new Intl.DateTimeFormat("de-AT", { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) + " Uhr";
-  const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
+    (en ? "Updated: " : "Stand: ") +
+    new Intl.DateTimeFormat(locale(), { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) +
+    (en ? "" : " Uhr");
   applyEvent(ev, rsvpsOpen);
+  render(slots, rsvpsOpen);
+  renderCalendar(slots, rsvpsOpen);
+  renderFun(dashboardState.games);
+  fillEventsList(eventsList);
+  document.getElementById("zielMin").value = LO;
+  document.getElementById("zielMax").value = HI;
+  document.getElementById("targetSummary").textContent = `${LO}–${HI}`;
+  updateTargetMeta();
+  document.getElementById("slotsSummary").textContent =
+    activeSlotBuckets.map(bucket => `${translateSlotPart(bucket.label)} ${bucket.start_hour}–${bucket.end_hour} ${en ? "h" : "Uhr"}`).join(" · ");
+  document.getElementById("slotsSourceSummary").textContent = (en ? {
+    manual:"· manual",
+    inferred:"· detected automatically",
+    raumplan:"· from the room plan",
+    fallback:"· default"
+  } : {
+    manual:"· manuell",
+    inferred:"· automatisch erkannt",
+    raumplan:"· aus der Raumplanung",
+    fallback:"· Standard"
+  })[slotSource] || "";
+  setView(location.hash === "#kalender" ? "kalender" : "uebersicht");
+}
+window.addEventListener("uilanguagechange", renderLoadedDashboard);
+
+Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon(EVENT)]).then(async ([sessions, games, ev, eventsList, con]) => {
+  const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
   if (activeTargetSource !== "manual") eligibleTargetCount = await loadEligibleTargetCount(ev?.event_access_levels);
   const remoteBuckets = con ? await findSlotBuckets(con.id) : [];
   const localBuckets = loadLocalSlotBuckets();
@@ -1142,33 +1194,11 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon
     HI = estimate.high;
     activeTargetSource = "access";
   }
-  if (buckets.length) {
-    const origin = slotSource === "inferred"
-      ? "Automatisch aus den Session-Startzeiten erkannte Slots"
-      : slotSource === "manual"
-        ? "Lokal definierte Slot-Zeiten"
-        : "Zuordnung folgt den Zeitabschnitten der verknüpften Con-Raumplan-Con";
-    slotRuleHint = `${origin}: ${buckets.map(b => `${b.label} (${b.start_hour}–${b.end_hour} Uhr)`).join(", ")} (Zeitzone ${TZ}).`;
-  }
   const slots = groupSlots(sessions, buckets);
-  render(slots, rsvpsOpen);
-  renderCalendar(slots, rsvpsOpen);
-  renderFun(games);
-  fillEventsList(eventsList);
-  document.getElementById("zielMin").value = LO;
-  document.getElementById("zielMax").value = HI;
-  document.getElementById("targetSummary").textContent = `${LO}–${HI}`;
-  updateTargetMeta();
-  document.getElementById("slotsSummary").textContent =
-    activeSlotBuckets.map(bucket => `${bucket.label} ${bucket.start_hour}–${bucket.end_hour} Uhr`).join(" · ");
-  document.getElementById("slotsSourceSummary").textContent = ({
-    manual:"· manuell",
-    inferred:"· automatisch erkannt",
-    raumplan:"· aus der Raumplanung",
-    fallback:"· Standard"
-  })[slotSource] || "";
-  setView(location.hash === "#kalender" ? "kalender" : "uebersicht");
+  dashboardState = { slots, games, rsvpsOpen, ev, eventsList, con, slotSource };
+  renderLoadedDashboard();
 }).catch(err => {
-  document.getElementById("status").innerHTML =
-    `<span class="err">Daten konnten nicht geladen werden (${err.message}).</span> Bitte Seite neu laden oder direkt auf <a href="${EVENT_URL}">Playabl</a> schauen.`;
+  document.getElementById("status").innerHTML = isEnglish()
+    ? `<span class="err">Data could not be loaded (${err.message}).</span> Reload the page or view the event directly on <a href="${EVENT_URL}">Playabl</a>.`
+    : `<span class="err">Daten konnten nicht geladen werden (${err.message}).</span> Bitte Seite neu laden oder direkt auf <a href="${EVENT_URL}">Playabl</a> schauen.`;
 });
