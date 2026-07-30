@@ -8,7 +8,7 @@
 <script src="theme-bootstrap.js?v=20260728-2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Jost:wght@400;500;600;700&family=Paytone+One&family=Open+Sans:wght@400;600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&family=Shippori+Mincho:wght@500;700&family=Space+Grotesk:wght@600;700&family=Nunito:wght@400;600;700&family=Bangers&family=Poppins:wght@400;600;700&family=Wire+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="dashboard.css?v=20260730-6">
+<link rel="stylesheet" href="dashboard.css?v=20260730-7">
 </head>
 <body class="dashboard-page">
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
@@ -78,7 +78,7 @@
     <div class="slot-config-header">
       <div>
         <h2 id="slotConfigTitle">Dashboard-Setup</h2>
-        <p id="slotConfigIntro">Passe Zielkorridor und Zeitfenster für dieses Event an. Die Slot-Einstellung bleibt lokal in diesem Browser.</p>
+        <p id="slotConfigIntro">Passe Zielkorridor, Sonderformat-Zählung und Zeitfenster für dieses Event an. Die Einstellungen bleiben lokal in diesem Browser.</p>
       </div>
       <button id="slotConfigClose" class="slot-config-close" value="cancel" formnovalidate aria-label="Dialog schließen">×</button>
     </div>
@@ -92,6 +92,10 @@
           <label for="zielMax"><span id="targetMaxLabel">Bis</span><input id="zielMax" type="number" min="1" max="999" aria-label="Ziel bis"></label>
         </div>
         <button type="button" id="targetConfigReset" class="target-reset">Ziel neu ermitteln</button>
+        <label class="setup-special-toggle" for="includeSpecialFormats">
+          <input id="includeSpecialFormats" type="checkbox">
+          <span><strong id="includeSpecialFormatsLabel">Sonderformate mitzählen</strong><small id="includeSpecialFormatsHint">Bezieht sie lokal in Platz-, Frei- und Bedarfszahlen ein.</small></span>
+        </label>
       </section>
       <h3 id="setupSlotsTitle" class="setup-slots-title">Slot-Zeiten</h3>
       <div id="slotConfigRows"></div>
@@ -118,7 +122,7 @@
       <section>
         <h3 id="settingsInfoTargetTitle">Ziel-Plätze pro Slot</h3>
         <p id="settingsInfoTargetText">Der Zielkorridor beschreibt, wie viele Personen in jedem Zeitfenster durch angebotene Runden untergebracht werden sollen. Das Dashboard vergleicht die aktuell angebotenen Spielplätze mit diesem Korridor und zeigt, in welchen Slots weitere Runden gebraucht werden.</p>
-        <p class="settings-info-note" id="settingsInfoCountText"><strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro platzrelevanter Session. Journaling, Workshops und eindeutig slot-unabhängige Formate werden als Sonderformate gekennzeichnet und fließen nicht in die Platzberechnung ein.</p>
+        <p class="settings-info-note" id="settingsInfoCountText"><strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro Session. Sonderformate sind standardmäßig ausgenommen und können im Setup lokal wieder einbezogen werden.</p>
       </section>
       <section>
         <h3 id="settingsInfoSourcesTitle">Woher kommen die Slots?</h3>
@@ -174,9 +178,9 @@
 <script src="https://lmbreuer.github.io/con-raumplan/punk-zine-quotes.js"></script>
 
 <script src="theme.js?v=20260728-3"></script>
-<script src="i18n.js?v=20260730-1"></script>
+<script src="i18n.js?v=20260730-2"></script>
 <script src="config.js?v=20260730-2"></script>
 <script src="api.js?v=20260730-1"></script>
-<script src="dashboard.js?v=20260730-6"></script>
+<script src="dashboard.js?v=20260730-7"></script>
 </body>
 </html>

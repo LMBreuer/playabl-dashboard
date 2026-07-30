@@ -46,10 +46,12 @@ automatisch aus der API. Zum Ausprobieren ohne Dateiänderung: `index.html?event
 ## Zählweise
 
 - **Plätze** = Spielplätze laut Playabl **plus 1 anbietende Person** (SL/Moderation) je
-  platzrelevanter Session — auch GMs sind untergebrachte Personen.
+  gezählter Session — auch GMs sind untergebrachte Personen.
 - Journaling, Workshops/Panels/Vorträge und ausdrücklich außerhalb der Slots laufende Formate werden
   als Sonderformate gekennzeichnet. Sie bleiben im Kalender und in der Programmliste sichtbar,
   zählen aber nicht für Zielplätze, freie Plätze oder den zusätzlichen Rundenbedarf.
+- Im Setup können Sonderformate pro Event und Browser lokal wieder in diese Berechnungen einbezogen
+  werden. Die automatische Slot-Erkennung ignoriert sie weiterhin.
 - Sessions mit Start vor 14:00 Uhr zählen als Vormittag, danach als Nachmittag (konfigurierbar).
 - Sobald die Anmeldung (RSVP) geöffnet ist, zeigt die Seite automatisch auch die Belegung.
 

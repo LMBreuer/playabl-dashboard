@@ -9,7 +9,7 @@ function estimateTargetRange(eligible, peakRsvps = 0) {
 function peakUniqueRsvps(sessions, buckets) {
   const bySlot = new Map();
   for (const session of sessions) {
-    if (capacityFormat(session.game_id) !== "capacity") continue;
+    if (!includeSpecialFormats && capacityFormat(session.game_id) !== "capacity") continue;
     const date = dayKey.format(new Date(session.start_time));
     const hour = hourOf(session.start_time);
     const bucket = buckets.find(item => hour >= item.start_hour && hour < item.end_hour);
@@ -67,6 +67,8 @@ const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, ho
 
 const localSlotKey = `playabl-dashboard-slot-buckets:${EVENT}`;
 const localSlotSourceKey = `playabl-dashboard-slot-source:${EVENT}`;
+const localSpecialFormatsKey = `playabl-dashboard-include-special-formats:${EVENT}`;
+let includeSpecialFormats = localStorage.getItem(localSpecialFormatsKey) === "true";
 let activeSlotBuckets = [];
 let activeSlotSource = "";
 function loadLocalSlotBuckets() {
@@ -142,6 +144,7 @@ function openSlotConfig() {
     .join("");
   document.getElementById("zielMin").value = LO;
   document.getElementById("zielMax").value = HI;
+  document.getElementById("includeSpecialFormats").checked = includeSpecialFormats;
   const dialog = document.getElementById("slotConfigDlg");
   clearSlotDrag();
   dialog.style.left = "50%";
@@ -418,7 +421,8 @@ function groupSlots(sessions, buckets) {
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (rank.get(a.part) ?? 99) - (rank.get(b.part) ?? 99));
 }
 
-const capacityGames = s => s.games.filter(g => g.format === "capacity");
+const isCountedGame = game => includeSpecialFormats || game.format === "capacity";
+const capacityGames = s => s.games.filter(isCountedGame);
 const specialFormats = s => s.games.filter(g => g.format !== "capacity");
 const seatsOf = s => capacityGames(s).reduce((x, g) => x + g.seats, 0);
 const slotDay = s => new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long", day:"2-digit", month:"2-digit" }).format(new Date(s.dayDate));
@@ -498,27 +502,27 @@ function render(slots, rsvpsOpen) {
       title:en ? "How to read the capacity chart" : "So liest du die Platzgrafik",
       intro:en ? "Meaning of segments, target band, and interactions." : "Bedeutung von Segmenten, Zielband und Interaktionen.",
       html:en
-        ? `<section><h3>Sessions and capacity</h3><p>Each blue segment represents a capacity-relevant session. Its width corresponds to the player seats plus the person running it.${showBusy ? " The lighter portion is already occupied." : ""}</p></section><section><h3>Interaction</h3><p>Hover over a segment to see its title and capacity. Clicking opens the session on Playabl; some details may require a login.</p></section><section><h3>Target range</h3><p>The grey band marks the target of ${LO}–${HI} accommodated people per slot.${excludedFormats.length ? " Journaling, workshops, and other slot-independent special formats remain visible in the calendar and programme list, but do not count towards this target." : ""}</p></section>`
-        : `<section><h3>Runden und Plätze</h3><p>Jedes blaue Segment steht für eine platzrelevante Session. Seine Breite entspricht den Spielplätzen plus der anbietenden Person.${showBusy ? " Der hellere Anteil ist bereits belegt." : ""}</p></section><section><h3>Interaktion</h3><p>Mouseover zeigt Titel und Kapazität. Ein Klick öffnet die Runde auf Playabl; manche Details sind dort erst nach dem Login sichtbar.</p></section><section><h3>Zielkorridor</h3><p>Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot.${excludedFormats.length ? " Journaling, Workshops und andere slot-unabhängige Sonderformate bleiben im Kalender und in der Programmliste sichtbar, zählen aber nicht zu diesem Ziel." : ""}</p></section>`
+        ? `<section><h3>Sessions and capacity</h3><p>Each blue segment represents a counted session. Its width corresponds to the player seats plus the person running it.${showBusy ? " The lighter portion is already occupied." : ""}</p></section><section><h3>Interaction</h3><p>Hover over a segment to see its title and capacity. Clicking opens the session on Playabl; some details may require a login.</p></section><section><h3>Target range</h3><p>The grey band marks the target of ${LO}–${HI} accommodated people per slot.${excludedFormats.length ? (includeSpecialFormats ? " The local Setup setting currently includes special formats in this calculation." : " Special formats remain visible in the calendar and programme list, but do not count towards this target.") : ""}</p></section>`
+        : `<section><h3>Runden und Plätze</h3><p>Jedes blaue Segment steht für eine gezählte Session. Seine Breite entspricht den Spielplätzen plus der anbietenden Person.${showBusy ? " Der hellere Anteil ist bereits belegt." : ""}</p></section><section><h3>Interaktion</h3><p>Mouseover zeigt Titel und Kapazität. Ein Klick öffnet die Runde auf Playabl; manche Details sind dort erst nach dem Login sichtbar.</p></section><section><h3>Zielkorridor</h3><p>Das graue Band markiert das Ziel von ${LO}–${HI} untergebrachten Personen pro Slot.${excludedFormats.length ? (includeSpecialFormats ? " Die lokale Setup-Einstellung bezieht Sonderformate derzeit in diese Berechnung ein." : " Sonderformate bleiben im Kalender und in der Programmliste sichtbar, zählen aber nicht zu diesem Ziel.") : ""}</p></section>`
     }),
     free: en => ({
       title:en ? "Where are seats still available?" : "Wo ist noch Platz?",
       intro:en ? "How the list is sorted and calculated." : "Sortierung und Berechnung der freien Plätze.",
       html:en
-        ? `<section><p>Only regular sessions with available player seats are shown. They are sorted from most to fewest available seats. The person running the session is not counted as an available player seat.</p></section>`
-        : `<section><p>Gezeigt werden nur reguläre Runden mit freien Spielplätzen – absteigend nach der Zahl der freien Plätze sortiert. Die anbietende Person zählt dabei nicht als freier Spielplatz.</p></section>`
+        ? `<section><p>Only counted sessions with available player seats are shown. They are sorted from most to fewest available seats. The person running the session is not counted as an available player seat.${includeSpecialFormats ? " The local Setup setting currently includes special formats." : ""}</p></section>`
+        : `<section><p>Gezeigt werden nur gezählte Sessions mit freien Spielplätzen – absteigend nach der Zahl der freien Plätze sortiert. Die anbietende Person zählt dabei nicht als freier Spielplatz.${includeSpecialFormats ? " Die lokale Setup-Einstellung zählt Sonderformate derzeit mit." : ""}</p></section>`
     }),
     needs: en => ({
       title:en ? "Where are more sessions needed?" : "Wo werden noch Runden gebraucht?",
       intro:en ? "How the remaining demand per slot is calculated." : "Berechnung des zusätzlichen Bedarfs je Slot.",
       html:en
-        ? `<section><p>The dashboard compares capacity-relevant seats in each slot with the lower target of ${LO}. Journaling, workshops, and other slot-independent special formats are deliberately excluded. They remain visible in the calendar and programme list, but do not represent seats that need a table in that slot.</p></section>`
-        : `<section><p>Das Dashboard vergleicht die platzrelevanten Spielplätze jedes Slots mit dem unteren Zielwert von ${LO}. Journaling, Workshops und andere slot-unabhängige Sonderformate sind bewusst ausgenommen: Sie bleiben im Kalender und in der Programmliste sichtbar, stellen aber keine Plätze dar, für die in diesem Slot ein Spieltisch benötigt wird.</p></section>`
+        ? `<section><p>The dashboard compares counted seats in each slot with the lower target of ${LO}.${includeSpecialFormats ? " The local Setup setting currently includes special formats." : " Special formats are excluded by default because they do not necessarily represent seats requiring a table in that slot."}</p></section>`
+        : `<section><p>Das Dashboard vergleicht die gezählten Spielplätze jedes Slots mit dem unteren Zielwert von ${LO}.${includeSpecialFormats ? " Die lokale Setup-Einstellung zählt Sonderformate derzeit mit." : " Sonderformate sind standardmäßig ausgenommen, weil sie nicht zwingend Plätze darstellen, für die in diesem Slot ein Spieltisch benötigt wird."}</p></section>`
     }),
     specials: en => ({
       title:en ? "Special formats in this event" : "Sonderformate in diesem Event",
-      intro:en ? "Visible in the programme, excluded from capacity calculations." : "Im Programm sichtbar, aus der Platzberechnung ausgenommen.",
-      html:`<section><p>${en ? "These entries remain in the calendar and full programme list. The reason shown here explains why they do not affect target capacity, available seats, or additional-session demand." : "Diese Einträge bleiben im Kalender und in der vollständigen Programmliste sichtbar. Der angezeigte Grund erklärt, warum sie Zielplätze, freie Plätze und zusätzlichen Rundenbedarf nicht beeinflussen."}</p><ul class="special-format-list">${excludedFormats.map(game => `<li><a href="${game.url}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a><span>${escapeHtml(slotName(game.slot))} · ${formatTime(game.startTime)}–${formatTime(game.endTime)}</span><small>${en ? "Detected as" : "Erkannt als"}: ${escapeHtml(formatReason(game.format))}</small></li>`).join("")}</ul></section>`
+      intro:includeSpecialFormats ? (en ? "Visible in the programme and currently included locally." : "Im Programm sichtbar und derzeit lokal mitgezählt.") : (en ? "Visible in the programme and excluded from capacity calculations." : "Im Programm sichtbar und aus der Platzberechnung ausgenommen."),
+      html:`<section><p>${includeSpecialFormats ? (en ? "The Setup setting currently includes these entries in target capacity, available seats, and additional-session demand on this browser." : "Die Setup-Einstellung bezieht diese Einträge in diesem Browser derzeit in Zielplätze, freie Plätze und zusätzlichen Rundenbedarf ein.") : (en ? "These entries remain in the calendar and full programme list, but do not affect target capacity, available seats, or additional-session demand." : "Diese Einträge bleiben im Kalender und in der vollständigen Programmliste sichtbar, beeinflussen aber Zielplätze, freie Plätze und zusätzlichen Rundenbedarf nicht.")}</p><ul class="special-format-list">${excludedFormats.map(game => `<li><a href="${game.url}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a><span>${escapeHtml(slotName(game.slot))} · ${formatTime(game.startTime)}–${formatTime(game.endTime)}</span><small>${en ? "Detected as" : "Erkannt als"}: ${escapeHtml(formatReason(game.format))}</small></li>`).join("")}</ul></section>`
     }),
     systems: en => {
       const familyMode = document.getElementById("sysMode")?.value === "mentions";
@@ -543,7 +547,7 @@ function render(slots, rsvpsOpen) {
 
   app.innerHTML = `
     <div class="bento-grid">
-      <section class="kpi bento-hero" aria-labelledby="heroKpiLabel"><div class="l" id="heroKpiLabel">${t("Sessions gesamt", "Total sessions")}</div><div class="v">${totalSessions}</div><div class="bento-hero-copy">${t(`${capacitySessionCount} platzrelevant · ${totalSeats} Spielplätze über ${slots.length} Slots · ø ${avgSeats.toFixed(1).replace(".", ",")}`, `${capacitySessionCount} capacity-relevant · ${totalSeats} seats across ${slots.length} slots · ${avgSeats.toFixed(1)} average`)}</div><div class="bento-slot-bars" role="list" aria-label="${t("Zielstatus der Plätze pro Slot", "Capacity target status by slot")}">${slots.map(s => { const seats = seatsOf(s); const status = seats >= LO ? t("Ziel erreicht", "target reached") : t(`noch ${LO - seats} Plätze bis zum Ziel`, `${LO - seats} seats still needed to reach the target`); const label = `${slotName(s)}: ${seats} ${t("Plätze", "seats")}, ${status}`; return `<span role="listitem" aria-label="${escapeHtml(label)}" class="${seats >= LO ? "is-on-target" : "is-below-target"}" style="--slot-fill:${Math.min(100, seats / LO * 100)}%" title="${escapeHtml(label)}"></span>`; }).join("")}</div><div class="bento-hero-legend" aria-hidden="true">${document.documentElement.hasAttribute("data-color-aid") ? t(`Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter`, `One marker per slot · ✓ = target (${LO}+) reached, ! = below target`) : t(`Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`, `One bar per slot · green = target (${LO}+) reached, red = below target`)}</div></section>
+      <section class="kpi bento-hero" aria-labelledby="heroKpiLabel"><div class="l" id="heroKpiLabel">${t("Sessions gesamt", "Total sessions")}</div><div class="v">${totalSessions}</div><div class="bento-hero-copy">${t(`${capacitySessionCount} gezählt · ${totalSeats} Spielplätze über ${slots.length} Slots · ø ${avgSeats.toFixed(1).replace(".", ",")}`, `${capacitySessionCount} counted · ${totalSeats} seats across ${slots.length} slots · ${avgSeats.toFixed(1)} average`)}</div><div class="bento-slot-bars" role="list" aria-label="${t("Zielstatus der Plätze pro Slot", "Capacity target status by slot")}">${slots.map(s => { const seats = seatsOf(s); const status = seats >= LO ? t("Ziel erreicht", "target reached") : t(`noch ${LO - seats} Plätze bis zum Ziel`, `${LO - seats} seats still needed to reach the target`); const label = `${slotName(s)}: ${seats} ${t("Plätze", "seats")}, ${status}`; return `<span role="listitem" aria-label="${escapeHtml(label)}" class="${seats >= LO ? "is-on-target" : "is-below-target"}" style="--slot-fill:${Math.min(100, seats / LO * 100)}%" title="${escapeHtml(label)}"></span>`; }).join("")}</div><div class="bento-hero-legend" aria-hidden="true">${document.documentElement.hasAttribute("data-color-aid") ? t(`Je Marker ein Slot · ✓ = Ziel (${LO}+) erreicht, ! = darunter`, `One marker per slot · ✓ = target (${LO}+) reached, ! = below target`) : t(`Je Balken ein Slot · grün = Ziel (${LO}+) erreicht, rot = darunter`, `One bar per slot · green = target (${LO}+) reached, red = below target`)}</div></section>
       <section class="bento-kpis" aria-label="${t("Kennzahlen", "Key figures")}">
       <div class="kpi"><div class="l">${t("Spielplätze gesamt", "Total player seats")}</div><div class="v">${totalSeats}</div></div>
       ${excludedFormats.length ? `<button type="button" class="kpi kpi-button" data-section-info="specials" aria-label="${escapeHtml(t(`${excludedFormats.length} Sonderformate. Liste und Erkennungsgründe anzeigen.`, `${excludedFormats.length} special formats. Show list and detection reasons.`))}"><span class="l">${t("Sonderformate", "Special formats")}</span><span class="v">${excludedFormats.length}</span></button>` : ""}
@@ -600,7 +604,7 @@ function render(slots, rsvpsOpen) {
     row.className = "row";
     row.setAttribute("role", "group");
     row.setAttribute("aria-label", `${slotName(slot)}: ${seats} ${t("Plätze", "seats")}; ${seats >= LO ? t("Ziel erreicht", "target reached") : t(`${LO - seats} Plätze fehlen bis zum Ziel`, `${LO - seats} seats needed to reach the target`)}`);
-    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${new Intl.DateTimeFormat(locale(), { timeZone:TZ, day:"2-digit", month:"2-digit" }).format(new Date(slot.dayDate))} · ${capacityGames(slot).length} ${t("platzrelevante Runden", "capacity-relevant sessions")}${nSpecial ? ` · +${nSpecial} ${t("weitere Formate", "other formats")}` : ""}${showBusy ? ` · ${rsvps + capacityGames(slot).length} ${t("belegt", "occupied")}` : ""}</span><span class="mstats">${seats} ${t("Plätze", "seats")}${LO - seats > 0 ? t(` · noch +${LO - seats} bis Ziel`, ` · ${LO - seats} still needed`) : t(" · Ziel erreicht", " · target reached")}</span></div>`;
+    row.innerHTML = `<div class="lbl"><b>${slotName(slot)}</b><span>${new Intl.DateTimeFormat(locale(), { timeZone:TZ, day:"2-digit", month:"2-digit" }).format(new Date(slot.dayDate))} · ${capacityGames(slot).length} ${t("gezählte Sessions", "counted sessions")}${nSpecial ? (includeSpecialFormats ? ` · ${t("davon", "including")} ${nSpecial} ${t("Sonderformat(e)", "special format(s)")}` : ` · +${nSpecial} ${t("Sonderformat(e)", "special format(s)")}`) : ""}${showBusy ? ` · ${rsvps + capacityGames(slot).length} ${t("belegt", "occupied")}` : ""}</span><span class="mstats">${seats} ${t("Plätze", "seats")}${LO - seats > 0 ? t(` · noch +${LO - seats} bis Ziel`, ` · ${LO - seats} still needed`) : t(" · Ziel erreicht", " · target reached")}</span></div>`;
     const track = document.createElement("div");
     track.className = "track";
     const band = document.createElement("div");
@@ -679,9 +683,9 @@ function render(slots, rsvpsOpen) {
       <td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${escapeHtml(g.title)}</a>${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ""}</td>
       <td class="game-system">${escapeHtml(gameSystem(g))}</td>
       <td class="game-facilitator">${escapeHtml(gameFacilitator(g))}</td>
-      <td>${formatTime(g.startTime)}–${formatTime(g.endTime)}${g.format === "capacity" ? ` · ${g.playerSeats}+${t("SL", "GM")}${showBusy ? ` · ${g.rsvps + 1}/${g.seats} ${t("belegt", "occupied")}` : ""}` : ""}</td>
+      <td>${formatTime(g.startTime)}–${formatTime(g.endTime)}${isCountedGame(g) ? ` · ${g.playerSeats}+${t("SL", "GM")}${showBusy ? ` · ${g.rsvps + 1}/${g.seats} ${t("belegt", "occupied")}` : ""}` : ""}</td>
     </tr>`).join("");
-    d.innerHTML = `<summary>${slotDay(slot)} ${translateSlotPart(slot.part)} — ${slot.games.length} ${t("Sessions", "sessions")}, ${seatsOf(slot)} ${t("platzrelevante Plätze", "capacity-relevant seats")}</summary><div class="tscroll"><table class="games"><caption class="sr-only">${t(`Runden am ${slotDay(slot)} ${translateSlotPart(slot.part)}`, `Sessions on ${slotDay(slot)} ${translateSlotPart(slot.part)}`)}</caption><thead><tr><th>Session</th><th>System</th><th>${t("SL", "GM")}</th><th>${t("Zeit & Plätze", "Time & capacity")}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    d.innerHTML = `<summary>${slotDay(slot)} ${translateSlotPart(slot.part)} — ${slot.games.length} ${t("Sessions", "sessions")}, ${seatsOf(slot)} ${t("gezählte Plätze", "counted seats")}</summary><div class="tscroll"><table class="games"><caption class="sr-only">${t(`Runden am ${slotDay(slot)} ${translateSlotPart(slot.part)}`, `Sessions on ${slotDay(slot)} ${translateSlotPart(slot.part)}`)}</caption><thead><tr><th>Session</th><th>System</th><th>${t("SL", "GM")}</th><th>${t("Zeit & Plätze", "Time & capacity")}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     detail.appendChild(d);
   }
 
@@ -707,7 +711,7 @@ function renderCalendar(slots, rsvpsOpen) {
   const en = isEnglish();
   const t = (de, english) => en ? english : de;
   const cal = document.getElementById("calView");
-  const showBusy = rsvpsOpen || slots.some(s => s.games.some(g => g.rsvps > 0));
+  const showBusy = rsvpsOpen || slots.some(s => capacityGames(s).some(g => g.rsvps > 0));
   const days = new Map();
   for (const s of slots) {
     if (!days.has(s.date)) days.set(s.date, { dayDate:s.dayDate, parts: {} });
@@ -716,10 +720,13 @@ function renderCalendar(slots, rsvpsOpen) {
   const systems = [...new Map(slots.flatMap(slot => slot.games).map(game => [gameSystem(game).toLocaleLowerCase(locale()), gameSystem(game)])).values()]
     .sort((a, b) => a.localeCompare(b, locale(), { sensitivity:"base", numeric:true }));
   const totalGames = slots.reduce((sum, slot) => sum + slot.games.length, 0);
+  const calendarCapacity = game => isCountedGame(game)
+    ? ` · ${game.playerSeats}+${t("SL", "GM")}${showBusy ? (frei(game) > 0 ? ` <span class="badge frei">${frei(game)} ${t("frei", "available")}</span>` : ` <span class="badge voll">${t("voll", "full")}</span>`) : ""}`
+    : "";
   const card = (g, day) => `
-    <a class="cal-card${g.format !== "capacity" ? " non-capacity-card" : ""}" data-calendar-game data-day="${escapeHtml(day)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)} ${formatLabel(g.format)}`.toLocaleLowerCase(locale()))}" data-free="${String(g.format === "capacity" && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.format !== "capacity" ? `, ${formatLabel(g.format)}` : `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}`}`)}">
+    <a class="cal-card${g.format !== "capacity" ? " non-capacity-card" : ""}" data-calendar-game data-day="${escapeHtml(day)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)} ${formatLabel(g.format)}`.toLocaleLowerCase(locale()))}" data-free="${String(isCountedGame(g) && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.format !== "capacity" ? `, ${formatLabel(g.format)}` : ""}${isCountedGame(g) ? `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}` : ""}`)}">
       <span class="t">${escapeHtml(g.title)}</span>
-      <span class="m">${formatTime(g.startTime)}–${formatTime(g.endTime)}${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ` · ${g.playerSeats}+${t("SL", "GM")}${showBusy ? (frei(g) > 0 ? ` <span class="badge frei">${frei(g)} ${t("frei", "available")}</span>` : ` <span class="badge voll">${t("voll", "full")}</span>`) : ""}`}</span>
+      <span class="m">${formatTime(g.startTime)}–${formatTime(g.endTime)}${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ""}${calendarCapacity(g)}</span>
       <span class="m"><span>${escapeHtml(gameSystem(g))}</span><span aria-hidden="true">·</span><span>${t("SL", "GM")}: ${escapeHtml(gameFacilitator(g))}</span></span>
     </a>`;
   cal.innerHTML = `
@@ -909,6 +916,9 @@ document.getElementById("slotConfigSave").addEventListener("click", () => {
   if (!buckets.length) return alert(copy.setupInvalidSlots);
   localStorage.setItem(localSlotKey, JSON.stringify(buckets));
   localStorage.setItem(localSlotSourceKey, "manual");
+  includeSpecialFormats = document.getElementById("includeSpecialFormats").checked;
+  if (includeSpecialFormats) localStorage.setItem(localSpecialFormatsKey, "true");
+  else localStorage.removeItem(localSpecialFormatsKey);
   const p = new URLSearchParams(location.search);
   p.set("event", EVENT);
   p.set("min", lo);

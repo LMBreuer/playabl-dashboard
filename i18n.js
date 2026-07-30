@@ -5,8 +5,9 @@ const UI_COPY = {
     nav: "Ansicht, Event und Ziel wählen", view:"Ansicht", activeSettings:"Aktive Einstellungen", theme:"Farbschema wählen", calendarView:"Kalender-Ansicht", overview: "Übersicht", calendar: "Kalender",
     contextTitle:"Kontext", contextIntro:"Zufällige Ausschnitte aus Rundenbeschreibungen.", contextClose:"Kontext schließen", contextRefresh:"Andere Ausschnitte", sectionInfoTitle:"Information", sectionInfoClose:"Information schließen",
     community: "Community", event: "Event wechseln", setup: "Setup", language: "Sprache wählen", targetSetting:"Ziel-Plätze pro Slot", slotsSetting:"Slots",
-    setupTitle:"Dashboard-Setup", setupIntro:"Passe Zielkorridor und Zeitfenster für dieses Event an. Die Slot-Einstellung bleibt lokal in diesem Browser.",
+    setupTitle:"Dashboard-Setup", setupIntro:"Passe Zielkorridor, Sonderformat-Zählung und Zeitfenster für dieses Event an. Die Einstellungen bleiben lokal in diesem Browser.",
     setupClose:"Dialog schließen", setupTargetTitle:"Ziel-Plätze pro Slot", setupFrom:"Von", setupTo:"Bis", setupMin:"Ziel von", setupMax:"Ziel bis",
+    setupIncludeSpecial:"Sonderformate mitzählen", setupIncludeSpecialHint:"Bezieht sie lokal in Platz-, Frei- und Bedarfszahlen ein.",
     setupSlotsTitle:"Slot-Zeiten", setupAdd:"+ Slot hinzufügen", setupResetSlots:"Slots neu ermitteln", setupCancel:"Abbrechen", setupSave:"Setup speichern",
     setupName:"Name", setupRemove:"Slot entfernen", setupInvalidTarget:"Bitte gültige Ziel-Werte angeben (von ≤ bis).", setupInvalidSlots:"Bitte mindestens einen gültigen Slot angeben.",
     infoOpen: "Informationen zu Zielplätzen und Slots", infoClose: "Informationen schließen",
@@ -14,7 +15,7 @@ const UI_COPY = {
     infoIntro: "Hintergrund zur Auswertung, automatischen Erkennung und lokalen Konfiguration.",
     infoTargetTitle: "Ziel-Plätze pro Slot",
     infoTargetText: "Der Zielkorridor beschreibt, wie viele Personen in jedem Zeitfenster durch angebotene Runden untergebracht werden sollen. Wenn Playabl Event-Freischaltungen bereitstellt, schätzt das Dashboard daraus automatisch einen Korridor von ungefähr 85–100 Prozent und rundet ihn sinnvoll. Sobald RSVPs vorhanden sind, dient die höchste eindeutige Nachfrage eines Slots zusätzlich als Untergrenze. Manuelle Werte haben Vorrang; „Ziel neu ermitteln“ stellt die automatische Schätzung wieder her.",
-    infoCountText: "<strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro platzrelevanter Session. Journaling, Workshops und eindeutig slot-unabhängige Formate werden als Sonderformate gekennzeichnet. Sie bleiben im Kalender und in der Programmliste sichtbar, fließen aber nicht in Platzbedarf, freie Plätze oder Zielerreichung ein. Der Zielwert verändert keine Daten auf Playabl.",
+    infoCountText: "<strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro Session. Journaling, Workshops und eindeutig slot-unabhängige Formate werden als Sonderformate gekennzeichnet und sind standardmäßig ausgenommen. Im Setup können sie für dieses Event und diesen Browser wieder in Platzbedarf, freie Plätze und Zielerreichung einbezogen werden. Der Zielwert verändert keine Daten auf Playabl.",
     infoSourcesTitle: "Woher kommen die Slots?",
     infoSourceManual: "<strong>Manuelle Einstellung:</strong> Eine im Setup gespeicherte Konfiguration hat immer Vorrang.",
     infoSourcePlan: "<strong>Con-Raumplan:</strong> Ist das Event mit einer Raumplanung verbunden, werden deren Zeitfenster übernommen.",
@@ -31,8 +32,9 @@ const UI_COPY = {
     nav: "Choose view, event and target", view:"View", activeSettings:"Active settings", theme:"Choose colour scheme", calendarView:"Calendar view", overview: "Overview", calendar: "Calendar",
     contextTitle:"Context", contextIntro:"Random excerpts from session descriptions.", contextClose:"Close context", contextRefresh:"Different excerpts", sectionInfoTitle:"Information", sectionInfoClose:"Close information",
     community: "Community", event: "Change event", setup: "Setup", language: "Choose language", targetSetting:"Target capacity per slot", slotsSetting:"Slots",
-    setupTitle:"Dashboard setup", setupIntro:"Adjust the target range and time windows for this event. Slot settings remain local to this browser.",
+    setupTitle:"Dashboard setup", setupIntro:"Adjust the target range, special-format counting, and time windows for this event. Settings remain local to this browser.",
     setupClose:"Close dialog", setupTargetTitle:"Target capacity per slot", setupFrom:"From", setupTo:"To", setupMin:"Target from", setupMax:"Target to",
+    setupIncludeSpecial:"Count special formats", setupIncludeSpecialHint:"Locally includes them in capacity, availability, and demand figures.",
     setupSlotsTitle:"Slot times", setupAdd:"+ Add slot", setupResetSlots:"Redetect slots", setupCancel:"Cancel", setupSave:"Save setup",
     setupName:"Name", setupRemove:"Remove slot", setupInvalidTarget:"Enter a valid target range (from ≤ to).", setupInvalidSlots:"Enter at least one valid slot.",
     infoOpen: "Information about target capacity and slots", infoClose: "Close information",
@@ -40,7 +42,7 @@ const UI_COPY = {
     infoIntro: "Background on the analysis, automatic detection, and local configuration.",
     infoTargetTitle: "Target capacity per slot",
     infoTargetText: "The target range describes how many people should be accommodated by the sessions offered in each time window. When Playabl provides event access data, the dashboard automatically estimates a range of roughly 85–100 percent and rounds it sensibly. Once RSVPs exist, the highest unique demand in any slot also acts as a lower bound. Manual values take priority; “Redetect target” restores the automatic estimate.",
-    infoCountText: "<strong>Capacity includes player seats plus the person running each capacity-relevant session.</strong> Journaling, workshops, and clearly slot-independent formats are marked as special formats. They remain visible in the calendar and programme list, but are excluded from demand, available-seat, and target calculations. The target does not change any data on Playabl.",
+    infoCountText: "<strong>Capacity includes player seats plus the person running each counted session.</strong> Journaling, workshops, and clearly slot-independent formats are marked as special formats and excluded by default. Setup can include them again in demand, available-seat, and target calculations for this event and browser. The target does not change any data on Playabl.",
     infoSourcesTitle: "Where do the slots come from?",
     infoSourceManual: "<strong>Manual configuration:</strong> A configuration saved in Setup always takes priority.",
     infoSourcePlan: "<strong>Con room plan:</strong> If the event is linked to a room plan, its time windows are used.",
@@ -81,6 +83,8 @@ function applyLanguage(language) {
   document.getElementById("zielMin").setAttribute("aria-label", copy.setupMin);
   document.getElementById("targetMaxLabel").textContent = copy.setupTo;
   document.getElementById("zielMax").setAttribute("aria-label", copy.setupMax);
+  document.getElementById("includeSpecialFormatsLabel").textContent = copy.setupIncludeSpecial;
+  document.getElementById("includeSpecialFormatsHint").textContent = copy.setupIncludeSpecialHint;
   document.getElementById("setupSlotsTitle").textContent = copy.setupSlotsTitle;
   document.getElementById("slotConfigAdd").textContent = copy.setupAdd;
   document.getElementById("slotConfigReset").textContent = copy.setupResetSlots;
