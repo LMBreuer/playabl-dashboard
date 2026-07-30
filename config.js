@@ -18,8 +18,19 @@ const CONFIG = {
   ],
 };
 
-// Workshops und Specials werden getrennt von den Kapazitäten ausgewertet.
-const WS_RE = /workshop|panel|vortrag/i;
+const NON_CAPACITY_FORMATS = [
+  { key:"programme", pattern:/\b(?:workshop|panel|vortrag|talk|podcast|lesung|reading|keynote)\b/i },
+  { key:"journaling", pattern:/\bjournal(?:ing)?\b/i }
+];
+
+function capacityFormat(game) {
+  const titleAndSystem = `${game?.system || ""} ${game?.title || ""}`;
+  const matched = NON_CAPACITY_FORMATS.find(format => format.pattern.test(titleAndSystem));
+  if (matched) return matched.key;
+  const description = String(game?.description || "").replace(/<[^>]+>/g, " ");
+  if (/\b(?:läuft|findet)\s+nicht\s+in\s+einem\s+slot\b|\bkein(?:e|en|er|es)?\s+fest(?:e|en|er|es)?\s+slot\b|\bslot[-\s]?unabhängig\b|\b(?:während|über)\s+(?:der|die)?\s*(?:gesamten?|ganzen?)\s+con\b|\bnebenher\s+(?:während|über)\b|\b(?:does\s+not|doesn't|won't)\s+(?:run|take\s+place)\s+in\s+(?:a|one)\s+slot\b|\bno\s+fixed\s+slot\b|\bthroughout\s+the\s+(?:whole\s+)?(?:con|event)\b|\bruns?\s+all\s+weekend\b/i.test(description)) return "slot-independent";
+  return "capacity";
+}
 
 const params  = new URLSearchParams(location.search);
 const EVENT   = params.get("event") || String(CONFIG.eventId);

@@ -8,7 +8,7 @@ async function api(path) {
   return resp.json();
 }
 
-const load = () => api(`sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,event_id,creator_id(id,username))`
+const load = () => api(`sessions?select=id,start_time,end_time,participant_count,rsvps,game_id!inner(id,title,system,description,event_id,creator_id(id,username))`
   + `&deleted_at=is.null&game_id.event_id=eq.${EVENT}&order=start_time.asc`);
 const loadGames = () => api(`games?select=id,title,system,description,participant_count&event_id=eq.${EVENT}&deleted_at=is.null`).catch(() => []);
 const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time,event_access_levels&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);

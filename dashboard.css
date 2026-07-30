@@ -469,6 +469,11 @@
   }
   .kpi .v { font-size: var(--fs-xl); font-weight: 800; font-variant-numeric: tabular-nums; }
   .kpi .l { font-size: var(--fs-xs); color: var(--text-secondary); }
+  .kpi-button { position:relative; color:var(--text-primary); font:inherit; text-align:left; cursor:pointer; }
+  .kpi-button .l, .kpi-button .v { display:block; }
+  .expected-value { display:flex; align-items:baseline; white-space:nowrap; }
+  .expected-value .approx-mark { margin-right:.12em; font-family:var(--font-body); font-size:.55em; font-weight:700; line-height:1; }
+  .expected-value .per-day { margin-left:.04em; font-size:.58em; }
   .card {
     background: var(--surface-1); border: var(--border-w) solid var(--border); border-radius: var(--r-lg);
     padding: var(--sp-5) var(--sp-6); margin-bottom: var(--sp-4); box-shadow: var(--shadow-card);
@@ -543,6 +548,10 @@
   }
   .badge.frei { color: var(--good-text); border-color: var(--good); background: transparent; }
   .badge.voll { opacity: .8; }
+  .special-format-list { display:grid; gap:10px; margin:14px 0 0; padding:0; list-style:none; }
+  .special-format-list li { display:grid; gap:3px; padding:12px 14px; border:var(--border-w) solid var(--grid); border-radius:var(--r-md); background:var(--surface-2); }
+  .special-format-list a { color:var(--text-primary); font-weight:700; }
+  .special-format-list span, .special-format-list small { color:var(--text-secondary); }
 
   .cal-day { margin-bottom: var(--sp-5); }
   .cal-cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
@@ -586,6 +595,7 @@
     background: var(--surface-2); box-shadow: var(--shadow-card);
   }
   .cal-card:hover { border-color: var(--accent); }
+  .cal-card.non-capacity-card { box-shadow:inset 3px 0 0 var(--accent),var(--shadow-card); }
   .cal-card .t { font-weight: 600; font-size: var(--fs-sm); }
   .cal-card .m { font-size: var(--fs-xs); color: var(--text-secondary); display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; margin-top: 2px; }
 
