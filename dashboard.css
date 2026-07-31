@@ -271,9 +271,6 @@
 :root[data-theme="cosmic"] .cal-day:nth-child(3n) .cal-col {
   background:linear-gradient(180deg,rgba(8,25,31,.78),rgba(4,6,13,.94));
 }
-:root[data-theme="cosmic"] .cal-card {
-  border-left:2px solid var(--room-accent,var(--cosmic-blue));
-}
 :root[data-theme="cosmic"] input,
 :root[data-theme="cosmic"] select,
 :root[data-theme="cosmic"] button,
@@ -595,7 +592,6 @@
     background: var(--surface-2); box-shadow: var(--shadow-card);
   }
   .cal-card:hover { border-color: var(--accent); }
-  .cal-card.non-capacity-card { box-shadow:inset 3px 0 0 var(--accent),var(--shadow-card); }
   .cal-card .t { font-weight: 600; font-size: var(--fs-sm); }
   .cal-card .m { font-size: var(--fs-xs); color: var(--text-secondary); display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; margin-top: 2px; }
 
