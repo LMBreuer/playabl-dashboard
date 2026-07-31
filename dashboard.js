@@ -68,9 +68,18 @@ const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, ho
 const localSlotKey = `playabl-dashboard-slot-buckets:${EVENT}`;
 const localSlotSourceKey = `playabl-dashboard-slot-source:${EVENT}`;
 const localSpecialFormatsKey = `playabl-dashboard-include-special-formats:${EVENT}`;
+const personalProfileKey = "playabl-dashboard-personal-profile";
 let includeSpecialFormats = localStorage.getItem(localSpecialFormatsKey) === "true";
 let activeSlotBuckets = [];
 let activeSlotSource = "";
+let personalCalendarFilterActive = false;
+function loadPersonalProfile() {
+  try {
+    const profile = JSON.parse(localStorage.getItem(personalProfileKey) || "null");
+    return profile?.id && profile?.username ? { id:String(profile.id), username:String(profile.username) } : null;
+  } catch { return null; }
+}
+let personalProfile = loadPersonalProfile();
 function loadLocalSlotBuckets() {
   try {
     const rows = JSON.parse(localStorage.getItem(localSlotKey) || "[]");
@@ -145,6 +154,7 @@ function openSlotConfig() {
   document.getElementById("zielMin").value = LO;
   document.getElementById("zielMax").value = HI;
   document.getElementById("includeSpecialFormats").checked = includeSpecialFormats;
+  updatePersonalCalendarSetup();
   const dialog = document.getElementById("slotConfigDlg");
   clearSlotDrag();
   dialog.style.left = "50%";
@@ -189,6 +199,87 @@ slotDialogHandle.addEventListener("pointerup", stopSlotDrag);
 slotDialogHandle.addEventListener("pointercancel", stopSlotDrag);
 slotDialogHandle.addEventListener("lostpointercapture", () => { slotDrag = null; });
 slotDialog.addEventListener("close", clearSlotDrag);
+
+const personalCalendarDialog = document.getElementById("personalCalendarDlg");
+const personalCalendarForm = document.getElementById("personalCalendarForm");
+const personalCalendarInput = document.getElementById("personalCalendarIdentity");
+const personalCalendarMessage = document.getElementById("personalCalendarMessage");
+function updatePersonalCalendarSetup() {
+  const status = document.getElementById("setupPersonalStatus");
+  const change = document.getElementById("personalCalendarSetupChange");
+  const reset = document.getElementById("personalCalendarReset");
+  if (!status || !change || !reset) return;
+  if (personalProfile) {
+    status.textContent = isEnglish()
+      ? `Playabl name “${personalProfile.username}” is stored locally for My games.`
+      : `Der Playabl-Name „${personalProfile.username}“ ist lokal für Meine Spiele gespeichert.`;
+    change.textContent = isEnglish() ? "Change association" : "Zuordnung ändern";
+    reset.hidden = false;
+  } else {
+    status.textContent = isEnglish()
+      ? "No association is stored yet. Set it through My games in the calendar."
+      : "Noch keine Zuordnung gespeichert. Du kannst sie im Kalender über „Meine Spiele“ festlegen.";
+    change.textContent = isEnglish() ? "Set association" : "Zuordnung festlegen";
+    reset.hidden = true;
+  }
+}
+function openPersonalCalendarDialog() {
+  if (slotDialog.open) slotDialog.close("cancel");
+  personalCalendarMessage.textContent = "";
+  personalCalendarInput.value = personalProfile?.username || "";
+  personalCalendarDialog.showModal();
+  requestAnimationFrame(() => personalCalendarInput.focus());
+}
+function closePersonalCalendarDialog() {
+  if (personalCalendarDialog.open) personalCalendarDialog.close("cancel");
+}
+document.getElementById("personalCalendarClose").addEventListener("click", closePersonalCalendarDialog);
+document.getElementById("personalCalendarCancel").addEventListener("click", closePersonalCalendarDialog);
+document.getElementById("personalCalendarSetupChange").addEventListener("click", openPersonalCalendarDialog);
+document.getElementById("personalCalendarReset").addEventListener("click", () => {
+  localStorage.removeItem(personalProfileKey);
+  personalProfile = null;
+  personalCalendarFilterActive = false;
+  updatePersonalCalendarSetup();
+  renderLoadedDashboard();
+});
+personalCalendarForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const identity = personalCalendarInput.value.trim();
+  if (!identity) return personalCalendarInput.focus();
+  const saveButton = document.getElementById("personalCalendarSave");
+  saveButton.disabled = true;
+  personalCalendarMessage.classList.remove("is-error");
+  personalCalendarMessage.textContent = isEnglish() ? "Looking up Playabl profile …" : "Playabl-Profil wird gesucht …";
+  try {
+    const profiles = await loadProfileByIdentity(identity);
+    const profile = identity.includes("@")
+      ? profiles[0]
+      : profiles.find(row => String(row.username).localeCompare(identity, undefined, { sensitivity:"accent" }) === 0) || profiles[0];
+    if (!profile) {
+      personalCalendarMessage.classList.add("is-error");
+      personalCalendarMessage.textContent = isEnglish()
+        ? "No Playabl profile matching this entry was found. Check the spelling."
+        : "Kein Playabl-Profil zu dieser Eingabe gefunden. Bitte prüfe die Schreibweise.";
+      return;
+    }
+    personalProfile = { id:String(profile.id), username:String(profile.username) };
+    localStorage.setItem(personalProfileKey, JSON.stringify(personalProfile));
+    personalCalendarFilterActive = true;
+    closePersonalCalendarDialog();
+    updatePersonalCalendarSetup();
+    renderLoadedDashboard();
+  } catch {
+    personalCalendarMessage.classList.add("is-error");
+    personalCalendarMessage.textContent = isEnglish()
+      ? "The profile could not be loaded. Please try again."
+      : "Das Profil konnte nicht geladen werden. Bitte versuche es erneut.";
+  } finally {
+    saveButton.disabled = false;
+  }
+});
+window.addEventListener("uilanguagechange", updatePersonalCalendarSetup);
+updatePersonalCalendarSetup();
 
 const infoDialog = document.getElementById("settingsInfoDlg");
 const infoDialogHandle = infoDialog.querySelector(".slot-config-header");
@@ -410,10 +501,12 @@ function groupSlots(sessions, buckets) {
       url: "https://app.playabl.io/games/" + s.game_id.id,
       system: (s.game_id.system || "").trim(),
       facilitator: (s.game_id.creator_id?.username || "").trim(),
+      facilitatorId: String(s.game_id.creator_id?.id || ""),
       format: capacityFormat(s.game_id),
       seats: s.participant_count + 1,  // Spielplätze + 1 anbietende Person (SL/Moderation)
       playerSeats: s.participant_count,
       rsvps: (s.rsvps || []).length,
+      rsvpIds: (s.rsvps || []).map(String),
       startTime:s.start_time,
       endTime:s.end_time
     });
@@ -428,6 +521,18 @@ const seatsOf = s => capacityGames(s).reduce((x, g) => x + g.seats, 0);
 const slotDay = s => new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long", day:"2-digit", month:"2-digit" }).format(new Date(s.dayDate));
 const slotWeekday = s => new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long" }).format(new Date(s.dayDate));
 const slotName = s => `${slotWeekday(s)} ${translateSlotPart(s.part)}`;
+const gameStartMinute = game => sessionStartMinute({ start_time:game.startTime });
+const compareGamesByStartThenTitle = (a, b) => gameStartMinute(a) - gameStartMinute(b)
+  || a.title.localeCompare(b.title, locale(), { sensitivity:"base", numeric:true });
+const gamesByStartThenTitle = games => [...games].sort(compareGamesByStartThenTitle);
+function personalGameState(game) {
+  if (!personalProfile) return null;
+  if (game.facilitatorId === personalProfile.id) return { type:"facilitator" };
+  const index = game.rsvpIds.indexOf(personalProfile.id);
+  if (index < 0) return null;
+  if (index < game.playerSeats) return { type:"confirmed" };
+  return { type:"waitlist", position:index - game.playerSeats + 1 };
+}
 const gameSystem = g => g.system || (isEnglish() ? "No system specified" : "Kein System angegeben");
 const gameFacilitator = g => g.facilitator || (isEnglish() ? "Not specified" : "Nicht angegeben");
 const frei = g => Math.max(0, g.playerSeats - g.rsvps);
@@ -679,7 +784,7 @@ function render(slots, rsvpsOpen) {
   const detail = document.getElementById("detail");
   for (const slot of slots) {
     const d = document.createElement("details");
-    const rows = slot.games.map(g => `<tr>
+    const rows = gamesByStartThenTitle(slot.games).map(g => `<tr>
       <td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${escapeHtml(g.title)}</a>${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ""}</td>
       <td class="game-system">${escapeHtml(gameSystem(g))}</td>
       <td class="game-facilitator">${escapeHtml(gameFacilitator(g))}</td>
@@ -723,12 +828,24 @@ function renderCalendar(slots, rsvpsOpen) {
   const calendarCapacity = game => isCountedGame(game)
     ? ` · ${game.playerSeats}+${t("SL", "GM")}${showBusy ? (frei(game) > 0 ? ` <span class="badge frei">${frei(game)} ${t("frei", "available")}</span>` : ` <span class="badge voll">${t("voll", "full")}</span>`) : ""}`
     : "";
-  const card = (g, day) => `
-    <a class="cal-card${g.format !== "capacity" ? " non-capacity-card" : ""}" data-calendar-game data-day="${escapeHtml(day)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)} ${formatLabel(g.format)}`.toLocaleLowerCase(locale()))}" data-free="${String(isCountedGame(g) && frei(g) > 0)}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.format !== "capacity" ? `, ${formatLabel(g.format)}` : ""}${isCountedGame(g) ? `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}` : ""}`)}">
+  const personalStatusLabel = state => {
+    if (!state) return "";
+    if (state.type === "facilitator") return t("Spielleitung", "Facilitator");
+    if (state.type === "confirmed") return t("Bestätigt", "Confirmed");
+    return t(`Warteliste · Platz ${state.position}`, `Waitlist · position ${state.position}`);
+  };
+  const personalStatusSymbol = state => state?.type === "facilitator" ? "◆" : state?.type === "confirmed" ? "✓" : "↗";
+  const card = (g, day, slotKey, defaultOrder, suggestionOrder) => {
+    const personalState = personalGameState(g);
+    const personalLabel = personalStatusLabel(personalState);
+    const suggestionEligible = !personalState && isCountedGame(g) && frei(g) > 0;
+    return `
+    <a class="cal-card${g.format !== "capacity" ? " non-capacity-card" : ""}" data-calendar-game data-day="${escapeHtml(day)}" data-slot-key="${escapeHtml(slotKey)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)} ${formatLabel(g.format)}`.toLocaleLowerCase(locale()))}" data-free="${String(isCountedGame(g) && frei(g) > 0)}" data-personal="${personalState?.type || ""}" data-suggestion-eligible="${String(suggestionEligible)}" data-default-order="${defaultOrder}" data-suggestion-order="${suggestionOrder}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.format !== "capacity" ? `, ${formatLabel(g.format)}` : ""}${isCountedGame(g) ? `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}` : ""}${personalLabel ? `, ${personalLabel}` : ""}`)}">
       <span class="t">${escapeHtml(g.title)}</span>
       <span class="m">${formatTime(g.startTime)}–${formatTime(g.endTime)}${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ""}${calendarCapacity(g)}</span>
-      <span class="m"><span>${escapeHtml(gameSystem(g))}</span><span aria-hidden="true">·</span><span>${t("SL", "GM")}: ${escapeHtml(gameFacilitator(g))}</span></span>
+      <span class="m"><span>${escapeHtml(gameSystem(g))}</span><span aria-hidden="true">·</span><span>${t("SL", "GM")}: ${escapeHtml(gameFacilitator(g))}</span>${personalState ? `<span class="calendar-personal-status is-${personalState.type}"><span aria-hidden="true">${personalStatusSymbol(personalState)}</span> ${escapeHtml(personalLabel)}</span>` : ""}</span>
     </a>`;
+  };
   cal.innerHTML = `
     <section class="calendar-filters" aria-label="${t("Kalender filtern", "Filter calendar")}">
       <label class="calendar-filter-field" for="calendarSearch">
@@ -748,6 +865,7 @@ function renderCalendar(slots, rsvpsOpen) {
         </div>
       </div>
       <div class="calendar-filter-footer">
+        <button type="button" class="calendar-personal-toggle" id="calendarMyGamesFilter" aria-pressed="${String(personalCalendarFilterActive)}" aria-label="${escapeHtml(personalProfile ? t(`Nur Spiele von oder mit ${personalProfile.username} anzeigen`, `Show only games run by or joined by ${personalProfile.username}`) : t("Playabl-Name oder E-Mail-Adresse für Meine Spiele festlegen", "Set a Playabl name or email address for My games"))}">${personalProfile ? escapeHtml(t(`Meine Spiele · ${personalProfile.username}`, `My games · ${personalProfile.username}`)) : t("Meine Spiele", "My games")}</button>
         ${rsvpsOpen ? `<button type="button" class="calendar-free-toggle" id="calendarFreeFilter" aria-pressed="false"><span aria-hidden="true">○</span> ${t("Nur freie Plätze", "Available seats only")}</button>` : ""}
         <button type="button" class="calendar-filter-reset" id="calendarFilterReset" hidden>${t("Filter zurücksetzen", "Reset filters")}</button>
         <span class="calendar-filter-count" id="calendarFilterCount" role="status" aria-live="polite">${totalGames} ${t("Runden", "sessions")}</span>
@@ -760,16 +878,36 @@ function renderCalendar(slots, rsvpsOpen) {
     <div class="card cal-day" data-calendar-day="${escapeHtml(date)}">
       <h2>${new Intl.DateTimeFormat(locale(), { timeZone:TZ, weekday:"long", day:"2-digit", month:"2-digit" }).format(new Date(d.dayDate))}</h2>
       <div class="cal-cols" style="--calendar-columns:${Math.min(3, Math.max(1, parts.length))}">
-        ${parts.map(slot => {
+        ${parts.map((slot, partIndex) => {
           const seats = seatsOf(slot);
           const free = capacityGames(slot).reduce((sum, game) => sum + frei(game), 0);
           const missing = Math.max(0, LO - seats);
           const badge = showBusy ? t(`${free} frei`, `${free} available`) : (missing ? t(`noch +${missing} bis Ziel`, `${missing} still needed`) : t("Ziel erreicht", "Target reached"));
           const badgeClass = showBusy || !missing ? "is-good" : "is-warn";
+          const slotKey = `calendar-slot-${date}-${partIndex}`;
+          const sortedGames = gamesByStartThenTitle(slot.games);
+          const hasBookedGame = sortedGames.some(game => ["facilitator", "confirmed"].includes(personalGameState(game)?.type));
+          const onlyWaitlist = !hasBookedGame && sortedGames.some(game => personalGameState(game)?.type === "waitlist");
+          const suggestions = sortedGames.filter(game => !personalGameState(game) && isCountedGame(game) && frei(game) > 0)
+            .sort((a, b) => frei(b) - frei(a) || compareGamesByStartThenTitle(a, b));
+          const suggestionOrder = new Map(suggestions.map((game, index) => [game, index]));
+          const canSuggest = !!personalProfile && !hasBookedGame && suggestions.length > 0;
           return `
-          <div class="cal-col" data-calendar-slot>
+          <div class="cal-col" data-calendar-slot data-slot-key="${slotKey}" data-can-suggest="${String(canSuggest)}">
             <div class="cal-col-head"><h3>${translateSlotPart(slot.part)}</h3><span class="cal-slot-badge ${badgeClass}">${badge}</span></div>
-            ${slot.games.map(game => card(game, slot.date)).join("") || `<p class="hint">– ${t("keine Runden", "no sessions")} –</p>`}
+            <div class="cal-games" id="${slotKey}">
+              ${sortedGames.map((game, index) => card(game, slot.date, slotKey, index, suggestionOrder.get(game) ?? 999)).join("") || `<p class="hint">– ${t("keine Runden", "no sessions")} –</p>`}
+              ${canSuggest ? `
+                <div class="calendar-suggestion-panel" data-calendar-suggestion-panel data-suggestion-reason="${onlyWaitlist ? "waitlist" : "empty"}" hidden>
+                  <div class="calendar-suggestion-copy">
+                    <strong data-suggestions-title></strong>
+                    <span data-suggestions-description></span>
+                  </div>
+                  <button type="button" class="setup-button dashboard-action-button calendar-suggestions-toggle" data-calendar-suggestions data-slot-key="${slotKey}" aria-controls="${slotKey}" aria-expanded="false">
+                    <span data-suggestions-label>${t("Vorschläge anzeigen", "Show suggestions")}</span>
+                  </button>
+                </div>` : ""}
+            </div>
           </div>`;
         }).join("")}
       </div>
@@ -780,32 +918,85 @@ function renderCalendar(slots, rsvpsOpen) {
   const systemInput = document.getElementById("calendarSystem");
   const resetButton = document.getElementById("calendarFilterReset");
   const freeButton = document.getElementById("calendarFreeFilter");
+  const myGamesButton = document.getElementById("calendarMyGamesFilter");
   const count = document.getElementById("calendarFilterCount");
   const noResults = document.getElementById("calendarNoResults");
   let selectedDay = "";
   let freeOnly = false;
+  const openSuggestionSlots = new Set();
   const applyCalendarFilters = () => {
     const query = searchInput.value.trim().toLocaleLowerCase(locale());
     const queryTerms = query.split(/\s+/).filter(Boolean);
     const systemQuery = systemInput.value.trim().toLocaleLowerCase(locale());
+    const matchesBaseFilters = game => (!queryTerms.length || queryTerms.every(term => game.dataset.search.includes(term)))
+      && (!systemQuery || game.dataset.system.includes(systemQuery))
+      && (!selectedDay || game.dataset.day === selectedDay)
+      && (!freeOnly || game.dataset.free === "true");
     let visibleGames = 0;
-    for (const game of cal.querySelectorAll("[data-calendar-game]")) {
-      const visible = (!queryTerms.length || queryTerms.every(term => game.dataset.search.includes(term)))
-        && (!systemQuery || game.dataset.system.includes(systemQuery))
-        && (!selectedDay || game.dataset.day === selectedDay)
-        && (!freeOnly || game.dataset.free === "true");
-      game.hidden = !visible;
-      if (visible) visibleGames += 1;
-    }
+    let visibleSuggestionPanels = 0;
     for (const column of cal.querySelectorAll("[data-calendar-slot]")) {
-      column.hidden = !column.querySelector("[data-calendar-game]:not([hidden])");
+      const slotKey = column.dataset.slotKey;
+      const gamesContainer = column.querySelector(".cal-games");
+      const suggestionPanel = column.querySelector("[data-calendar-suggestion-panel]");
+      const suggestionButton = suggestionPanel?.querySelector("[data-calendar-suggestions]");
+      const candidates = [...column.querySelectorAll('[data-suggestion-eligible="true"]')].filter(matchesBaseFilters);
+      const canShowSuggestions = personalCalendarFilterActive && column.dataset.canSuggest === "true" && candidates.length > 0;
+      if (!canShowSuggestions) openSuggestionSlots.delete(slotKey);
+      const suggestionsOpen = canShowSuggestions && openSuggestionSlots.has(slotKey);
+      const cards = [...column.querySelectorAll("[data-calendar-game]")];
+      const candidateSet = new Set(candidates);
+      for (const game of cards) {
+        const visible = matchesBaseFilters(game)
+          && (!personalCalendarFilterActive || game.dataset.personal || (suggestionsOpen && candidateSet.has(game)));
+        game.hidden = !visible;
+        if (visible) visibleGames += 1;
+      }
+      if (suggestionPanel && suggestionButton) {
+        suggestionPanel.hidden = !canShowSuggestions;
+        suggestionButton.setAttribute("aria-expanded", String(suggestionsOpen));
+        suggestionButton.querySelector("[data-suggestions-label]").textContent = suggestionsOpen
+          ? t("Vorschläge ausblenden", "Hide suggestions")
+          : t("Vorschläge anzeigen", "Show suggestions");
+        suggestionPanel.querySelector("[data-suggestions-title]").textContent = suggestionsOpen
+          ? t("Freie Alternativen", "Available alternatives")
+          : suggestionPanel.dataset.suggestionReason === "waitlist"
+            ? t("Nur Warteliste in diesem Slot", "Waitlist only in this slot")
+            : t("Noch keine feste Runde in diesem Slot", "No confirmed session in this slot");
+        suggestionPanel.querySelector("[data-suggestions-description]").textContent = suggestionsOpen
+          ? candidates.length === 1
+            ? t("1 Runde mit freien Plätzen.", "1 session with available seats.")
+            : t(`${candidates.length} Runden mit freien Plätzen – die meisten freien Plätze zuerst.`, `${candidates.length} sessions with available seats – most availability first.`)
+          : candidates.length === 1
+            ? t("1 freie Alternative ist verfügbar.", "1 available alternative.")
+            : t(`${candidates.length} freie Alternativen sind verfügbar.`, `${candidates.length} available alternatives.`);
+        if (!suggestionPanel.hidden) visibleSuggestionPanels += 1;
+      }
+      if (gamesContainer) {
+        const byDefaultOrder = (a, b) => +a.dataset.defaultOrder - +b.dataset.defaultOrder;
+        if (canShowSuggestions && suggestionPanel) {
+          const personalCards = cards.filter(game => game.dataset.personal).sort(byDefaultOrder);
+          const suggestionCards = candidates.sort((a, b) => +a.dataset.suggestionOrder - +b.dataset.suggestionOrder);
+          const otherCards = cards.filter(game => !game.dataset.personal && !candidateSet.has(game)).sort(byDefaultOrder);
+          for (const game of personalCards) gamesContainer.appendChild(game);
+          gamesContainer.appendChild(suggestionPanel);
+          for (const game of suggestionCards) gamesContainer.appendChild(game);
+          for (const game of otherCards) gamesContainer.appendChild(game);
+        } else {
+          for (const game of cards.sort(byDefaultOrder)) gamesContainer.appendChild(game);
+          if (suggestionPanel) gamesContainer.appendChild(suggestionPanel);
+        }
+      }
+      column.hidden = !column.querySelector("[data-calendar-game]:not([hidden])") && !canShowSuggestions;
     }
     for (const day of cal.querySelectorAll("[data-calendar-day]")) {
       day.hidden = !day.querySelector("[data-calendar-slot]:not([hidden])");
     }
     count.textContent = visibleGames === totalGames ? `${totalGames} ${t("Runden", "sessions")}` : t(`${visibleGames} von ${totalGames} Runden`, `${visibleGames} of ${totalGames} sessions`);
-    noResults.hidden = visibleGames > 0;
-    resetButton.hidden = !(query || systemQuery || selectedDay || freeOnly);
+    noResults.textContent = personalCalendarFilterActive && personalProfile
+      ? t(`Keine Spiele für ${personalProfile.username} entsprechen diesen Filtern.`, `No games for ${personalProfile.username} match these filters.`)
+      : t("Keine Sessions entsprechen diesen Filtern.", "No sessions match these filters.");
+    noResults.hidden = visibleGames > 0 || visibleSuggestionPanels > 0;
+    resetButton.hidden = !(query || systemQuery || selectedDay || freeOnly || personalCalendarFilterActive);
   };
   searchInput.addEventListener("input", applyCalendarFilters);
   systemInput.addEventListener("input", applyCalendarFilters);
@@ -822,17 +1013,36 @@ function renderCalendar(slots, rsvpsOpen) {
     freeButton.querySelector("span").textContent = freeOnly ? "✓" : "○";
     applyCalendarFilters();
   });
+  myGamesButton.addEventListener("click", () => {
+    if (!personalProfile) return openPersonalCalendarDialog();
+    personalCalendarFilterActive = !personalCalendarFilterActive;
+    if (!personalCalendarFilterActive) openSuggestionSlots.clear();
+    myGamesButton.setAttribute("aria-pressed", String(personalCalendarFilterActive));
+    applyCalendarFilters();
+  });
+  for (const button of cal.querySelectorAll("[data-calendar-suggestions]")) {
+    button.addEventListener("click", () => {
+      const slotKey = button.dataset.slotKey;
+      if (openSuggestionSlots.has(slotKey)) openSuggestionSlots.delete(slotKey);
+      else openSuggestionSlots.add(slotKey);
+      applyCalendarFilters();
+    });
+  }
   resetButton.addEventListener("click", () => {
     searchInput.value = "";
     systemInput.value = "";
     selectedDay = "";
     freeOnly = false;
+    personalCalendarFilterActive = false;
+    openSuggestionSlots.clear();
     freeButton?.setAttribute("aria-pressed", "false");
+    myGamesButton.setAttribute("aria-pressed", "false");
     if (freeButton) freeButton.querySelector("span").textContent = "○";
     cal.querySelectorAll("[data-day-filter]").forEach(button => button.setAttribute("aria-pressed", String(!button.dataset.dayFilter)));
     applyCalendarFilters();
     searchInput.focus();
   });
+  applyCalendarFilters();
 }
 
 // ---------- Ansicht umschalten (Übersicht/Kalender) ----------

@@ -8,8 +8,11 @@ const UI_COPY = {
     setupTitle:"Dashboard-Setup", setupIntro:"Passe Zielkorridor, Sonderformat-Zählung und Zeitfenster für dieses Event an. Die Einstellungen bleiben lokal in diesem Browser.",
     setupClose:"Dialog schließen", setupTargetTitle:"Ziel-Plätze pro Slot", setupFrom:"Von", setupTo:"Bis", setupMin:"Ziel von", setupMax:"Ziel bis",
     setupIncludeSpecial:"Sonderformate mitzählen", setupIncludeSpecialHint:"Bezieht sie lokal in Platz-, Frei- und Bedarfszahlen ein.",
+    setupPersonalTitle:"Mein Kalender", setupPersonalChange:"Zuordnung festlegen", setupPersonalReset:"Zuordnung zurücksetzen",
     setupSlotsTitle:"Slot-Zeiten", setupAdd:"+ Slot hinzufügen", setupResetSlots:"Slots neu ermitteln", setupCancel:"Abbrechen", setupSave:"Setup speichern",
     setupName:"Name", setupRemove:"Slot entfernen", setupInvalidTarget:"Bitte gültige Ziel-Werte angeben (von ≤ bis).", setupInvalidSlots:"Bitte mindestens einen gültigen Slot angeben.",
+    personalTitle:"Mein Kalender", personalIntro:"Hinterlege deinen Playabl-Namen oder deine E-Mail-Adresse, um eigene Angebote, bestätigte Anmeldungen und Wartelistenplätze zu sehen.",
+    personalClose:"Dialog schließen", personalIdentity:"Playabl-Name oder E-Mail-Adresse", personalPrivacy:"Die E-Mail-Adresse wird nicht gespeichert. Lokal bleiben nur Profil-ID und Playabl-Name; auf Playabl wird nichts verändert.", personalCancel:"Abbrechen", personalSave:"Meine Spiele anzeigen",
     infoOpen: "Informationen zu Zielplätzen und Slots", infoClose: "Informationen schließen",
     infoTitle: "Wie funktionieren Zielplätze und Slots?",
     infoIntro: "Hintergrund zur Auswertung, automatischen Erkennung und lokalen Konfiguration.",
@@ -35,8 +38,11 @@ const UI_COPY = {
     setupTitle:"Dashboard setup", setupIntro:"Adjust the target range, special-format counting, and time windows for this event. Settings remain local to this browser.",
     setupClose:"Close dialog", setupTargetTitle:"Target capacity per slot", setupFrom:"From", setupTo:"To", setupMin:"Target from", setupMax:"Target to",
     setupIncludeSpecial:"Count special formats", setupIncludeSpecialHint:"Locally includes them in capacity, availability, and demand figures.",
+    setupPersonalTitle:"My calendar", setupPersonalChange:"Set association", setupPersonalReset:"Reset association",
     setupSlotsTitle:"Slot times", setupAdd:"+ Add slot", setupResetSlots:"Redetect slots", setupCancel:"Cancel", setupSave:"Save setup",
     setupName:"Name", setupRemove:"Remove slot", setupInvalidTarget:"Enter a valid target range (from ≤ to).", setupInvalidSlots:"Enter at least one valid slot.",
+    personalTitle:"My calendar", personalIntro:"Enter your Playabl name or email address to see sessions you run, confirmed registrations, and waitlist positions.",
+    personalClose:"Close dialog", personalIdentity:"Playabl name or email address", personalPrivacy:"The email address is not stored. Only the profile ID and Playabl name remain in this browser; nothing is changed on Playabl.", personalCancel:"Cancel", personalSave:"Show my games",
     infoOpen: "Information about target capacity and slots", infoClose: "Close information",
     infoTitle: "How do target capacity and slots work?",
     infoIntro: "Background on the analysis, automatic detection, and local configuration.",
@@ -85,6 +91,9 @@ function applyLanguage(language) {
   document.getElementById("zielMax").setAttribute("aria-label", copy.setupMax);
   document.getElementById("includeSpecialFormatsLabel").textContent = copy.setupIncludeSpecial;
   document.getElementById("includeSpecialFormatsHint").textContent = copy.setupIncludeSpecialHint;
+  document.getElementById("setupPersonalTitle").textContent = copy.setupPersonalTitle;
+  document.getElementById("personalCalendarSetupChange").textContent = copy.setupPersonalChange;
+  document.getElementById("personalCalendarReset").textContent = copy.setupPersonalReset;
   document.getElementById("setupSlotsTitle").textContent = copy.setupSlotsTitle;
   document.getElementById("slotConfigAdd").textContent = copy.setupAdd;
   document.getElementById("slotConfigReset").textContent = copy.setupResetSlots;
@@ -94,6 +103,13 @@ function applyLanguage(language) {
   document.querySelectorAll("[data-slot-from-copy]").forEach(element => { element.textContent = copy.setupFrom; });
   document.querySelectorAll("[data-slot-to-copy]").forEach(element => { element.textContent = copy.setupTo; });
   document.querySelectorAll("[data-slot-remove]").forEach(element => { element.setAttribute("aria-label", copy.setupRemove); });
+  document.getElementById("personalCalendarTitle").textContent = copy.personalTitle;
+  document.getElementById("personalCalendarIntro").textContent = copy.personalIntro;
+  document.getElementById("personalCalendarClose").setAttribute("aria-label", copy.personalClose);
+  document.getElementById("personalCalendarIdentityLabel").textContent = copy.personalIdentity;
+  document.getElementById("personalCalendarPrivacy").textContent = copy.personalPrivacy;
+  document.getElementById("personalCalendarCancel").textContent = copy.personalCancel;
+  document.getElementById("personalCalendarSave").textContent = copy.personalSave;
   const settingLabels = document.querySelectorAll(".setting-summary-label");
   if (settingLabels[0]) settingLabels[0].textContent = copy.targetSetting;
   if (settingLabels[1]) settingLabels[1].textContent = copy.slotsSetting;

@@ -13,6 +13,11 @@ const load = () => api(`sessions?select=id,start_time,end_time,participant_count
 const loadGames = () => api(`games?select=id,title,system,description,participant_count&event_id=eq.${EVENT}&deleted_at=is.null`).catch(() => []);
 const loadEvent = () => api(`community_events?select=id,title,start_time,end_time,fixed_access_time,event_access_levels&id=eq.${EVENT}`).then(r => r[0] || null).catch(() => null);
 const loadEventsList = () => api(`community_events?select=id,title,start_time,community_id(id,name)&draft_state=eq.PUBLISHED&deleted_at=is.null&order=start_time.desc&limit=100`).catch(() => []);
+const escapePostgrestLike = value => String(value).replace(/[\\%_]/g, match => `\\${match}`);
+const loadProfileByIdentity = identity => {
+  const field = identity.includes("@") ? "email" : "username";
+  return api(`profiles?select=id,username&${field}=ilike.${encodeURIComponent(escapePostgrestLike(identity))}&limit=2`);
+};
 
 async function loadEligibleTargetCount(accessLevels) {
   const ids = (accessLevels || []).map(Number).filter(Number.isFinite);
