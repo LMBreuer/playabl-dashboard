@@ -68,15 +68,21 @@ const hourOf = t => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, ho
 const localSlotKey = `playabl-dashboard-slot-buckets:${EVENT}`;
 const localSlotSourceKey = `playabl-dashboard-slot-source:${EVENT}`;
 const localSpecialFormatsKey = `playabl-dashboard-include-special-formats:${EVENT}`;
-const personalProfileKey = "playabl-dashboard-personal-profile";
+const personalProfileKey = "playabl-personal-profile";
+const legacyPersonalProfileKey = "playabl-dashboard-personal-profile";
 let includeSpecialFormats = localStorage.getItem(localSpecialFormatsKey) === "true";
 let activeSlotBuckets = [];
 let activeSlotSource = "";
 let personalCalendarFilterActive = false;
 function loadPersonalProfile() {
   try {
-    const profile = JSON.parse(localStorage.getItem(personalProfileKey) || "null");
-    return profile?.id && profile?.username ? { id:String(profile.id), username:String(profile.username) } : null;
+    const raw = localStorage.getItem(personalProfileKey) || localStorage.getItem(legacyPersonalProfileKey);
+    const profile = JSON.parse(raw || "null");
+    if (!profile?.id || !profile?.username) return null;
+    const normalized = { id:String(profile.id), username:String(profile.username) };
+    if (!localStorage.getItem(personalProfileKey)) localStorage.setItem(personalProfileKey, JSON.stringify(normalized));
+    localStorage.removeItem(legacyPersonalProfileKey);
+    return normalized;
   } catch { return null; }
 }
 let personalProfile = loadPersonalProfile();
@@ -238,6 +244,7 @@ document.getElementById("personalCalendarCancel").addEventListener("click", clos
 document.getElementById("personalCalendarSetupChange").addEventListener("click", openPersonalCalendarDialog);
 document.getElementById("personalCalendarReset").addEventListener("click", () => {
   localStorage.removeItem(personalProfileKey);
+  localStorage.removeItem(legacyPersonalProfileKey);
   personalProfile = null;
   personalCalendarFilterActive = false;
   updatePersonalCalendarSetup();
@@ -265,6 +272,7 @@ personalCalendarForm.addEventListener("submit", async event => {
     }
     personalProfile = { id:String(profile.id), username:String(profile.username) };
     localStorage.setItem(personalProfileKey, JSON.stringify(personalProfile));
+    localStorage.removeItem(legacyPersonalProfileKey);
     personalCalendarFilterActive = true;
     closePersonalCalendarDialog();
     updatePersonalCalendarSetup();
@@ -480,7 +488,7 @@ sectionInfoHandle.addEventListener("lostpointercapture", () => { sectionInfoDrag
 sectionInfoDialog.addEventListener("close", () => { sectionInfoDrag = null; });
 
 // Konfigurierte oder erkannte Slots haben Vorrang vor dem Uhrzeit-Fallback.
-function groupSlots(sessions, buckets) {
+function groupSlots(sessions, buckets, locationsBySession = new Map()) {
   const useBuckets = buckets && buckets.length;
   const rank = new Map(useBuckets ? buckets.map((b, i) => [b.label, i]) : [["Vormittag", 0], ["Nachmittag", 1]]);
   const map = new Map();
@@ -496,6 +504,7 @@ function groupSlots(sessions, buckets) {
     }
     const key = d + "|" + part;
     if (!map.has(key)) map.set(key, { date: d, part, dayDate:s.start_time, games: [] });
+    const location = locationsBySession.get(String(s.id)) || null;
     map.get(key).games.push({
       title: s.game_id.title.replace(/\s*[\[(][^\])]*(?:3W6|Offline|Con)[^\])]*[\])]\s*/gi, "").trim() || s.game_id.title,
       url: "https://app.playabl.io/games/" + s.game_id.id,
@@ -508,7 +517,8 @@ function groupSlots(sessions, buckets) {
       rsvps: (s.rsvps || []).length,
       rsvpIds: (s.rsvps || []).map(String),
       startTime:s.start_time,
-      endTime:s.end_time
+      endTime:s.end_time,
+      location
     });
   }
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date) || (rank.get(a.part) ?? 99) - (rank.get(b.part) ?? 99));
@@ -839,11 +849,16 @@ function renderCalendar(slots, rsvpsOpen) {
     const personalState = personalGameState(g);
     const personalLabel = personalStatusLabel(personalState);
     const suggestionEligible = !personalState && isCountedGame(g) && frei(g) > 0;
+    const locationText = g.location
+      ? [g.location.room, g.location.table, g.location.floor].filter(Boolean).join(" · ")
+      : "";
+    const locationLabel = locationText ? `${t("Raum", "Room")}: ${locationText}` : "";
     return `
-    <a class="cal-card${g.format !== "capacity" ? " non-capacity-card" : ""}" data-calendar-game data-day="${escapeHtml(day)}" data-slot-key="${escapeHtml(slotKey)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)} ${formatLabel(g.format)}`.toLocaleLowerCase(locale()))}" data-free="${String(isCountedGame(g) && frei(g) > 0)}" data-personal="${personalState?.type || ""}" data-suggestion-eligible="${String(suggestionEligible)}" data-default-order="${defaultOrder}" data-suggestion-order="${suggestionOrder}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.format !== "capacity" ? `, ${formatLabel(g.format)}` : ""}${isCountedGame(g) ? `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}` : ""}${personalLabel ? `, ${personalLabel}` : ""}`)}">
+    <a class="cal-card${g.format !== "capacity" ? " non-capacity-card" : ""}" data-calendar-game data-day="${escapeHtml(day)}" data-slot-key="${escapeHtml(slotKey)}" data-system="${escapeHtml(gameSystem(g).toLocaleLowerCase(locale()))}" data-search="${escapeHtml(`${g.title} ${gameSystem(g)} ${gameFacilitator(g)} ${formatLabel(g.format)} ${locationText}`.toLocaleLowerCase(locale()))}" data-free="${String(isCountedGame(g) && frei(g) > 0)}" data-personal="${personalState?.type || ""}" data-suggestion-eligible="${String(suggestionEligible)}" data-default-order="${defaultOrder}" data-suggestion-order="${suggestionOrder}" href="${g.url}" target="_blank" rel="noopener" aria-label="${escapeHtml(`${g.title}, System ${gameSystem(g)}, ${t("Spielleitung", "facilitator")} ${gameFacilitator(g)}, ${formatTime(g.startTime)} ${t("bis", "to")} ${formatTime(g.endTime)}${g.format !== "capacity" ? `, ${formatLabel(g.format)}` : ""}${isCountedGame(g) ? `, ${g.playerSeats} ${t("Spielplätze plus Spielleitung", "player seats plus facilitator")}${showBusy ? `, ${frei(g)} ${t("frei", "available")}` : ""}` : ""}${locationLabel ? `, ${locationLabel}` : ""}${personalLabel ? `, ${personalLabel}` : ""}`)}">
       <span class="t">${escapeHtml(g.title)}</span>
       <span class="m">${formatTime(g.startTime)}–${formatTime(g.endTime)}${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ""}${calendarCapacity(g)}</span>
       <span class="m"><span>${escapeHtml(gameSystem(g))}</span><span aria-hidden="true">·</span><span>${t("SL", "GM")}: ${escapeHtml(gameFacilitator(g))}</span>${personalState ? `<span class="calendar-personal-status is-${personalState.type}"><span aria-hidden="true">${personalStatusSymbol(personalState)}</span> ${escapeHtml(personalLabel)}</span>` : ""}</span>
+      ${locationLabel ? `<span class="m calendar-location"><span class="calendar-location-label">${t("Raum", "Room")}:</span><span>${escapeHtml(locationText)}</span></span>` : ""}
     </a>`;
   };
   cal.innerHTML = `
@@ -1316,14 +1331,41 @@ async function findRaumplanCon(eventId) {
     return rows[0] || null;
   } catch { return null; }
 }
+async function fetchRaumplanRows(path) {
+  const r = await fetch(`${RAUMPLAN_SUPABASE}/rest/v1/${path}`,
+    { headers: { apikey: RAUMPLAN_ANON, Authorization: "Bearer " + RAUMPLAN_ANON } });
+  if (!r.ok) throw new Error(`Raumplan HTTP ${r.status}`);
+  return r.json();
+}
 // Aktive Slots aus dem verknüpften Raumplan lesen.
 async function findSlotBuckets(conId) {
   try {
-    const r = await fetch(`${RAUMPLAN_SUPABASE}/rest/v1/slot_buckets?select=label,start_hour,end_hour&con_id=eq.${conId}&active=eq.true&order=sort`,
-      { headers: { apikey: RAUMPLAN_ANON, Authorization: "Bearer " + RAUMPLAN_ANON } });
-    if (!r.ok) return [];
-    return await r.json();
+    return await fetchRaumplanRows(`slot_buckets?select=label,start_hour,end_hour&con_id=eq.${conId}&active=eq.true&order=sort`);
   } catch { return []; }
+}
+async function findRaumplanLocations(conId) {
+  try {
+    const [assignments, tables, rooms] = await Promise.all([
+      fetchRaumplanRows(`assignments?select=session_key,table_id&con_id=eq.${conId}&table_id=not.is.null`),
+      fetchRaumplanRows(`tables?select=id,name,room_id&con_id=eq.${conId}`),
+      fetchRaumplanRows(`rooms?select=id,name,floor&con_id=eq.${conId}`)
+    ]);
+    const roomById = new Map(rooms.map(room => [room.id, room]));
+    const tableById = new Map(tables.map(table => [table.id, table]));
+    const locations = new Map();
+    for (const assignment of assignments) {
+      if (!assignment.session_key?.startsWith("playabl:")) continue;
+      const table = tableById.get(assignment.table_id);
+      const room = table && roomById.get(table.room_id);
+      if (!room) continue;
+      locations.set(assignment.session_key.slice("playabl:".length), {
+        room:room.name,
+        table:table.name,
+        floor:room.floor
+      });
+    }
+    return locations;
+  } catch { return new Map(); }
 }
 let activeCreditsCon = null;
 function renderCredits(con = activeCreditsCon) {
@@ -1382,7 +1424,9 @@ window.addEventListener("uilanguagechange", renderLoadedDashboard);
 Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon(EVENT)]).then(async ([sessions, games, ev, eventsList, con]) => {
   const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
   if (activeTargetSource !== "manual") eligibleTargetCount = await loadEligibleTargetCount(ev?.event_access_levels);
-  const remoteBuckets = con ? await findSlotBuckets(con.id) : [];
+  const [remoteBuckets, locationsBySession] = con
+    ? await Promise.all([findSlotBuckets(con.id), findRaumplanLocations(con.id)])
+    : [[], new Map()];
   const localBuckets = loadLocalSlotBuckets();
   const storedSlotSource = localStorage.getItem(localSlotSourceKey) || (localBuckets.length ? "manual" : "");
   const manualBuckets = storedSlotSource === "manual" ? localBuckets : [];
@@ -1414,7 +1458,7 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon
     HI = estimate.high;
     activeTargetSource = "access";
   }
-  const slots = groupSlots(sessions, buckets);
+  const slots = groupSlots(sessions, buckets, locationsBySession);
   dashboardState = { slots, games, rsvpsOpen, ev, eventsList, con, slotSource };
   renderLoadedDashboard();
 }).catch(err => {

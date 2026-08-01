@@ -309,6 +309,34 @@
   transform:none !important;
 }
 @media (max-width:720px) {
+  :root[data-theme="cosmic"] body,
+  :root[data-theme="cosmic"] body:has(#calView:not([hidden])) {
+    animation:none;
+  }
+  :root[data-theme="cosmic"] body::before,
+  :root[data-theme="cosmic"] body:has(#calView:not([hidden]))::before {
+    inset:-18vmax;
+    opacity:.82;
+    filter:none;
+    backface-visibility:hidden;
+    animation:cosmic-mobile-nebula 52s ease-in-out infinite alternate;
+  }
+  :root[data-theme="cosmic"] body::after,
+  :root[data-theme="cosmic"] body:has(#calView:not([hidden]))::after {
+    inset:-8vmax;
+    opacity:.62;
+    filter:none;
+    background-size:cover;
+    backface-visibility:hidden;
+    animation:cosmic-mobile-stars 96s linear infinite alternate;
+  }
+  :root[data-theme="cosmic"] .card,
+  :root[data-theme="cosmic"] .kpi,
+  :root[data-theme="cosmic"] .cal-card,
+  :root[data-theme="cosmic"] .calendar-filters {
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
   :root[data-theme="cosmic"] .dashboard-head::after {
     top:0;
     right:5px;
@@ -319,6 +347,14 @@
     max-width:11ch;
     font-size:clamp(2.8rem,15vw,4.7rem);
   }
+}
+@keyframes cosmic-mobile-nebula {
+  from { transform:translate3d(-1.5%,-1%,0) rotate(-17deg) scale(1.03); }
+  to { transform:translate3d(1.8%,1.2%,0) rotate(-14deg) scale(1.07); }
+}
+@keyframes cosmic-mobile-stars {
+  from { transform:translate3d(-1%,-.5%,0) scale(1.01); }
+  to { transform:translate3d(1.2%,.8%,0) scale(1.025); }
 }
   :root[data-theme="contrast"] .seg { border: 1px solid var(--text-primary); }:root[data-theme="colorful"] {
     --text-readable-muted: #625a82;
@@ -600,6 +636,8 @@
   .cal-card:hover { border-color: var(--accent); }
   .cal-card .t { font-weight: 600; font-size: var(--fs-sm); }
   .cal-card .m { font-size: var(--fs-xs); color: var(--text-secondary); display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; margin-top: 2px; }
+  .calendar-location { padding-top:2px; }
+  .calendar-location-label { color:var(--text-readable-muted); font-weight:700; }
   .calendar-personal-status { margin-left:auto; color:var(--text-primary); font-weight:800; }
   .calendar-personal-status.is-confirmed { color:var(--good-text); }
   .calendar-personal-status.is-waitlist { color:var(--warn-text); }
