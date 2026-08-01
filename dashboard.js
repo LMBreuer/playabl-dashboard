@@ -543,6 +543,40 @@ function personalGameState(game) {
   if (index < game.playerSeats) return { type:"confirmed" };
   return { type:"waitlist", position:index - game.playerSeats + 1 };
 }
+
+function participantPlanningStats(slots, eligibleParticipantIds) {
+  if (!eligibleParticipantIds?.size || !slots.length) return null;
+  const people = new Map([...eligibleParticipantIds].map(id => [String(id), {
+    occupiedSlots:new Set(),
+    waitlistSlots:new Set()
+  }]));
+  slots.forEach((slot, slotIndex) => {
+    slot.games.forEach(game => {
+      people.get(game.facilitatorId)?.occupiedSlots.add(slotIndex);
+      game.rsvpIds.forEach((participantId, index) => {
+        const person = people.get(participantId);
+        if (!person) return;
+        (index < game.playerSeats ? person.occupiedSlots : person.waitlistSlots).add(slotIndex);
+      });
+    });
+  });
+  const entries = [...people.values()];
+  const withPlaceOrLead = entries.filter(person => person.occupiedSlots.size > 0).length;
+  const fullyPlanned = entries.filter(person => person.occupiedSlots.size === slots.length).length;
+  const waiting = entries.filter(person => person.waitlistSlots.size > 0).length;
+  const uncoveredWaiting = entries.filter(person => [...person.waitlistSlots].some(slot => !person.occupiedSlots.has(slot))).length;
+  const percent = count => Math.round(count / entries.length * 100);
+  return {
+    total:entries.length,
+    slotCount:slots.length,
+    withPlaceOrLead,
+    withPlaceOrLeadPercent:percent(withPlaceOrLead),
+    fullyPlanned,
+    fullyPlannedPercent:percent(fullyPlanned),
+    waiting,
+    uncoveredWaiting
+  };
+}
 const gameSystem = g => g.system || (isEnglish() ? "No system specified" : "Kein System angegeben");
 const gameFacilitator = g => g.facilitator || (isEnglish() ? "Not specified" : "Nicht angegeben");
 const frei = g => Math.max(0, g.playerSeats - g.rsvps);
@@ -591,7 +625,8 @@ function applyEvent(ev, rsvpsOpen) {
 }
 
 // ---------- Übersichts-Ansicht ----------
-function render(slots, rsvpsOpen) {
+let freeListExpanded = false;
+function render(slots, rsvpsOpen, participantPlanning) {
   const en = isEnglish();
   const t = (de, english) => en ? english : de;
   const app = document.getElementById("app");
@@ -624,8 +659,8 @@ function render(slots, rsvpsOpen) {
       title:en ? "Where are seats still available?" : "Wo ist noch Platz?",
       intro:en ? "How the list is sorted and calculated." : "Sortierung und Berechnung der freien Plätze.",
       html:en
-        ? `<section><p>Only counted sessions with available player seats are shown. They are sorted from most to fewest available seats. The person running the session is not counted as an available player seat.${includeSpecialFormats ? " The local Setup setting currently includes special formats." : ""}</p></section>`
-        : `<section><p>Gezeigt werden nur gezählte Sessions mit freien Spielplätzen – absteigend nach der Zahl der freien Plätze sortiert. Die anbietende Person zählt dabei nicht als freier Spielplatz.${includeSpecialFormats ? " Die lokale Setup-Einstellung zählt Sonderformate derzeit mit." : ""}</p></section>`
+        ? `<section><p>The compact view shows the session with the most available player seats in each slot. The link below the list expands all sessions with available seats, sorted from most to fewest available seats. The person running the session is not counted as an available player seat.${includeSpecialFormats ? " The local Setup setting currently includes special formats." : ""}</p></section>`
+        : `<section><p>Die kompakte Ansicht zeigt je Slot die Session mit den meisten freien Spielplätzen. Der Link unter der Liste klappt alle Sessions mit freien Plätzen auf – absteigend nach freien Plätzen sortiert. Die anbietende Person zählt dabei nicht als freier Spielplatz.${includeSpecialFormats ? " Die lokale Setup-Einstellung zählt Sonderformate derzeit mit." : ""}</p></section>`
     }),
     needs: en => ({
       title:en ? "Where are more sessions needed?" : "Wo werden noch Runden gebraucht?",
@@ -638,6 +673,13 @@ function render(slots, rsvpsOpen) {
       title:en ? "Special formats in this event" : "Sonderformate in diesem Event",
       intro:includeSpecialFormats ? (en ? "Visible in the programme and currently included locally." : "Im Programm sichtbar und derzeit lokal mitgezählt.") : (en ? "Visible in the programme and excluded from capacity calculations." : "Im Programm sichtbar und aus der Platzberechnung ausgenommen."),
       html:`<section><p>${includeSpecialFormats ? (en ? "The Setup setting currently includes these entries in target capacity, available seats, and additional-session demand on this browser." : "Die Setup-Einstellung bezieht diese Einträge in diesem Browser derzeit in Zielplätze, freie Plätze und zusätzlichen Rundenbedarf ein.") : (en ? "These entries remain in the calendar and full programme list, but do not affect target capacity, available seats, or additional-session demand." : "Diese Einträge bleiben im Kalender und in der vollständigen Programmliste sichtbar, beeinflussen aber Zielplätze, freie Plätze und zusätzlichen Rundenbedarf nicht.")}</p><ul class="special-format-list">${excludedFormats.map(game => `<li><a href="${game.url}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a><span>${escapeHtml(slotName(game.slot))} · ${formatTime(game.startTime)}–${formatTime(game.endTime)}</span><small>${en ? "Detected as" : "Erkannt als"}: ${escapeHtml(formatReason(game.format))}</small></li>`).join("")}</ul></section>`
+    }),
+    participation: en => ({
+      title:en ? "How is participant planning calculated?" : "Wie wird die Teilnehmendenplanung berechnet?",
+      intro:en ? "Confirmed places, facilitation, waitlists, and the limits of the data." : "Sichere Plätze, Leitungen, Wartelisten und die Grenzen der Daten.",
+      html:en
+        ? `<section><h3>Who is included?</h3><p>The denominator is the ${participantPlanning?.total || 0} people with event access on Playabl. The card appears only after registration has opened.</p></section><section><h3>Confirmed and fully planned</h3><p>A person counts as having a confirmed place if they are within a session’s player capacity according to the order of its RSVP list, or if they run a session themselves. “Fully planned” means confirmed or running a session in every one of the ${participantPlanning?.slotCount || slots.length} detected programme slots. Special formats count as personal commitments here, independently of the capacity setting in Setup.</p></section><section><h3>Waitlists</h3><p>A waitlist never counts as a confirmed place. An “uncovered waitlist slot” means that the person is waitlisted in that slot and has no confirmed place or session of their own in the same slot. A person can therefore appear on a waitlist while already having a safe alternative.</p></section><section><h3>Privacy and limitations</h3><p>The public dashboard shows aggregate counts only—never names, profile details, or contact data. Playabl does not provide individual attendance days, so the full-planning percentage assumes that every person with event access could attend all programme slots.</p></section>`
+        : `<section><h3>Wer wird berücksichtigt?</h3><p>Die Grundgesamtheit sind die ${participantPlanning?.total || 0} Personen mit Event-Freischaltung auf Playabl. Die Karte erscheint erst, nachdem die Anmeldung geöffnet wurde.</p></section><section><h3>Sicher und vollständig verplant</h3><p>Eine Person gilt als sicher eingeplant, wenn sie gemäß Reihenfolge der RSVP-Liste innerhalb der Spielplatz-Kapazität liegt oder selbst eine Session anbietet. „Vollständig verplant“ bedeutet: in jedem der ${participantPlanning?.slotCount || slots.length} erkannten Programmslots bestätigt oder selbst anbietend. Sonderformate zählen hier als persönliche Termine – unabhängig von der Platzberechnungs-Einstellung im Setup.</p></section><section><h3>Wartelisten</h3><p>Eine Warteliste zählt nie als sicherer Platz. Ein „unversorgter Wartelisten-Slot“ bedeutet, dass die Person in diesem Slot wartet und dort weder einen bestätigten Platz noch eine eigene Session hat. Eine Person kann deshalb auf einer Warteliste stehen und im selben Slot trotzdem bereits eine sichere Alternative haben.</p></section><section><h3>Datenschutz und Grenzen</h3><p>Das öffentliche Dashboard zeigt ausschließlich zusammengefasste Zahlen – niemals Namen, Profildaten oder Kontaktdaten. Playabl liefert keine individuellen Anwesenheitstage; die Vollplanungsquote nimmt daher an, dass alle Event-Freigeschalteten grundsätzlich in allen Programmslots teilnehmen könnten.</p></section>`
     }),
     systems: en => {
       const familyMode = document.getElementById("sysMode")?.value === "mentions";
@@ -671,6 +713,16 @@ function render(slots, rsvpsOpen) {
       ${CONFIG.erwartete ? `<div class="kpi"><div class="l">${t("erwartete Teilnehmende", "expected attendees")}</div>${expectedMarkup}</div>` : ""}
       ${!showBusy && !excludedFormats.length ? `<div class="kpi"><div class="l">${t("Slots im Programm", "Slots in the schedule")}</div><div class="v">${slots.length}</div></div>` : ""}
     </section>
+    ${participantPlanning ? `<section class="card bento-participation" aria-labelledby="participationHeading">
+      <div class="card-title-row"><h2 id="participationHeading">${t("Teilnehmendenplanung", "Participant planning")}</h2><button type="button" class="section-info-button" data-section-info="participation" aria-label="${sectionInfoLabel("Erklärung zur Teilnehmendenplanung", "Explanation of participant planning")}"><span aria-hidden="true">i</span></button></div>
+      <div class="participation-layout">
+        <div class="participation-primary"><strong>${participantPlanning.withPlaceOrLeadPercent}<span>%</span></strong><p>${t(`der Event-Freigeschalteten haben mindestens einen sicheren Platz oder leiten eine Session.`, `of people with event access have at least one confirmed place or run a session.`)}</p><small>${participantPlanning.withPlaceOrLead} ${t("von", "of")} ${participantPlanning.total}</small></div>
+        <div class="participation-secondary">
+          <div><strong>${participantPlanning.fullyPlannedPercent}<span>%</span></strong><p>${t(`sind in allen ${participantPlanning.slotCount} Slots sicher verplant.`, `are confirmed or facilitating in all ${participantPlanning.slotCount} slots.`)}</p><small>${participantPlanning.fullyPlanned} ${t("Personen", "people")}</small></div>
+          <div><strong>${participantPlanning.uncoveredWaiting}</strong><p>${t("warten in mindestens einem Slot noch ohne sichere Alternative.", "are waiting in at least one slot without a confirmed alternative.")}</p><small>${t(`${participantPlanning.waiting} Personen stehen insgesamt auf Wartelisten`, `${participantPlanning.waiting} people are on waitlists in total`)}</small></div>
+        </div>
+      </div>
+    </section>` : ""}
     <section class="card bento-chart">
       <div class="card-title-row"><h2 id="chartHeading">${t("Angebotene Spielplätze pro Slot", "Player seats offered per slot")}</h2><button type="button" class="section-info-button" data-section-info="chart" aria-label="${sectionInfoLabel("Erklärung zur Platzgrafik", "Explanation of the capacity chart")}"><span aria-hidden="true">i</span></button></div>
       <div class="chart" id="chart" aria-labelledby="chartHeading"></div>
@@ -807,13 +859,27 @@ function render(slots, rsvpsOpen) {
   if (showBusy) {
     const open = allCapacityGames.filter(g => frei(g) > 0).sort((a, b) => frei(b) - frei(a));
     const full = allCapacityGames.length - open.length;
-    if (open.length) document.getElementById("freeList").setAttribute("role", "list");
-    else document.getElementById("freeList").removeAttribute("role");
-    document.getElementById("freeList").innerHTML = open.map(g =>
-      `<div class="free-row" role="listitem"><a href="${g.url}" target="_blank" rel="noopener">${g.title}</a>
-       <span>${slotName(g.slot)} · ${formatTime(g.startTime)}–${formatTime(g.endTime)} <span class="badge frei">${t(`${frei(g)} von ${g.playerSeats} frei`, `${frei(g)} of ${g.playerSeats} available`)}</span></span></div>`).join("")
-      || `<p class="hint">${t("Aktuell sind alle Runden voll.", "All sessions are currently full.")}</p>`;
-    document.getElementById("freeMore").textContent = full > 0 ? t(`${full} weitere Runden sind bereits voll.`, `${full} more sessions are already full.`) : "";
+    const featured = slots.map(slot => open.filter(game => game.slot === slot)
+      .sort((a, b) => frei(b) - frei(a) || compareGamesByStartThenTitle(a, b))[0]).filter(Boolean);
+    const freeList = document.getElementById("freeList");
+    const freeMore = document.getElementById("freeMore");
+    function renderOpenSessions() {
+      const visible = freeListExpanded ? open : featured;
+      if (visible.length) freeList.setAttribute("role", "list");
+      else freeList.removeAttribute("role");
+      freeList.innerHTML = visible.map(game =>
+        `<div class="free-row" role="listitem"><a href="${game.url}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a>
+         <span>${escapeHtml(slotName(game.slot))} · ${formatTime(game.startTime)}–${formatTime(game.endTime)} <span class="badge frei">${t(`${frei(game)} von ${game.playerSeats} frei`, `${frei(game)} of ${game.playerSeats} available`)}</span></span></div>`).join("")
+        || `<p class="hint">${t("Aktuell sind alle Runden voll.", "All sessions are currently full.")}</p>`;
+      const hidden = Math.max(0, open.length - featured.length);
+      freeMore.innerHTML = `${hidden ? `<button type="button" class="free-more-toggle" aria-controls="freeList" aria-expanded="${String(freeListExpanded)}">${freeListExpanded ? t("Weniger anzeigen", "Show less") : t(`${hidden} weitere freie Runden anzeigen`, `Show ${hidden} more sessions with available seats`)}</button>` : ""}${full > 0 ? `<span class="free-full-note">${t(`${full} weitere Runden sind bereits voll.`, `${full} more sessions are already full.`)}</span>` : ""}`;
+    }
+    freeMore.addEventListener("click", event => {
+      if (!event.target.closest(".free-more-toggle")) return;
+      freeListExpanded = !freeListExpanded;
+      renderOpenSessions();
+    });
+    renderOpenSessions();
   } else {
     document.getElementById("freeList").removeAttribute("role");
     document.getElementById("freeList").innerHTML =
@@ -1388,7 +1454,7 @@ window.addEventListener("uilanguagechange", () => renderCredits());
 let dashboardState = null;
 function renderLoadedDashboard() {
   if (!dashboardState) return;
-  const { slots, rsvpsOpen, ev, eventsList, con, slotSource } = dashboardState;
+  const { slots, rsvpsOpen, ev, eventsList, con, slotSource, participantPlanning } = dashboardState;
   const en = isEnglish();
   renderCredits(con);
   document.getElementById("status").textContent =
@@ -1396,7 +1462,7 @@ function renderLoadedDashboard() {
     new Intl.DateTimeFormat(locale(), { timeZone: TZ, dateStyle: "full", timeStyle: "short" }).format(new Date()) +
     (en ? "" : " Uhr");
   applyEvent(ev, rsvpsOpen);
-  render(slots, rsvpsOpen);
+  render(slots, rsvpsOpen, participantPlanning);
   renderCalendar(slots, rsvpsOpen);
   renderFun(dashboardState.games);
   fillEventsList(eventsList);
@@ -1423,7 +1489,8 @@ window.addEventListener("uilanguagechange", renderLoadedDashboard);
 
 Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon(EVENT)]).then(async ([sessions, games, ev, eventsList, con]) => {
   const rsvpsOpen = !!(ev?.fixed_access_time && ev.fixed_access_time <= Date.now());
-  if (activeTargetSource !== "manual") eligibleTargetCount = await loadEligibleTargetCount(ev?.event_access_levels);
+  const eligibleParticipantIds = await loadEligibleParticipantIds(ev?.event_access_levels, ev?.community_id);
+  if (activeTargetSource !== "manual") eligibleTargetCount = eligibleParticipantIds.size || null;
   const [remoteBuckets, locationsBySession] = con
     ? await Promise.all([findSlotBuckets(con.id), findRaumplanLocations(con.id)])
     : [[], new Map()];
@@ -1459,7 +1526,8 @@ Promise.all([load(), loadGames(), loadEvent(), loadEventsList(), findRaumplanCon
     activeTargetSource = "access";
   }
   const slots = groupSlots(sessions, buckets, locationsBySession);
-  dashboardState = { slots, games, rsvpsOpen, ev, eventsList, con, slotSource };
+  const participantPlanning = rsvpsOpen ? participantPlanningStats(slots, eligibleParticipantIds) : null;
+  dashboardState = { slots, games, rsvpsOpen, ev, eventsList, con, slotSource, participantPlanning };
   renderLoadedDashboard();
 }).catch(err => {
   document.getElementById("status").innerHTML = isEnglish()

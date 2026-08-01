@@ -13,9 +13,9 @@ const UI_COPY = {
     setupName:"Name", setupRemove:"Slot entfernen", setupInvalidTarget:"Bitte gültige Ziel-Werte angeben (von ≤ bis).", setupInvalidSlots:"Bitte mindestens einen gültigen Slot angeben.",
     personalTitle:"Mein Kalender", personalIntro:"Hinterlege deinen Playabl-Namen oder deine E-Mail-Adresse, um eigene Angebote, bestätigte Anmeldungen und Wartelistenplätze zu sehen.",
     personalClose:"Dialog schließen", personalIdentity:"Playabl-Name oder E-Mail-Adresse", personalPrivacy:"Die E-Mail-Adresse wird nicht gespeichert. Lokal bleiben nur Profil-ID und Playabl-Name; auf Playabl wird nichts verändert.", personalCancel:"Abbrechen", personalSave:"Meine Spiele anzeigen",
-    infoOpen: "Informationen zu Zielplätzen und Slots", infoClose: "Informationen schließen",
-    infoTitle: "Wie funktionieren Zielplätze und Slots?",
-    infoIntro: "Hintergrund zur Auswertung, automatischen Erkennung und lokalen Konfiguration.",
+    infoOpen: "Informationen zu Zielplätzen, Slots und Teilnehmendenplanung", infoClose: "Informationen schließen",
+    infoTitle: "Wie funktionieren Zielplätze, Slots und Teilnehmendenplanung?",
+    infoIntro: "Hintergrund zur Auswertung, automatischen Erkennung, Teilnehmendenplanung und lokalen Konfiguration.",
     infoTargetTitle: "Ziel-Plätze pro Slot",
     infoTargetText: "Der Zielkorridor beschreibt, wie viele Personen in jedem Zeitfenster durch angebotene Runden untergebracht werden sollen. Wenn Playabl Event-Freischaltungen bereitstellt, schätzt das Dashboard daraus automatisch einen Korridor von ungefähr 85–100 Prozent und rundet ihn sinnvoll. Sobald RSVPs vorhanden sind, dient die höchste eindeutige Nachfrage eines Slots zusätzlich als Untergrenze. Manuelle Werte haben Vorrang; „Ziel neu ermitteln“ stellt die automatische Schätzung wieder her.",
     infoCountText: "<strong>Gezählt werden Spielplätze plus anbietende Person</strong> pro Session. Journaling, Workshops und eindeutig slot-unabhängige Formate werden als Sonderformate gekennzeichnet und sind standardmäßig ausgenommen. Im Setup können sie für dieses Event und diesen Browser wieder in Platzbedarf, freie Plätze und Zielerreichung einbezogen werden. Der Zielwert verändert keine Daten auf Playabl.",
@@ -27,6 +27,9 @@ const UI_COPY = {
     infoDetectionTitle: "Wie funktioniert die automatische Erkennung?",
     infoDetectionText: "Nahe beieinanderliegende Startzeiten werden zu Gruppen zusammengefasst. Eine größere zeitliche Lücke deutet auf einen neuen Slot hin. Aus der Lage dieser Gruppen entstehen Bezeichnungen wie Vormittag, Nachmittag oder Abend sowie passende Grenzen zwischen den Zeitfenstern.",
     infoDetectionStable: "Die Schätzung wird nur einmal angelegt. Danach bleibt sie stabil, auch wenn später neue Sessions dazukommen. Im Setup kann sie jederzeit geprüft und korrigiert werden.",
+    infoParticipationTitle: "Wie wird die Teilnehmendenplanung berechnet?",
+    infoParticipationText: "Sobald die Anmeldung geöffnet ist, wertet das Dashboard alle Personen mit Event-Freischaltung aus. Als sicher eingeplant gilt, wer innerhalb der Spielplatz-Kapazität einer RSVP-Liste liegt oder selbst eine Session anbietet. Eine Warteliste zählt nicht als sicher. „Vollständig verplant“ bedeutet, in jedem erkannten Programmslot bestätigt oder selbst anbietend zu sein; Sonderformate zählen dabei als persönliche Termine.",
+    infoParticipationPrivacy: "Öffentlich erscheinen ausschließlich zusammengefasste Zahlen, niemals Namen oder Kontaktdaten. Da Playabl keine individuellen Anwesenheitstage liefert, nimmt die Vollplanungsquote an, dass alle Event-Freigeschalteten grundsätzlich in allen Slots teilnehmen könnten.",
     infoStorageTitle: "Speicherung und erneute Ermittlung",
     infoStorageText: "Manuell eingestellte oder automatisch erkannte Slots werden nur lokal in diesem Browser gespeichert. Sie verändern weder Playabl noch die Con-Raumplanung. <strong>„Slots neu ermitteln“</strong> entfernt die lokale Slot-Konfiguration und führt die Quellenlogik erneut aus: Raumplanung, automatische Erkennung und zuletzt der Standard-Fallback. Der Zielkorridor bleibt dabei unverändert."
   },
@@ -43,9 +46,9 @@ const UI_COPY = {
     setupName:"Name", setupRemove:"Remove slot", setupInvalidTarget:"Enter a valid target range (from ≤ to).", setupInvalidSlots:"Enter at least one valid slot.",
     personalTitle:"My calendar", personalIntro:"Enter your Playabl name or email address to see sessions you run, confirmed registrations, and waitlist positions.",
     personalClose:"Close dialog", personalIdentity:"Playabl name or email address", personalPrivacy:"The email address is not stored. Only the profile ID and Playabl name remain in this browser; nothing is changed on Playabl.", personalCancel:"Cancel", personalSave:"Show my games",
-    infoOpen: "Information about target capacity and slots", infoClose: "Close information",
-    infoTitle: "How do target capacity and slots work?",
-    infoIntro: "Background on the analysis, automatic detection, and local configuration.",
+    infoOpen: "Information about target capacity, slots, and participant planning", infoClose: "Close information",
+    infoTitle: "How do target capacity, slots, and participant planning work?",
+    infoIntro: "Background on the analysis, automatic detection, participant planning, and local configuration.",
     infoTargetTitle: "Target capacity per slot",
     infoTargetText: "The target range describes how many people should be accommodated by the sessions offered in each time window. When Playabl provides event access data, the dashboard automatically estimates a range of roughly 85–100 percent and rounds it sensibly. Once RSVPs exist, the highest unique demand in any slot also acts as a lower bound. Manual values take priority; “Redetect target” restores the automatic estimate.",
     infoCountText: "<strong>Capacity includes player seats plus the person running each counted session.</strong> Journaling, workshops, and clearly slot-independent formats are marked as special formats and excluded by default. Setup can include them again in demand, available-seat, and target calculations for this event and browser. The target does not change any data on Playabl.",
@@ -57,6 +60,9 @@ const UI_COPY = {
     infoDetectionTitle: "How does automatic detection work?",
     infoDetectionText: "Start times that are close together are grouped. A larger gap indicates the beginning of a new slot. The positions of these groups produce labels such as Morning, Afternoon, or Evening, together with suitable boundaries between the time windows.",
     infoDetectionStable: "The estimate is created only once. It then remains stable even when more sessions are added later. It can be reviewed and corrected in Setup at any time.",
+    infoParticipationTitle: "How is participant planning calculated?",
+    infoParticipationText: "Once registration has opened, the dashboard evaluates everyone with event access. A person counts as confirmed if they are within a session’s player capacity according to the RSVP order or if they run a session themselves. A waitlist does not count as confirmed. “Fully planned” means being confirmed or facilitating in every detected programme slot; special formats count as personal commitments here.",
+    infoParticipationPrivacy: "Only aggregate figures are shown publicly—never names or contact details. Because Playabl does not provide individual attendance days, the full-planning percentage assumes that everyone with event access could attend all slots.",
     infoStorageTitle: "Storage and redetection",
     infoStorageText: "Manually configured or automatically detected slots are stored only in this browser. They do not change Playabl or the con room plan. <strong>“Redetect slots”</strong> removes the local slot configuration and runs the source logic again: room plan, automatic detection, and finally the standard fallback. The target range remains unchanged."
   }
@@ -128,6 +134,9 @@ function applyLanguage(language) {
   document.getElementById("settingsInfoDetectionTitle").textContent = copy.infoDetectionTitle;
   document.getElementById("settingsInfoDetectionText").textContent = copy.infoDetectionText;
   document.getElementById("settingsInfoDetectionStable").textContent = copy.infoDetectionStable;
+  document.getElementById("settingsInfoParticipationTitle").textContent = copy.infoParticipationTitle;
+  document.getElementById("settingsInfoParticipationText").textContent = copy.infoParticipationText;
+  document.getElementById("settingsInfoParticipationPrivacy").textContent = copy.infoParticipationPrivacy;
   document.getElementById("settingsInfoStorageTitle").textContent = copy.infoStorageTitle;
   document.getElementById("settingsInfoStorageText").innerHTML = copy.infoStorageText;
   document.getElementById("wordContextTitle").textContent = copy.contextTitle;

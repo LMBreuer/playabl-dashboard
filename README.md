@@ -54,6 +54,10 @@ automatisch aus der API. Zum Ausprobieren ohne Dateiänderung: `index.html?event
   werden. Die automatische Slot-Erkennung ignoriert sie weiterhin.
 - Sessions mit Start vor 14:00 Uhr zählen als Vormittag, danach als Nachmittag (konfigurierbar).
 - Sobald die Anmeldung (RSVP) geöffnet ist, zeigt die Seite automatisch auch die Belegung.
+- Ab geöffneter Anmeldung fasst die Teilnehmendenplanung zusammen, wie viele Event-Freigeschaltete
+  mindestens einen bestätigten Platz haben oder selbst eine Session anbieten, in allen Slots sicher
+  verplant sind oder in einem Slot ausschließlich auf Wartelisten stehen. Wartelisten zählen nie als
+  sicherer Platz; veröffentlicht werden ausschließlich Aggregate, keine Profil- oder Kontaktdaten.
 
 ## Hinweis
 

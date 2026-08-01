@@ -62,7 +62,7 @@
           <span class="setting-summary-value" id="slotsSummary">werden geladen …</span>
           <span class="setting-source" id="slotsSourceSummary"></span>
         </div>
-        <button class="settings-info-button" id="settingsInfoOpen" type="button" aria-label="Informationen zu Zielplätzen und Slots">i</button>
+        <button class="settings-info-button" id="settingsInfoOpen" type="button" aria-label="Informationen zu Zielplätzen, Slots und Teilnehmendenplanung">i</button>
       </div>
     </nav>
     <p id="status" role="status" aria-live="polite">Lade Daten von Playabl …</p>
@@ -145,8 +145,8 @@
   <div class="slot-config-form">
     <div class="slot-config-header">
       <div>
-        <h2 id="settingsInfoTitle">Wie funktionieren Zielplätze und Slots?</h2>
-        <p id="settingsInfoIntro">Hintergrund zur Auswertung, automatischen Erkennung und lokalen Konfiguration.</p>
+        <h2 id="settingsInfoTitle">Wie funktionieren Zielplätze, Slots und Teilnehmendenplanung?</h2>
+        <p id="settingsInfoIntro">Hintergrund zur Auswertung, automatischen Erkennung, Teilnehmendenplanung und lokalen Konfiguration.</p>
       </div>
       <button class="slot-config-close" id="settingsInfoClose" type="button" aria-label="Informationen schließen">×</button>
     </div>
@@ -169,6 +169,11 @@
         <h3 id="settingsInfoDetectionTitle">Wie funktioniert die automatische Erkennung?</h3>
         <p id="settingsInfoDetectionText">Nahe beieinanderliegende Startzeiten werden zu Gruppen zusammengefasst. Eine größere zeitliche Lücke deutet auf einen neuen Slot hin. Aus der Lage dieser Gruppen entstehen Bezeichnungen wie Vormittag, Nachmittag oder Abend sowie passende Grenzen zwischen den Zeitfenstern.</p>
         <p id="settingsInfoDetectionStable">Die Schätzung wird nur einmal angelegt. Danach bleibt sie stabil, auch wenn später neue Sessions dazukommen. Im Setup kann sie jederzeit geprüft und korrigiert werden.</p>
+      </section>
+      <section>
+        <h3 id="settingsInfoParticipationTitle">Wie wird die Teilnehmendenplanung berechnet?</h3>
+        <p id="settingsInfoParticipationText">Sobald die Anmeldung geöffnet ist, wertet das Dashboard alle Personen mit Event-Freischaltung aus. Als sicher eingeplant gilt, wer innerhalb der Spielplatz-Kapazität einer RSVP-Liste liegt oder selbst eine Session anbietet. Eine Warteliste zählt nicht als sicher. „Vollständig verplant“ bedeutet, in jedem erkannten Programmslot bestätigt oder selbst anbietend zu sein; Sonderformate zählen dabei als persönliche Termine.</p>
+        <p class="settings-info-note" id="settingsInfoParticipationPrivacy">Öffentlich erscheinen ausschließlich zusammengefasste Zahlen, niemals Namen oder Kontaktdaten. Da Playabl keine individuellen Anwesenheitstage liefert, nimmt die Vollplanungsquote an, dass alle Event-Freigeschalteten grundsätzlich in allen Slots teilnehmen könnten.</p>
       </section>
       <section>
         <h3 id="settingsInfoStorageTitle">Speicherung und erneute Ermittlung</h3>
