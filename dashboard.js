@@ -625,7 +625,6 @@ function applyEvent(ev, rsvpsOpen) {
 }
 
 // ---------- Übersichts-Ansicht ----------
-let freeListExpanded = false;
 function render(slots, rsvpsOpen, participantPlanning) {
   const en = isEnglish();
   const t = (de, english) => en ? english : de;
@@ -659,8 +658,8 @@ function render(slots, rsvpsOpen, participantPlanning) {
       title:en ? "Where are seats still available?" : "Wo ist noch Platz?",
       intro:en ? "How the list is sorted and calculated." : "Sortierung und Berechnung der freien Plätze.",
       html:en
-        ? `<section><p>The compact view shows the session with the most available player seats in each slot. The link below the list expands all sessions with available seats, sorted from most to fewest available seats. The person running the session is not counted as an available player seat.${includeSpecialFormats ? " The local Setup setting currently includes special formats." : ""}</p></section>`
-        : `<section><p>Die kompakte Ansicht zeigt je Slot die Session mit den meisten freien Spielplätzen. Der Link unter der Liste klappt alle Sessions mit freien Plätzen auf – absteigend nach freien Plätzen sortiert. Die anbietende Person zählt dabei nicht als freier Spielplatz.${includeSpecialFormats ? " Die lokale Setup-Einstellung zählt Sonderformate derzeit mit." : ""}</p></section>`
+        ? `<section><p>The compact view shows the session with the most available player seats in each slot. The link below opens every session with available seats in the full calendar, grouped by day and slot. The person running the session is not counted as an available player seat.${includeSpecialFormats ? " The local Setup setting currently includes special formats." : ""}</p></section>`
+        : `<section><p>Die kompakte Ansicht zeigt je Slot die Session mit den meisten freien Spielplätzen. Der Link darunter öffnet alle Runden mit freien Plätzen im vollständigen Kalender – nach Tag und Slot geordnet. Die anbietende Person zählt dabei nicht als freier Spielplatz.${includeSpecialFormats ? " Die lokale Setup-Einstellung zählt Sonderformate derzeit mit." : ""}</p></section>`
     }),
     needs: en => ({
       title:en ? "Where are more sessions needed?" : "Wo werden noch Runden gebraucht?",
@@ -739,7 +738,6 @@ function render(slots, rsvpsOpen, participantPlanning) {
         <div class="needs-list" id="needsList" role="list"></div>
       </div>
     </div>
-    <div class="card bento-full"><h2>${t("Alle Sessions im Detail", "All sessions in detail")}</h2><div id="detail"></div></div>
     <div class="card" id="funCard" hidden>
       <h2>Insights</h2>
       <p class="hint">${t("Live aus allen angebotenen Runden.", "Calculated live from all sessions on offer.")}</p>
@@ -843,43 +841,22 @@ function render(slots, rsvpsOpen, participantPlanning) {
       <span class="needs-value">${missing ? `+${missing}` : "✓"}</span>
     </div>`).join("");
 
-  const detail = document.getElementById("detail");
-  for (const slot of slots) {
-    const d = document.createElement("details");
-    const rows = gamesByStartThenTitle(slot.games).map(g => `<tr>
-      <td><a href="${g.url}" target="_blank" rel="noopener" style="color:inherit">${escapeHtml(g.title)}</a>${g.format !== "capacity" ? ` <span class="badge">${escapeHtml(formatLabel(g.format))}</span>` : ""}</td>
-      <td class="game-system">${escapeHtml(gameSystem(g))}</td>
-      <td class="game-facilitator">${escapeHtml(gameFacilitator(g))}</td>
-      <td>${formatTime(g.startTime)}–${formatTime(g.endTime)}${isCountedGame(g) ? ` · ${g.playerSeats}+${t("SL", "GM")}${showBusy ? ` · ${g.rsvps + 1}/${g.seats} ${t("belegt", "occupied")}` : ""}` : ""}</td>
-    </tr>`).join("");
-    d.innerHTML = `<summary>${slotDay(slot)} ${translateSlotPart(slot.part)} — ${slot.games.length} ${t("Sessions", "sessions")}, ${seatsOf(slot)} ${t("gezählte Plätze", "counted seats")}</summary><div class="tscroll"><table class="games"><caption class="sr-only">${t(`Runden am ${slotDay(slot)} ${translateSlotPart(slot.part)}`, `Sessions on ${slotDay(slot)} ${translateSlotPart(slot.part)}`)}</caption><thead><tr><th>Session</th><th>System</th><th>${t("SL", "GM")}</th><th>${t("Zeit & Plätze", "Time & capacity")}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-    detail.appendChild(d);
-  }
-
   if (showBusy) {
     const open = allCapacityGames.filter(g => frei(g) > 0).sort((a, b) => frei(b) - frei(a));
-    const full = allCapacityGames.length - open.length;
     const featured = slots.map(slot => open.filter(game => game.slot === slot)
       .sort((a, b) => frei(b) - frei(a) || compareGamesByStartThenTitle(a, b))[0]).filter(Boolean);
     const freeList = document.getElementById("freeList");
     const freeMore = document.getElementById("freeMore");
-    function renderOpenSessions() {
-      const visible = freeListExpanded ? open : featured;
-      if (visible.length) freeList.setAttribute("role", "list");
-      else freeList.removeAttribute("role");
-      freeList.innerHTML = visible.map(game =>
-        `<div class="free-row" role="listitem"><a href="${game.url}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a>
-         <span>${escapeHtml(slotName(game.slot))} · ${formatTime(game.startTime)}–${formatTime(game.endTime)} <span class="badge frei">${t(`${frei(game)} von ${game.playerSeats} frei`, `${frei(game)} of ${game.playerSeats} available`)}</span></span></div>`).join("")
-        || `<p class="hint">${t("Aktuell sind alle Runden voll.", "All sessions are currently full.")}</p>`;
-      const hidden = Math.max(0, open.length - featured.length);
-      freeMore.innerHTML = `${hidden ? `<button type="button" class="free-more-toggle" aria-controls="freeList" aria-expanded="${String(freeListExpanded)}">${freeListExpanded ? t("Weniger anzeigen", "Show less") : t(`${hidden} weitere freie Runden anzeigen`, `Show ${hidden} more sessions with available seats`)}</button>` : ""}${full > 0 ? `<span class="free-full-note">${t(`${full} weitere Runden sind bereits voll.`, `${full} more sessions are already full.`)}</span>` : ""}`;
-    }
-    freeMore.addEventListener("click", event => {
-      if (!event.target.closest(".free-more-toggle")) return;
-      freeListExpanded = !freeListExpanded;
-      renderOpenSessions();
-    });
-    renderOpenSessions();
+    if (featured.length) freeList.setAttribute("role", "list");
+    else freeList.removeAttribute("role");
+    freeList.innerHTML = featured.map(game =>
+      `<div class="free-row" role="listitem"><a href="${game.url}" target="_blank" rel="noopener">${escapeHtml(game.title)}</a>
+       <span>${escapeHtml(slotName(game.slot))} · ${formatTime(game.startTime)}–${formatTime(game.endTime)} <span class="badge frei">${t(`${frei(game)} von ${game.playerSeats} frei`, `${frei(game)} of ${game.playerSeats} available`)}</span></span></div>`).join("")
+      || `<p class="hint">${t("Aktuell sind alle Runden voll.", "All sessions are currently full.")}</p>`;
+    freeMore.innerHTML = open.length
+      ? `<button type="button" class="free-calendar-link"><span>${t(`Alle ${open.length} freien Runden im Kalender`, `View all ${open.length} sessions with available seats in the calendar`)}</span><span aria-hidden="true">→</span></button><span class="free-calendar-note">${t("Nach Tag und Slot geordnet", "Grouped by day and slot")}</span>`
+      : "";
+    freeMore.querySelector(".free-calendar-link")?.addEventListener("click", openFreeCalendar);
   } else {
     document.getElementById("freeList").removeAttribute("role");
     document.getElementById("freeList").innerHTML =
@@ -888,6 +865,7 @@ function render(slots, rsvpsOpen, participantPlanning) {
 }
 
 // ---------- Kalender-Ansicht ----------
+let calendarFreeFilterControl = null;
 function renderCalendar(slots, rsvpsOpen) {
   const en = isEnglish();
   const t = (de, english) => en ? english : de;
@@ -1079,6 +1057,12 @@ function renderCalendar(slots, rsvpsOpen) {
     noResults.hidden = visibleGames > 0 || visibleSuggestionPanels > 0;
     resetButton.hidden = !(query || systemQuery || selectedDay || freeOnly || personalCalendarFilterActive);
   };
+  calendarFreeFilterControl = enabled => {
+    freeOnly = Boolean(enabled && freeButton);
+    freeButton?.setAttribute("aria-pressed", String(freeOnly));
+    if (freeButton) freeButton.querySelector("span").textContent = freeOnly ? "✓" : "○";
+    applyCalendarFilters();
+  };
   searchInput.addEventListener("input", applyCalendarFilters);
   systemInput.addEventListener("input", applyCalendarFilters);
   for (const chip of cal.querySelectorAll("[data-day-filter]")) {
@@ -1089,10 +1073,7 @@ function renderCalendar(slots, rsvpsOpen) {
     });
   }
   freeButton?.addEventListener("click", () => {
-    freeOnly = !freeOnly;
-    freeButton.setAttribute("aria-pressed", String(freeOnly));
-    freeButton.querySelector("span").textContent = freeOnly ? "✓" : "○";
-    applyCalendarFilters();
+    calendarFreeFilterControl(!freeOnly);
   });
   myGamesButton.addEventListener("click", () => {
     if (!personalProfile) return openPersonalCalendarDialog();
@@ -1127,6 +1108,15 @@ function renderCalendar(slots, rsvpsOpen) {
 }
 
 // ---------- Ansicht umschalten (Übersicht/Kalender) ----------
+function openFreeCalendar() {
+  setView("kalender");
+  calendarFreeFilterControl?.(true);
+  document.querySelector(".calendar-filters")?.scrollIntoView({
+    behavior:document.documentElement.hasAttribute("data-zen") || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    block:"start"
+  });
+}
+
 function setView(v) {
   const cal = v === "kalender";
   document.getElementById("app").hidden = cal;
@@ -1446,6 +1436,8 @@ function renderCredits(con = activeCreditsCon) {
     <span aria-hidden="true">·</span>
     <a href="${raumplanLink}" style="color:inherit">${en ? `Con room plan${slug ? " for this event" : ""}` : `Con-Raumplan${slug ? " für dieses Event" : ""}`}</a>
     <span aria-hidden="true">·</span>
+    <button type="button" class="tour-footer-link" data-guided-tour-open>${en ? "Tour" : "Rundgang"}</button>
+    <span aria-hidden="true">·</span>
     <a href="impressum.html" style="color:inherit">${en ? "Legal notice" : "Impressum"}</a>`;
 }
 window.addEventListener("uilanguagechange", () => renderCredits());
@@ -1484,6 +1476,7 @@ function renderLoadedDashboard() {
     fallback:"· Standard"
   })[slotSource] || "";
   setView(location.hash === "#kalender" ? "kalender" : "uebersicht");
+  window.dispatchEvent(new CustomEvent("dashboardready"));
 }
 window.addEventListener("uilanguagechange", renderLoadedDashboard);
 
