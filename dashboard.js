@@ -1438,7 +1438,13 @@ function renderCredits(con = activeCreditsCon) {
     <span aria-hidden="true">·</span>
     <button type="button" class="tour-footer-link" data-guided-tour-open>${en ? "Tour" : "Rundgang"}</button>
     <span aria-hidden="true">·</span>
-    <a href="impressum.html" style="color:inherit">${en ? "Legal notice" : "Impressum"}</a>`;
+    <a href="impressum.html" style="color:inherit">${en ? "Legal notice" : "Impressum"}</a>
+    <span class="ai-disclosure">
+      <a class="ai-disclosure-trigger" href="https://de.wikipedia.org/wiki/Ethik_der_k%C3%BCnstlichen_Intelligenz" target="_blank" rel="noopener noreferrer" aria-describedby="aiDisclosureDashboard">${en ? "Developed with AI assistance" : "Mit KI-Unterstützung entwickelt"}</a>
+      <span id="aiDisclosureDashboard" class="ai-disclosure-tooltip" role="tooltip">${en
+        ? "Part of the code for this web application was developed with the assistance of generative AI. Concept, responsibility and decisions remained with people. The use of AI raises social, cultural and political questions and continues to require open, critical discussion."
+        : "Der Code dieser Webapplikation wurde teilweise mit Unterstützung generativer KI entwickelt. Konzeption, Verantwortung und Entscheidungen blieben dabei bei Menschen. Der Einsatz von KI berührt gesellschaftliche, kulturelle und politische Fragen und bedarf weiterhin offener, kritischer Diskussionen."}</span>
+    </span>`;
 }
 window.addEventListener("uilanguagechange", () => renderCredits());
 

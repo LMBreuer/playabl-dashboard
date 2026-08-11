@@ -741,6 +741,22 @@
     text-underline-offset:3px; cursor:pointer;
   }
   .tour-footer-link:hover, .tour-footer-link:focus-visible { color:var(--accent-text); }
+  .ai-disclosure { position:relative; order:99; display:inline-flex; align-items:center; margin-left:auto; }
+  .ai-disclosure-trigger {
+    color:var(--text-readable-muted); font:inherit; line-height:1.35; text-decoration:none;
+    border-bottom:1px dotted currentColor; cursor:pointer;
+  }
+  .ai-disclosure-trigger:hover, .ai-disclosure-trigger:focus-visible { color:var(--text-secondary); }
+  .ai-disclosure-tooltip {
+    position:absolute; z-index:45; right:0; bottom:calc(100% + 9px); width:min(360px,calc(100vw - 32px));
+    padding:10px 12px; border:var(--border-w) solid var(--border); border-radius:var(--r-md);
+    background:var(--surface-1); box-shadow:var(--shadow-card); color:var(--text-secondary);
+    font-size:.72rem; font-weight:500; line-height:1.45; text-align:left;
+    opacity:0; pointer-events:none; transform:translateY(4px); transition:opacity .15s ease,transform .15s ease;
+  }
+  .ai-disclosure:hover .ai-disclosure-tooltip,
+  .ai-disclosure:focus-within .ai-disclosure-tooltip { opacity:1; transform:translateY(0); }
+  @media (prefers-reduced-motion:reduce) { .ai-disclosure-tooltip { transition:none; } }
   .guided-tour-teaser {
     position:fixed; z-index:10010; right:20px; bottom:20px;
     width:min(350px,calc(100vw - 32px)); padding:20px;
