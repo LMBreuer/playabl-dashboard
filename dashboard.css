@@ -619,8 +619,7 @@
   }
   .calendar-personal-toggle:hover, .calendar-personal-toggle:focus-visible { color:var(--text-primary); border-bottom-color:var(--baseline); }
   .calendar-personal-toggle[aria-pressed="true"] { color:var(--accent-text); border-bottom-color:var(--accent); }
-  .calendar-download-button { display:inline-flex; align-items:center; gap:7px; min-height:36px; }
-  .calendar-export-icon { width:18px; height:18px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round; stroke-width:1.8; }
+  .calendar-export-icon { width:18px; height:18px; margin-right:7px; vertical-align:-4px; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round; stroke-width:1.8; }
   .calendar-free-toggle {
     display:inline-flex; align-items:center; gap:7px; min-height:36px; border:var(--border-w) solid var(--border); border-radius:var(--r-pill);
     padding:7px 12px;
