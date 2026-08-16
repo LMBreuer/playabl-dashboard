@@ -25,6 +25,7 @@
         ["Angebot mit dem Ziel vergleichen", "Die Grafik zeigt pro Slot, wie viele Spielplätze angeboten werden. Segmente stehen für Sessions; Zielband und Bedarfsanzeige machen Lücken sichtbar."],
         ["Freie Plätze und fehlende Runden", "Links erscheint pro Slot die Session mit den meisten freien Plätzen. Der Link darunter öffnet alle freien Runden im Kalender. Rechts siehst du, in welchen Slots noch Angebot fehlt."],
         ["Den Kalender filtern", "Suche nach Session, System oder Spielleitung, wähle einen Tag oder zeige nur deine Spiele beziehungsweise Runden mit freien Plätzen. Die Trefferzahl aktualisiert sich sofort."],
+        ["Persönliche Termine exportieren", "Mit dem ICS-Button lädst du ausschließlich deine persönlichen Spiele als Kalenderdatei herunter – unabhängig davon, ob „Meine Spiele“ gerade als Filter aktiv ist. Ohne Zuordnung legst du zuerst deinen Playabl-Namen fest. Die Datei lässt sich in Google Kalender, Apple Kalender und Outlook importieren; vorhandene Raumdaten werden übernommen."],
         ["Das vollständige Programm", "Im Kalender bleiben Zeit, System, Spielleitung, Raum und Verfügbarkeit zusammen. Die Tages- und Slotstruktur eignet sich auch als klare Druckansicht."]
       ]
     },
@@ -49,6 +50,7 @@
         ["Compare capacity with the target", "The chart shows how many player seats are offered in each slot. Segments represent sessions; the target band and demand display make gaps visible."],
         ["Available seats and missing sessions", "On the left, each slot shows the session with the most available seats. The link below opens every available session in the calendar. On the right, see which slots still need more capacity."],
         ["Filter the calendar", "Search by session, system, or facilitator, choose a day, or show only your games or sessions with available seats. The result count updates immediately."],
+        ["Export your personal events", "Use the ICS button to download only your personal games as a calendar file, whether or not the ‘My games’ filter is active. If no profile is linked yet, you will first select your Playabl name. You can import the file into Google Calendar, Apple Calendar or Outlook; available room details are included."],
         ["The complete programme", "The calendar keeps time, system, facilitator, room, and availability together. Its day and slot structure also works as a clear print view."]
       ]
     }
@@ -60,6 +62,7 @@
     ".bento-chart",
     ".bento-side-row",
     ".calendar-filters",
+    "#calendarDownload",
     ".calendar-bento .cal-day"
   ];
 
@@ -224,8 +227,10 @@
     }
     const previousScrollBehavior = document.documentElement.style.scrollBehavior;
     const targetRect = target.getBoundingClientRect();
-    const targetTop = index === 6
+    const targetTop = index === selectors.length - 1
       ? window.scrollY + targetRect.top - 16
+      : window.innerWidth <= 680
+        ? window.scrollY + targetRect.top - 112
       : window.scrollY + targetRect.top - Math.max(16, (window.innerHeight - targetRect.height) / 2);
     document.documentElement.style.scrollBehavior = "auto";
     window.scrollTo(0, Math.max(0, targetTop));

@@ -544,6 +544,52 @@ function personalGameState(game) {
   return { type:"waitlist", position:index - game.playerSeats + 1 };
 }
 
+function downloadPersonalGamesCalendar(slots) {
+  if (!personalProfile) return openPersonalCalendarDialog();
+  const en = isEnglish();
+  const t = (de, english) => en ? english : de;
+  const eventName = dashboardState?.ev?.title || `Playabl-Event ${EVENT}`;
+  const events = slots.flatMap(slot => slot.games.map(game => {
+    const state = personalGameState(game);
+    const start = new Date(game.startTime);
+    const end = new Date(game.endTime);
+    if (!state || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return null;
+    const role = state.type === "facilitator"
+      ? t("Spielleitung", "Facilitator")
+      : state.type === "confirmed"
+        ? t("Bestätigt", "Confirmed")
+        : t(`Warteliste · Platz ${state.position}`, `Waitlist · position ${state.position}`);
+    const location = game.location
+      ? [game.location.room, game.location.table, game.location.floor].filter(Boolean).join(" · ")
+      : "";
+    return {
+      uid:`event-${EVENT}-${game.url.split("/").pop()}-${calendarUtc(game.startTime)}@playabl-dashboard`,
+      title:game.title,
+      start:game.startTime,
+      end:game.endTime,
+      location,
+      description:[
+        eventName,
+        role,
+        `${t("System", "System")}: ${gameSystem(game)}`,
+        `${t("Spielleitung", "Facilitator")}: ${gameFacilitator(game)}`,
+        game.url,
+      ].filter(Boolean).join("\n"),
+      url:game.url,
+      tentative:state.type === "waitlist",
+    };
+  })).filter(Boolean).sort((a, b) => new Date(a.start) - new Date(b.start));
+  if (!events.length) {
+    window.alert(t("Für dieses Profil gibt es keine Spiele mit konkreter Startzeit.", "This profile has no games with a specific start time."));
+    return;
+  }
+  downloadCalendarFile({
+    calendarName:`${eventName} – ${personalProfile.username}`,
+    filename:`${eventName}-${personalProfile.username}`,
+    events,
+  });
+}
+
 function participantPlanningStats(slots, eligibleParticipantIds) {
   if (!eligibleParticipantIds?.size || !slots.length) return null;
   const people = new Map([...eligibleParticipantIds].map(id => [String(id), {
@@ -925,6 +971,7 @@ function renderCalendar(slots, rsvpsOpen) {
       </div>
       <div class="calendar-filter-footer">
         <button type="button" class="calendar-personal-toggle" id="calendarMyGamesFilter" aria-pressed="${String(personalCalendarFilterActive)}" aria-label="${escapeHtml(personalProfile ? t(`Nur Spiele von oder mit ${personalProfile.username} anzeigen`, `Show only games run by or joined by ${personalProfile.username}`) : t("Playabl-Name oder E-Mail-Adresse für Meine Spiele festlegen", "Set a Playabl name or email address for My games"))}">${personalProfile ? escapeHtml(t(`Meine Spiele · ${personalProfile.username}`, `My games · ${personalProfile.username}`)) : t("Meine Spiele", "My games")}</button>
+        <button type="button" class="dashboard-action-button setup-button calendar-download-button" id="calendarDownload" aria-label="${t("Meine Spiele als .ics-Datei exportieren", "Export my games as an .ics file")}" title="${t("Lädt nur deine persönlichen Spiele für Google Kalender, Apple Kalender oder Outlook herunter", "Downloads only your personal games for Google Calendar, Apple Calendar, or Outlook")}"><svg class="calendar-export-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="M12 12v5m0 0-2-2m2 2 2-2"/></svg> ICS</button>
         ${rsvpsOpen ? `<button type="button" class="calendar-free-toggle" id="calendarFreeFilter" aria-pressed="false"><span aria-hidden="true">○</span> ${t("Nur freie Plätze", "Available seats only")}</button>` : ""}
         <button type="button" class="calendar-filter-reset" id="calendarFilterReset" hidden>${t("Filter zurücksetzen", "Reset filters")}</button>
         <span class="calendar-filter-count" id="calendarFilterCount" role="status" aria-live="polite">${totalGames} ${t("Runden", "sessions")}</span>
@@ -978,6 +1025,7 @@ function renderCalendar(slots, rsvpsOpen) {
   const resetButton = document.getElementById("calendarFilterReset");
   const freeButton = document.getElementById("calendarFreeFilter");
   const myGamesButton = document.getElementById("calendarMyGamesFilter");
+  const calendarDownloadButton = document.getElementById("calendarDownload");
   const count = document.getElementById("calendarFilterCount");
   const noResults = document.getElementById("calendarNoResults");
   let selectedDay = "";
@@ -1082,6 +1130,7 @@ function renderCalendar(slots, rsvpsOpen) {
     myGamesButton.setAttribute("aria-pressed", String(personalCalendarFilterActive));
     applyCalendarFilters();
   });
+  calendarDownloadButton.addEventListener("click", () => downloadPersonalGamesCalendar(slots));
   for (const button of cal.querySelectorAll("[data-calendar-suggestions]")) {
     button.addEventListener("click", () => {
       const slotKey = button.dataset.slotKey;
