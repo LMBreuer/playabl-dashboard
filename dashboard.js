@@ -1473,6 +1473,16 @@ async function findRaumplanLocations(conId) {
   } catch { return new Map(); }
 }
 let activeCreditsCon = null;
+function loomspunMigrationUrl() {
+  const target = new URL("dashboard/", "https://lmbreuer.github.io/loomspun/");
+  target.search = location.search;
+  target.hash = location.hash;
+  return target.href;
+}
+document.addEventListener("click", event => {
+  const link = event.target.closest("a[data-loomspun-link]");
+  if (link) link.href = loomspunMigrationUrl();
+});
 function renderCredits(con = activeCreditsCon) {
   activeCreditsCon = con;
   const en = document.documentElement.lang === "en";
@@ -1480,6 +1490,8 @@ function renderCredits(con = activeCreditsCon) {
   const raumplanLink = slug ? `${RAUMPLAN_URL}plan.html?con=${encodeURIComponent(slug)}` : RAUMPLAN_URL;
   document.getElementById("credits").innerHTML = `
     <span>Playabl Dashboard</span>
+    <span aria-hidden="true">·</span>
+    <a data-loomspun-link href="${loomspunMigrationUrl()}" style="color:inherit">Loomspun · ${en ? "unified application" : "gemeinsame Anwendung"}</a>
     <span aria-hidden="true">·</span>
     <a href="https://playabl.io" target="_blank" rel="noopener" style="color:inherit">${en ? "Data source: Playabl" : "Datenquelle: Playabl"}</a>
     <span aria-hidden="true">·</span>
@@ -1495,6 +1507,7 @@ function renderCredits(con = activeCreditsCon) {
         : "Der Code dieser Webapplikation wurde teilweise mit Unterstützung generativer KI entwickelt. Konzeption, Verantwortung und Entscheidungen blieben dabei bei Menschen. Der Einsatz von KI berührt gesellschaftliche, kulturelle und politische Fragen und bedarf weiterhin offener, kritischer Diskussionen."}</span>
     </span>`;
 }
+document.getElementById("loomspunNoticeLink").href = loomspunMigrationUrl();
 window.addEventListener("uilanguagechange", () => renderCredits());
 
 // ---------- Start ----------

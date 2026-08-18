@@ -2,6 +2,7 @@ const UI_LANGUAGE_KEY = "playabl-dashboard-language";
 const UI_COPY = {
   de: {
     skip: "Zum Inhalt springen", header:"Dashboard-Kopfzeile", eyebrow: "Playabl · Spielangebot pro Slot", pageLoading:"Spielangebot pro Slot", dataLoading:"Daten werden live von Playabl geladen …", statusLoading:"Lade Daten von Playabl …", slotsLoading:"werden geladen …",
+    loomspunNoticeLabel:"Hinweis zu Loomspun", loomspunNoticeTitle:"Das Dashboard ist jetzt Teil von Loomspun.", loomspunNoticeText:"Dort findest du Dashboard, Kalender und Raumplan gemeinsam.", loomspunOpen:"In Loomspun öffnen →",
     nav: "Ansicht, Event und Ziel wählen", view:"Ansicht", activeSettings:"Aktive Einstellungen", theme:"Farbschema wählen", calendarView:"Kalender-Ansicht", overview: "Übersicht", calendar: "Kalender",
     contextTitle:"Kontext", contextIntro:"Zufällige Ausschnitte aus Rundenbeschreibungen.", contextClose:"Kontext schließen", contextRefresh:"Andere Ausschnitte", sectionInfoTitle:"Information", sectionInfoClose:"Information schließen",
     community: "Community", event: "Event wechseln", setup: "Setup", language: "Sprache wählen", targetSetting:"Ziel-Plätze pro Slot", slotsSetting:"Slots",
@@ -35,6 +36,7 @@ const UI_COPY = {
   },
   en: {
     skip: "Skip to content", header:"Dashboard header", eyebrow: "Playabl · Session capacity per slot", pageLoading:"Session capacity per slot", dataLoading:"Data is loaded live from Playabl …", statusLoading:"Loading data from Playabl …", slotsLoading:"loading …",
+    loomspunNoticeLabel:"Loomspun notice", loomspunNoticeTitle:"The dashboard is now part of Loomspun.", loomspunNoticeText:"Loomspun brings the dashboard, calendar, and room plan together.", loomspunOpen:"Open in Loomspun →",
     nav: "Choose view, event and target", view:"View", activeSettings:"Active settings", theme:"Choose colour scheme", calendarView:"Calendar view", overview: "Overview", calendar: "Calendar",
     contextTitle:"Context", contextIntro:"Random excerpts from session descriptions.", contextClose:"Close context", contextRefresh:"Different excerpts", sectionInfoTitle:"Information", sectionInfoClose:"Close information",
     community: "Community", event: "Change event", setup: "Setup", language: "Choose language", targetSetting:"Target capacity per slot", slotsSetting:"Slots",
@@ -75,6 +77,10 @@ function applyLanguage(language) {
   document.querySelectorAll("[data-language]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.language === key)));
   document.querySelector(".skip-link").textContent = copy.skip;
   document.querySelector(".dashboard-head").setAttribute("aria-label", copy.header);
+  document.getElementById("loomspunNotice").setAttribute("aria-label", copy.loomspunNoticeLabel);
+  document.getElementById("loomspunNoticeTitle").textContent = copy.loomspunNoticeTitle;
+  document.getElementById("loomspunNoticeText").textContent = copy.loomspunNoticeText;
+  document.getElementById("loomspunNoticeLink").textContent = copy.loomspunOpen;
   document.querySelector(".dashboard-eyebrow").firstChild.nodeValue = copy.eyebrow;
   document.querySelector(".controls-group .sr-only").textContent = copy.theme;
   document.querySelector(".language-switch").setAttribute("aria-label", copy.language);

@@ -840,6 +840,18 @@
   :root[data-zen] .guided-tour-complete-toast { transition:none; }
 
   .foot { font-size: var(--fs-xs); color: var(--text-readable-muted); margin-top: var(--sp-6); }
+  .loomspun-notice {
+    max-width: 1400px; margin: 0 auto 24px; padding: 11px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    border: var(--border-w) solid var(--chrome-border, var(--grid)); border-radius: var(--r-md);
+    background: var(--band); color: var(--text-readable-muted); font-size: var(--fs-sm);
+  }
+  .loomspun-notice strong { color: var(--text-primary); }
+  .loomspun-notice-link {
+    flex: none; padding: 7px 10px; border: var(--border-w) solid var(--chrome-border, var(--grid));
+    border-radius: var(--r-sm); background: var(--surface-1); color: var(--text-primary); font-weight: 700; text-decoration: none; white-space: nowrap;
+  }
+  .loomspun-notice-link:hover, .loomspun-notice-link:focus-visible { border-color: var(--accent); color: var(--accent-text); }
   .err { color: var(--warn-text); font-weight: 600; }
 
   .pixel-cat { width: 22px; height: 22px; vertical-align: -6px; }
@@ -873,7 +885,7 @@
     .guided-tour-complete-toast { transition:none; }
   }
   @media print {
-    .guided-tour-layer, .guided-tour-teaser, .guided-tour-complete-toast, .tour-footer-link { display:none !important; }
+    .guided-tour-layer, .guided-tour-teaser, .guided-tour-complete-toast, .tour-footer-link, .loomspun-notice { display:none !important; }
   }:root[data-theme="solarpunk"] {
     --text-readable-muted:#536b4e; --band-edge:#bfc79f; --series-soft:#9dc69a;
     --warn-text:#8f3f1f; --r-xl:30px 14px 30px 14px;
@@ -925,6 +937,9 @@
   body { padding:40px 32px 64px; min-height:100vh; }
   .dashboard-page .wrap { max-width:none; margin:0; position:relative; z-index:1; }
   .dashboard-page main, .dashboard-page .foot { max-width:1400px; margin-left:auto; margin-right:auto; }
+  @media (max-width: 640px) {
+    .loomspun-notice { align-items: flex-start; flex-direction: column; }
+  }
   .dashboard-actions { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; }
   .language-switch { display:flex; align-items:center; gap:2px; }
   .language-switch button { padding:6px 10px; border:0; border-radius:var(--r-pill); background:transparent; color:var(--text-secondary); font:700 .78rem/1 var(--font-body); cursor:pointer; }
